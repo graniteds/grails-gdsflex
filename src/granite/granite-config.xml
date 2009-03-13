@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE granite-config PUBLIC "-//Granite Data Services//DTD granite-config internal//EN"
+    "http://www.graniteds.org/public/dtd/2.0.0/granite-config.dtd">
+
+<!--
+  GRANITE DATA SERVICES
+  Copyright (C) 2009 ADEQUATE SYSTEMS SARL
+
+  This file is part of Granite Data Services.
+
+  Granite Data Services is free software; you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as published by
+  the Free Software Foundation; either version 3 of the License, or (at your
+  option) any later version.
+
+  Granite Data Services is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
+  for more details.
+
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, see <http://www.gnu.org/licenses/>.
+-->
+
+<granite-config>
+
+    <classgetter type="org.granite.hibernate.HibernateClassGetter"/>
+    
+    <externalizers>
+    	<configuration>
+    		<dynamicclass>true</dynamicclass>
+    	</configuration>
+        <externalizer type="org.granite.hibernate.HibernateExternalizer">
+            <include annotatedwith="javax.persistence.Entity"/>
+            <include annotatedwith="javax.persistence.MappedSuperclass"/>
+            <include annotatedwith="javax.persistence.Embeddable"/>
+        </externalizer>
+    </externalizers>
+    
+    <descriptors>
+    	<descriptor instanceof="javax.persistence.Entity" java="org.granite.messaging.amf.io.util.DefaultGroovyClassDescriptor"/>
+    </descriptors>
+
+    <!-- Uncomment to enable Spring security integration
+	<security type="org.granite.messaging.service.security.SpringSecurityService"/>
+     !-->
+	
+    <!--
+     ! Enable Spring components for Tide by annotation
+     !-->
+    <tide-components>
+		<component annotatedwith="org.granite.tide.annotations.TideEnabled"/>
+    </tide-components>
+
+</granite-config>
