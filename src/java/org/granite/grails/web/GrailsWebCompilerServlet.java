@@ -27,6 +27,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -129,7 +130,15 @@ public class GrailsWebCompilerServlet extends HttpServlet {
         }
         catch (WebCompilerException e) {
 			if (swfFile == null || !swfFile.exists() || swfFile.lastModified() <= lastModified) {
-				response.getWriter().append(e.getMessage());
+				PrintWriter writer = response.getWriter();
+				response.setContentType("text/html");
+				writer.println("<html><body>");
+				writer.println("<h1>Flex compilation error</h1>");
+				writer.println("<pre>");
+				writer.println(e.getMessage());
+				writer.println("</pre>");
+				writer.println("<p>Check server logs for more details</p>");
+				writer.println("</body></html>");
 				return;
 			}
         }

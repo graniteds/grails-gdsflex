@@ -3,12 +3,6 @@
   <authorEmail>william.drai@graniteds.org</authorEmail>
   <title>Integration between Grails and GraniteDS/Flex</title>
   <documentation>http://www.graniteds.org/</documentation>
-  <resources>
-    <resource>BootStrap</resource>
-    <resource>Config</resource>
-    <resource>DataSource</resource>
-    <resource>spring.resources</resource>
-    <resource>UrlMappings</resource>
-  </resources>
+  <resources />
   <dependencies />
 </plugin>
