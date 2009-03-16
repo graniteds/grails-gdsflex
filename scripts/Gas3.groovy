@@ -50,10 +50,12 @@ target(gas3: "Gas3") {
 	files = new ArrayList();
 	list(domainDir, files);
 	
-	Ant.gas3(outputdir: "${basedir}/grails-app/views", tide: "true", classpathref: "gas3.generate.classpath") {
-		fileset(dir: "${classesDirPath}") {
-			for (currentFile in files)
-				include(name: currentFile.getPath().substring(domainDir.getPath().length()+1).replace(".groovy", ".class"))
+	if (!files.isEmpty()) {
+		Ant.gas3(outputdir: "${basedir}/grails-app/views", tide: "true", classpathref: "gas3.generate.classpath") {
+			fileset(dir: "${classesDirPath}") {
+				for (currentFile in files)
+					include(name: currentFile.getPath().substring(domainDir.getPath().length()+1).replace(".groovy", ".class"))
+			}
 		}
 	}
 }
