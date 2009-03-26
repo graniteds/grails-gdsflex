@@ -25,7 +25,7 @@ import org.springframework.transaction.interceptor.TransactionProxyFactoryBean
 
 
 class GdsflexGrailsPlugin {
-    def version = 0.1
+    def version = 0.2
     def author = "William Drai"
     def authorEmail = "william.drai@graniteds.org"
     def title = "Integration between Grails and GraniteDS/Flex"

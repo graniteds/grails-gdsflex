@@ -112,18 +112,16 @@ public class GrailsWebCompilerServlet extends HttpServlet {
         
         String requestedPath = requestedFile.getFile().getAbsolutePath();
         File mxmlFile = requestedFile.getFile();
-        File sourcePath = mxmlFile.getParentFile();
-        long sourcesLastModified = lastModified(sourcePath, new String[] { ".mxml", ".as" });
         
         String swfPath = requestedPath.substring(0, (requestedPath.length() - 5));
         File swfFolder = new File(swfPath.substring(0, swfPath.lastIndexOf(File.separator)) + File.separator + "swf");
         if (!swfFolder.exists())
         	swfFolder.mkdir();
         File swfFile = new File(swfFolder, swfPath.substring(swfPath.lastIndexOf(File.separator)+1) + ".swf");
-		long lastModified = swfFile.exists() ? swfFile.lastModified() : 0;
+        long lastModified = swfFile != null && swfFile.exists() ? swfFile.lastModified() : 0L;
         
         try {
-            if (mxmlFile != null && swfFile != null && lastModified < sourcesLastModified) {
+            if (mxmlFile != null && swfFile != null) {
 				// log("Compiling mxml file: " + mxmlFile.getAbsolutePath() + " to " + swfFile.getAbsolutePath());
                 swfFile = webCompiler.compileMxmlFile(mxmlFile, swfFile, false, type, servletConfig.getServletContext().getContextPath());
 			}
@@ -224,33 +222,6 @@ public class GrailsWebCompilerServlet extends HttpServlet {
         }
         
         return buf.toString();
-    }
-    
-    
-    protected long lastModified(File path, final String[] extensions) {
-    	long lastModified = 0L;
-    	String[] files = path.list(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				for (String ext : extensions) {
-					if (name.endsWith(ext))
-						return true;
-				}
-				return false;
-			}
-    	});
-    	for (String file : files) {
-    		File f = new File(path, file);
-    		if (f.isDirectory()) {
-    			long lm = lastModified(f, extensions);
-    			if (lm > lastModified)
-    				lm = lastModified;
-    		}
-    		else if (f.lastModified() > lastModified)
-    			lastModified = f.lastModified();
-    	}
-    	
-    	return lastModified;
     }
 
 

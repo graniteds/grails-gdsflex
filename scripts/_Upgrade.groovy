@@ -19,3 +19,12 @@
 */
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
+
+println "Upgrading Flex libs"
+
+Ant.copy(todir: "${basedir}/web-app/WEB-INF/flex", overwrite: true) {
+    fileset(dir: "${pluginBasedir}/src/flex") {
+    	include(name: "**/*")
+    	exclude(name: "services-config.xml")
+    }
+}

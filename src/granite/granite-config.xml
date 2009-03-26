@@ -41,6 +41,10 @@
     <descriptors>
     	<descriptor instanceof="javax.persistence.Entity" java="org.granite.messaging.amf.io.util.DefaultGroovyClassDescriptor"/>
     </descriptors>
+	
+	<exceptionconverters>
+		<exceptionconverter type="org.granite.tide.spring.SpringValidationExceptionConverter"/>
+	</exceptionconverters>
 
     <!-- Uncomment to enable Spring security integration
 	<security type="org.granite.messaging.service.security.SpringSecurityService"/>
