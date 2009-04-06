@@ -21,14 +21,14 @@
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
-includeTargets << grailsScript ( "Init" )
+includeTargets << grailsScript("_GrailsClasspath")
 
 target ('default': "Gas3") {
      gas3()
 }                     
 
 target(gas3: "Gas3") {
-    depends(init, classpath)
+    depends(classpath)
 
 	rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator.jar").toURI().toURL())
 	rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator-share.jar").toURI().toURL())
