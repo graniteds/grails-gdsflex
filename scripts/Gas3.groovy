@@ -21,52 +21,9 @@
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
-includeTargets << grailsScript("_GrailsClasspath")
+
+includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
 
 target ('default': "Gas3") {
-     gas3()
-}                     
-
-target(gas3: "Gas3") {
-    depends(classpath)
-
-	rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator.jar").toURI().toURL())
-	rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator-share.jar").toURI().toURL())
-	
-//	Ant.path(id: 'gas3.classpath') {
-//		fileset(dir: "${gdsflexPluginDir}/scripts/lib", includes: "*.jar")
-//	}       
-	
-	Ant.taskdef(name: "gas3", classname: "org.granite.generator.ant.AntJavaAs3Task")
-		
-	Ant.path(id: "gas3.compile.classpath", compileClasspath)
-	
-	Ant.path(id: "gas3.generate.classpath") {
-		path(location: "${classesDirPath}")
-	}
-	
-	def domainDir = new File("${basedir}/grails-app/domain")
-
-	files = new ArrayList();
-	list(domainDir, files);
-	
-	if (!files.isEmpty()) {
-		Ant.gas3(outputdir: "${basedir}/grails-app/views", tide: "true", classpathref: "gas3.generate.classpath") {
-			fileset(dir: "${classesDirPath}") {
-				for (currentFile in files)
-					include(name: currentFile.getPath().substring(domainDir.getPath().length()+1).replace(".groovy", ".class"))
-			}
-		}
-	}
-}
-
-def list(File dir, List files) {
-	fs = dir.listFiles()
-	
-	for (f in fs) {
-		if (f.isDirectory())
-			list(f, files)
-		else if (f.getPath().endsWith(".groovy"))
-			files.add(f);
-	}
+     depends(compile)
 }
