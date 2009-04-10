@@ -23,9 +23,19 @@ grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
 
 eventCompileEnd = { kind ->
-	if (gdsflexPluginDir != basedir) {
+	if (checkDir()) {
         includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
 		println "Starting gas3 for " + kind
 		gas3()
 	}
+}
+eventPackagingEnd = {
+	if (checkDir()) {
+        includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
+		flexCompile()
+	}
+}
+
+def checkDir() {
+    return gdsflexPluginDir != basedir
 }

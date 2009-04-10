@@ -24,6 +24,7 @@ import org.codehaus.groovy.grails.plugins.support.GrailsPluginUtils
 import org.granite.tide.hibernate.HibernateSessionManager
 import org.springframework.transaction.interceptor.TransactionProxyFactoryBean
 import org.granite.tide.spring.security.Identity
+import org.granite.web.util.WebCompile
 
 
 class GdsflexGrailsPlugin {
@@ -34,9 +35,10 @@ class GdsflexGrailsPlugin {
     def description = ""
     def documentation = "http://www.graniteds.org/"
 	
-	
+	def watchedResources = "file:./grails-app/views/mxml/**/*.mxml"
+    
 	def doWithSpring = {
-    	
+        
 		tidePersistenceManagerTarget(HibernateSessionManager, ref("sessionFactory")) {
 		}
 		
@@ -160,11 +162,18 @@ class GdsflexGrailsPlugin {
 		        }
 		   	}
         }
-    }   
-    
+    }
+
+    def onChange = { event ->
+        println event
+        if(event.source) {
+            WebCompile.compile("grails-app/views/mxml",event.application.metadata['app.name'])
+        }
+    }
     
     
     static ConfigObject getGraniteConfig() {
+    	WebCompile.init("web-app/WEB-INF")
     
 		GroovyClassLoader classLoader = new GroovyClassLoader(GdsflexGrailsPlugin.getClassLoader())
 

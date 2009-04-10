@@ -59,7 +59,11 @@ target(gas3: "Gas3") {
                 }
             }
         }
-		Ant.gas3(outputdir: "${basedir}/grails-app/views", tide: "true", classpathref: "gas3.generate.classpath") {
+        File outDir = new File("${basedir}/grails-app/views/mxml")
+        if(!outDir.exists()) {
+            outDir.mkdirs()
+        }
+		Ant.gas3(outputdir: outDir, tide: "true", classpathref: "gas3.generate.classpath") {
 			fileset(dir: genClassPath) {
 				domainClasses.each{grailsClass->
                     include(name: grailsClass.fullName.replaceAll("\\.","/")+".class")
