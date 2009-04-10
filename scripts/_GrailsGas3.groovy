@@ -39,14 +39,14 @@ target(gas3: "Gas3") {
 	Ant.taskdef(name: "gas3", classname: "org.granite.generator.ant.AntJavaAs3Task")
 		
 	Ant.path(id: "gas3.compile.classpath", compileClasspath)
-    println as3Config
+
     def domainJar = as3Config.domainJar
 	def genClassPath =  domainJar?tmpPath:classesDirPath
 	Ant.path(id: "gas3.generate.classpath") {
         path(location: genClassPath)
 	}
 	
-    initGrailsApp()
+    def grailsApp = initGrailsApp()
 	def domainClasses = grailsApp.getArtefacts('Domain')
 	if (domainClasses.size()>0) {
         if(domainJar)  {
@@ -84,11 +84,12 @@ def initGrailsApp() {
         }
     }
 	def appCtx =  beanDefinitions.createApplicationContext()
-    grailsApp = appCtx.grailsApplication
+    def grailsApp = appCtx.grailsApplication
     PluginManagerHolder.pluginManager = null
     loadPlugins()
     pluginManager = PluginManagerHolder.pluginManager
     pluginManager.application = grailsApp
     pluginManager.doArtefactConfiguration()
     grailsApp.initialise()
+    return grailsApp
 }
