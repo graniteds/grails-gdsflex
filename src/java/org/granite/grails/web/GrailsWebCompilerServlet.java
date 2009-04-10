@@ -20,14 +20,12 @@
 
 package org.granite.grails.web;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -40,9 +38,6 @@ import org.codehaus.groovy.grails.commons.GrailsResourceUtils;
 import org.codehaus.groovy.grails.web.pages.GroovyPageResourceLoader;
 import org.codehaus.groovy.grails.web.servlet.DefaultGrailsApplicationAttributes;
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes;
-import org.granite.webcompiler.WebCompiler;
-import org.granite.webcompiler.WebCompilerException;
-import org.granite.webcompiler.WebCompilerType;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -61,8 +56,6 @@ public class GrailsWebCompilerServlet extends HttpServlet {
     private ResourceLoader resourceLoader = null;
     private ResourceLoader servletContextLoader = null;
     
-    private WebCompiler webCompiler;
-
     private GrailsApplicationAttributes grailsAttributes;
     
     
@@ -74,16 +67,6 @@ public class GrailsWebCompilerServlet extends HttpServlet {
 		if (springContext.containsBean(GroovyPageResourceLoader.BEAN_ID))
 			this.resourceLoader = (ResourceLoader)springContext.getBean(GroovyPageResourceLoader.BEAN_ID);
 		
-        webCompiler = WebCompiler.getInstance();
-        webCompiler.setTargetPlayer("9.0.28");
-        
-        try {
-            webCompiler.init(servletConfig.getServletContext().getRealPath("/WEB-INF"));
-        } 
-        catch (Exception e) {
-            log.error(e);
-        }
-
         this.grailsAttributes = new DefaultGrailsApplicationAttributes(servletConfig.getServletContext());
     }
 
@@ -94,78 +77,40 @@ public class GrailsWebCompilerServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {        
-        WebCompilerType type = WebCompilerType.application;
-        
+
         request.setAttribute(GrailsApplicationAttributes.REQUEST_SCOPE_ID, grailsAttributes);
 
         // Get the name of the Groovy script (intern the name so that we can
         // lock on it)
-        String pageName = request.getServletPath();        
-        pageName = pageName.replaceAll("\\.swf$", ".mxml").intern();
-
+        String pageName = "/swf"+request.getServletPath();        
         Resource requestedFile = getResourceForUri(pageName);
         if (requestedFile == null) {
-            // log("\"" + pageName + "\" not found");
             response.sendError(404, "\"" + pageName + "\" not found.");
             return;
         }
-        
-        String requestedPath = requestedFile.getFile().getAbsolutePath();
-        File mxmlFile = requestedFile.getFile();
-        
-        String swfPath = requestedPath.substring(0, (requestedPath.length() - 5));
-        File swfFolder = new File(swfPath.substring(0, swfPath.lastIndexOf(File.separator)) + File.separator + "swf");
-        if (!swfFolder.exists())
-        	swfFolder.mkdir();
-        File swfFile = new File(swfFolder, swfPath.substring(swfPath.lastIndexOf(File.separator)+1) + ".swf");
-        long lastModified = swfFile != null && swfFile.exists() ? swfFile.lastModified() : 0L;
-        
-        try {
-            if (mxmlFile != null && swfFile != null) {
-				// log("Compiling mxml file: " + mxmlFile.getAbsolutePath() + " to " + swfFile.getAbsolutePath());
-                swfFile = webCompiler.compileMxmlFile(mxmlFile, swfFile, false, type, servletConfig.getServletContext().getContextPath());
-			}
-        }
-        catch (WebCompilerException e) {
-			if (swfFile == null || !swfFile.exists() || swfFile.lastModified() <= lastModified) {
-				PrintWriter writer = response.getWriter();
-				response.setContentType("text/html");
-				writer.println("<html><body>");
-				writer.println("<h1>Flex compilation error</h1>");
-				writer.println("<pre>");
-				writer.println(e.getMessage());
-				writer.println("</pre>");
-				writer.println("<p>Check server logs for more details</p>");
-				writer.println("</body></html>");
-				return;
-			}
-        }
-		
-		File gspFile = new File(requestedPath.substring(0, (requestedPath.length() - 5)) + ".gsp");
-		if (!gspFile.exists()) {
-			File htmlFile = new File(swfFolder, swfPath.substring(swfPath.lastIndexOf(File.separator)+1) + ".html");
-			if (htmlFile.exists())
-				htmlFile.renameTo(gspFile);
-		}
-        
+        File swfFile = requestedFile.getFile();
         response.setContentType("application/x-shockwave-flash");
         response.setContentLength((int)swfFile.length());
         response.setBufferSize((int)swfFile.length());
         response.setDateHeader("Expires", 0);
         
-        OutputStream os = null;
-        InputStream is = null;
+        FileInputStream is = null;
+        FileChannel inChan = null;
         try {
-            is = new BufferedInputStream(new FileInputStream(swfFile));
-            os = response.getOutputStream();
-            for (int b = is.read(); b != -1; b = is.read())
-                os.write(b);
+            is = new FileInputStream(swfFile);
+            OutputStream os = response.getOutputStream();
+            inChan = is.getChannel();
+            long fSize =  inChan.size();
+            MappedByteBuffer mBuf = inChan.map(FileChannel.MapMode.READ_ONLY, 0,fSize);
+            byte[] buf = new byte[(int)fSize];
+            mBuf.get(buf);
+            os.write(buf);
         } finally {
-            if (is != null) try {
+            if (is != null)  {
                 is.close();
-            } finally {
-                if (os != null)
-                    os.close();
+            } 
+            if (inChan != null) {
+                inChan.close();
             }
         }
     }
