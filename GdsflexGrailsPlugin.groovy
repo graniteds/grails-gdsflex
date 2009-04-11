@@ -165,7 +165,6 @@ class GdsflexGrailsPlugin {
     }
 
     def onChange = { event ->
-        println event
         if(event.source) {
             WebCompile.compile("grails-app/views/mxml",event.application.metadata['app.name'])
         }

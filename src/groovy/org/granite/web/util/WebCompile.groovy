@@ -21,8 +21,6 @@ public class WebCompile {
             }
         }
         appXmlList.each { file->
-            println file
-            println file.path.replaceAll("/mxml/","/swf/").replaceAll("mxml\$","swf")
             try {
                 webCompiler.compileMxmlFile(file, new File(file.path.replaceAll("/mxml/","/swf/").replaceAll("mxml\$","swf")),
                                             false,WebCompilerType.application,"/${appName}")
