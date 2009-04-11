@@ -14,10 +14,12 @@
 <flex-config>
    
    <compiler>
-
+     
       <!-- Turn on generation of accessible SWFs. -->
       <accessible>false</accessible>
-
+      
+      <incremental>true</incremental>
+      
       <!-- Specifies the locales for internationalization. -->
       <locale>
           <locale-element>en_US</locale-element>
