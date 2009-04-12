@@ -28,7 +28,7 @@ import org.granite.web.util.WebCompile
 
 
 class GdsflexGrailsPlugin {
-    def version = 0.3
+    def version = "0.3.1"
     def author = "William Drai"
     def authorEmail = "william.drai@graniteds.org"
     def title = "Integration between Grails and GraniteDS/Flex"

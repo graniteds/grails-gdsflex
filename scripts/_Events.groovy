@@ -32,10 +32,11 @@ eventCompileEnd = { kind ->
 eventPackagingEnd = {
 	if (checkDir()) {
         includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
+        println "Starting compile mxml files"
 		flexCompile()
 	}
 }
 
 def checkDir() {
-    return gdsflexPluginDir != basedir
+    return gdsflexPluginDir.path != basedir
 }

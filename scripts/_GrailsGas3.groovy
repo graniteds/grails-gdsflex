@@ -28,10 +28,12 @@ grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 includeTargets << grailsScript("_GrailsCompile")
 
 tmpPath = System.properties."java.io.tmpdir"+File.separator+"gdsflex-tmp"
-as3Config = new ConfigSlurper().parse(
-               new File("${basedir}/grails-app/conf/GraniteDSConfig.groovy").toURI().toURL()
-            ).as3Config
-
+as3Config = [:]
+if(new File("${basedir}/grails-app/conf/GraniteDSConfig.groovy").exists()) {
+    as3Config = new ConfigSlurper().parse(
+                                          new File("${basedir}/grails-app/conf/GraniteDSConfig.groovy").toURI().toURL()
+                                          ).as3Config
+}
 target(gas3: "Gas3") {
 	rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator.jar").toURI().toURL())
 	rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator-share.jar").toURI().toURL())
