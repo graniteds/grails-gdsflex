@@ -22,11 +22,11 @@ public class WebCompile {
         }
         appXmlList.each { file->
             try {
-                File swfDir = new File(file.parent.replaceAll("views${File.separator}mxml","views${File.separator}swf"))
+                String sep = File.separator=="\\"?"\\\\":File.separator
+                File swfDir = new File(file.parent.replaceAll("views${sep}mxml","views${sep}swf"))
                 if(!swfDir.exists()) {
                     swfDir.mkdirs()
                 }
-                println new File(swfDir,file.name.replaceAll("mxml\$","swf"))
                 webCompiler.compileMxmlFile(file, 
                                             new File(swfDir,file.name.replaceAll("mxml\$","swf")),
                                             false,WebCompilerType.application,"/${appName}")
