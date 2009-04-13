@@ -1,40 +1,33 @@
 /*
-  GRANITE DATA SERVICES
-  Copyright (C) 2009 ADEQUATE SYSTEMS SARL
-
-  This file is part of Granite Data Services.
-
-  Granite Data Services is free software; you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as published by
-  the Free Software Foundation; either version 3 of the License, or (at your
-  option) any later version.
- 
-  Granite Data Services is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
-  for more details.
- 
-  You should have received a copy of the GNU Lesser General Public License
-  along with this library; if not, see <http://www.gnu.org/licenses/>.
-*/
+ GRANITE DATA SERVICES
+ Copyright (C) 2009 ADEQUATE SYSTEMS SARL
+ This file is part of Granite Data Services.
+ Granite Data Services is free software; you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published by
+ the Free Software Foundation; either version 3 of the License, or (at your
+ option) any later version.
+ Granite Data Services is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
+ for more details.
+ You should have received a copy of the GNU Lesser General Public License
+ along with this library; if not, see <http://www.gnu.org/licenses/>.
+ */
 
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
-
-eventCompileEnd = { kind ->
-	if (checkDir()) {
-        includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
-		println "Starting gas3 for " + kind
-		gas3()
-	}
-}
 eventPackagingEnd = {
-	if (checkDir()) {
-        includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
-        println "Starting compile mxml files"
-		flexCompile()
-	}
+    if (checkDir()) {
+        if (checkDir()) {
+            includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
+            println "Starting gas3  " 
+            gas3()
+            includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
+            println "Starting compile mxml files"
+            flexCompile()
+        }
+    }
 }
 
 def checkDir() {
