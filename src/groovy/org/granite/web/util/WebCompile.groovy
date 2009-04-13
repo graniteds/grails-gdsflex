@@ -22,7 +22,13 @@ public class WebCompile {
         }
         appXmlList.each { file->
             try {
-                webCompiler.compileMxmlFile(file, new File(file.path.replaceAll("/mxml/","/swf/").replaceAll("mxml\$","swf")),
+                File swfDir = new File(file.parent.replaceAll("views${File.separator}mxml","views${File.separator}swf"))
+                if(!swfDir.exists()) {
+                    swfDir.mkdirs()
+                }
+                println new File(swfDir,file.name.replaceAll("mxml\$","swf"))
+                webCompiler.compileMxmlFile(file, 
+                                            new File(swfDir,file.name.replaceAll("mxml\$","swf")),
                                             false,WebCompilerType.application,"/${appName}")
             }catch(WebCompilerException ex) {
             }
