@@ -19,6 +19,7 @@ import org.codehaus.groovy.grails.plugins.DefaultPluginMetaManager
 import org.codehaus.groovy.grails.plugins.PluginManagerHolder
 import org.springframework.core.io.FileSystemResourceLoader
 import org.springframework.mock.web.MockServletContext
+import org.springframework.util.ClassUtils
 
 
 Ant.property(environment:"env")
@@ -46,14 +47,15 @@ target(gas3: "Gas3") {
     Ant.path(id: "gas3.generate.classpath") { path(location: genClassPath) }
     
     def grailsApp = initGrailsApp()
-    def domainClasses = grailsApp.getArtefacts('Domain')
+    def domainClasses = grailsApp.getArtefacts('Domain') as List
     if (domainClasses.size()>0) {
+        domainClasses = mergeClasses(domainClasses)
         if(domainJar)  {
             Ant.mkdir(dir:tmpPath)
             Ant.unzip(dest:tmpPath,src:domainJar) {
                 patternset() {
                     domainClasses.each{grailsClass->
-                        include(name: grailsClass.fullName.replaceAll("\\.","/")+"*")
+                        include(name: grailsClass.name.replaceAll("\\.","/")+"*")
                     }                
                 }
             }
@@ -65,13 +67,40 @@ target(gas3: "Gas3") {
         Ant.gas3(outputdir: outDir, tide: "true", classpathref: "gas3.generate.classpath") {
             fileset(dir: genClassPath) {
                 domainClasses.each{grailsClass->
-                    include(name: grailsClass.fullName.replaceAll("\\.","/")+".class")
+                    include(name: grailsClass.name.replaceAll("\\.","/")+".class")
                 }
             }
         }
     }
 }
 
+def mergeClasses(domainClasses) {
+    def otherClassesMap = [:]
+    domainClasses.each{grailsClass->
+        Class idClazz = grailsClass.identifier.type
+        if(!ClassUtils.isPrimitiveOrWrapper(idClazz)) {
+            checkMap(otherClassesMap,idClazz)
+        }
+        grailsClass.persistentProperties.each{
+            if(it.type&& !ClassUtils.isPrimitiveOrWrapper(it.type) &&
+            it.type.isAnnotationPresent(javax.persistence.Embeddable.class) ) {
+                checkMap(otherClassesMap,it.type)
+            }
+        }
+        Class clazz = grailsClass.clazz
+        while(clazz && clazz != Object.class) {
+            checkMap(otherClassesMap,clazz)
+            clazz = clazz.superclass
+        }
+    }
+    return otherClassesMap.values() as List
+}
+
+private def checkMap(otherClassesMap,clazz) {
+    if(!otherClassesMap.containsKey(clazz.name)) {
+        otherClassesMap.put(clazz.name,clazz)
+    }
+}
 def initGrailsApp() {
     def builder =  new WebBeanBuilder()
     beanDefinitions = builder.beans {
@@ -85,7 +114,7 @@ def initGrailsApp() {
     def appCtx =  beanDefinitions.createApplicationContext()
     def servletContext = new MockServletContext('web-app', new FileSystemResourceLoader())
     appCtx.servletContext = servletContext
-
+    
     def grailsApp = appCtx.grailsApplication
     
     PluginManagerHolder.pluginManager = null
