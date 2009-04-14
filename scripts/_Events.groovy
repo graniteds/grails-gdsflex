@@ -17,16 +17,23 @@
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
+includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
+includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
+
+packageCompileFlag = false
+eventCompileEnd = {
+    if (checkDir() && packageCompileFlag) {
+        gas3()
+    }
+}
 eventPackagingEnd = {
     if (checkDir()) {
-        if (checkDir()) {
-            includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
-            println "Starting gas3  " 
+        if(!packageCompileFlag) {
             gas3()
-            includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
-            println "Starting compile mxml files"
-            flexCompile()
+            packageCompileFlag = true
         }
+        println "Starting compile mxml files"
+        flexCompile()
     }
 }
 

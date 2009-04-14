@@ -25,8 +25,6 @@ import org.springframework.util.ClassUtils
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
-includeTargets << grailsScript("_GrailsCompile")
-
 tmpPath = System.properties."java.io.tmpdir"+File.separator+"gdsflex-tmp"
 as3Config = [:]
 if(new File("${basedir}/grails-app/conf/GraniteDSConfig.groovy").exists()) {
@@ -34,14 +32,14 @@ if(new File("${basedir}/grails-app/conf/GraniteDSConfig.groovy").exists()) {
             new File("${basedir}/grails-app/conf/GraniteDSConfig.groovy").toURI().toURL()
             ).as3Config
 }
+rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator.jar").toURI().toURL())
+rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator-share.jar").toURI().toURL())
+
+Ant.taskdef(name: "gas3", classname: "org.granite.generator.ant.AntJavaAs3Task")
+
+Ant.path(id: "gas3.compile.classpath", compileClasspath)
+
 target(gas3: "Gas3") {
-    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator.jar").toURI().toURL())
-    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator-share.jar").toURI().toURL())
-    
-    Ant.taskdef(name: "gas3", classname: "org.granite.generator.ant.AntJavaAs3Task")
-    
-    Ant.path(id: "gas3.compile.classpath", compileClasspath)
-    
     def domainJar = as3Config.domainJar
     def genClassPath =  domainJar?tmpPath:classesDirPath
     Ant.path(id: "gas3.generate.classpath") { path(location: genClassPath) }

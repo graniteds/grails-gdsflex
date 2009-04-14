@@ -12,8 +12,7 @@ groovyObject.init("${basedir}/web-app/WEB-INF")
 target(flexCompile: "Compile the mxml to swf file") {
     if(Environment.current==Environment.DEVELOPMENT) {
         Ant.copy(tofile: "${basedir}/web-app/WEB-INF/flex/flex-config.xml",
-                 file:"${gdsflexPluginDir}/src/flex/flex-config-debug.xml",
-                 overwrite: true)
+                 file:"${gdsflexPluginDir}/src/flex/flex-config-debug.xml")
     }else {
         Ant.copy(tofile: "${basedir}/web-app/WEB-INF/flex/flex-config.xml",
                  file:"${pluginBasedir}/src/flex/flex-config-release.xml",
