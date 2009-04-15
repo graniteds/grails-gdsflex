@@ -16,7 +16,7 @@ public class WebCompile {
         def appXmlList = []
         root.eachFileRecurse{ file->
             if(file.name.endsWith(".mxml") && 
-                   file.text.indexOf("mx:Application") != -1 ) {
+                   file.text.indexOf("<mx:Application ") != -1 ) {
                 appXmlList.add(file)
             }
         }
