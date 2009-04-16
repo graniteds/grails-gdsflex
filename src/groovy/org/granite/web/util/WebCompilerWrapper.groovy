@@ -34,5 +34,6 @@ public class WebCompilerWrapper {
             }catch(WebCompilerException ex) {
             }
         }
+        println "compiling files end at:"+new Date()
     }
 }
