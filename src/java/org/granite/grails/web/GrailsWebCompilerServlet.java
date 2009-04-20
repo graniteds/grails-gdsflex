@@ -52,7 +52,6 @@ public class GrailsWebCompilerServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
 
-    private ServletConfig servletConfig = null;
     private ResourceLoader resourceLoader = null;
     private ResourceLoader servletContextLoader = null;
     
@@ -61,7 +60,6 @@ public class GrailsWebCompilerServlet extends HttpServlet {
     
     @Override
     public void init(ServletConfig servletConfig) throws ServletException {
-        this.servletConfig = servletConfig;
         this.servletContextLoader = new ServletContextResourceLoader(servletConfig.getServletContext());
         ApplicationContext springContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletConfig.getServletContext());
 		if (springContext.containsBean(GroovyPageResourceLoader.BEAN_ID))
@@ -84,11 +82,11 @@ public class GrailsWebCompilerServlet extends HttpServlet {
         // lock on it)
         String pageName = "/swf"+request.getServletPath();        
         Resource requestedFile = getResourceForUri(pageName);
-        if (requestedFile == null) {
+        File swfFile = requestedFile.getFile();
+        if (requestedFile == null || swfFile==null || !swfFile.exists()) {
             response.sendError(404, "\"" + pageName + "\" not found.");
             return;
         }
-        File swfFile = requestedFile.getFile();
         response.setContentType("application/x-shockwave-flash");
         response.setContentLength((int)swfFile.length());
         response.setBufferSize((int)swfFile.length());
@@ -172,6 +170,5 @@ public class GrailsWebCompilerServlet extends HttpServlet {
 
    @Override
     public void destroy() {
-       servletConfig = null;
     }
 }

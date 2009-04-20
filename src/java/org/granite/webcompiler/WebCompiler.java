@@ -354,7 +354,7 @@ public class WebCompiler {
     		if (f.isDirectory()) {
     			long lm = lastModified(f, extensions);
     			if (lm > lastModified)
-    				lm = lastModified;
+    				lastModified = lm;
     		}
     		else if (f.lastModified() > lastModified)
     			lastModified = f.lastModified();
