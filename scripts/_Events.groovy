@@ -18,7 +18,6 @@ Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
 includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
-includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
 
 packageCompileFlag = false
 eventCompileEnd = {
@@ -32,6 +31,7 @@ eventPackagingEnd = {
             gas3()
             packageCompileFlag = true
         }
+        includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
         println "Starting compile mxml files"
         flexCompile()
     }

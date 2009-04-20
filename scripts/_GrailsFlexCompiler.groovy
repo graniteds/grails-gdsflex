@@ -4,6 +4,7 @@ Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
 GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
+loader.addURL(new File(classesDirPath).toURI().toURL())
 Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/web/util/WebCompilerWrapper.groovy"))
 GroovyObject groovyObject = (GroovyObject) groovyClass.newInstance()
 
