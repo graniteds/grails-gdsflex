@@ -15,9 +15,11 @@ public class WebCompilerWrapper {
         if(appXmlList.size()==0) {
             File root = new File(sourceDir)
             root.eachFileRecurse{ file->
-                if(file.name.endsWith(".mxml") && 
-                file.text.indexOf("<mx:Application ") != -1 ) {
-                    appXmlList.add(file)
+                if(file.name.endsWith(".mxml")) {
+                    String content = file.text
+                    if(content.indexOf("<mx:Application ") != -1 ||content.indexOf("<mx:Module ")!=-1) {
+                        appXmlList.add(file)
+                    }
                 }
             }
         }

@@ -196,8 +196,11 @@ public class WebCompiler {
             throw new IOException("Invalid MXML file: " + mxmlFile.getCanonicalPath());
         
         File sourcePath = mxmlFile.getParentFile();
-        long sourcesLastModified = lastModified(sourcePath,[ ".mxml", ".as" ]);
-        long lastModified = outputFile.exists() ? outputFile.lastModified() : 0;
+        long sourcesLastModified = 0L
+        if(!force) {
+            sourcesLastModified = lastModified(sourcePath,[ ".mxml", ".as" ])
+        }
+        long lastModified = outputFile.exists() ? outputFile.lastModified() : 0
         
         boolean changed = (!outputFile.exists() || lastModified < sourcesLastModified);
         
