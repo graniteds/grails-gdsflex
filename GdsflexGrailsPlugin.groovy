@@ -25,7 +25,7 @@ import org.granite.tide.hibernate.HibernateSessionManager
 import org.springframework.transaction.interceptor.TransactionProxyFactoryBean
 import org.granite.tide.spring.security.Identity
 import org.granite.web.util.WebCompilerWrapper
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 
@@ -40,8 +40,8 @@ class GdsflexGrailsPlugin {
 	def watchedResources = ["file:./grails-app/views/mxml/**/*.mxml",
 	                        "file:./grails-app/views/mxml/**/*.css",
 	                        "file:./grails-app/views/mxml/**/*.as"]
-    private static ConcurrentLinkedQueue lastModifiedQueue = new ConcurrentLinkedQueue()
-    private static AtomicBoolean isCompiling = new AtomicBoolean(false)
+    private static LinkedBlockingQueue lastModifiedQueue = new LinkedBlockingQueue()
+    private static ExecutorService executor = Executors.newFixedThreadPool(1) 
     
 	def doWithSpring = {
         
@@ -172,18 +172,18 @@ class GdsflexGrailsPlugin {
 
     def onChange = { event ->
         if(event.source) {
-        		compileMxml(event.source)
+        		compileMxml(event)
         }
     }
     
-    def compileMxml(file) {
-    		lastModifiedQueue.offer(file.lastModified())
-    		if(!isCompiling.get()) {
-    			isCompiling.set(true)
-    			while(lastModifiedQueue.poll()) {}
-    			WebCompilerWrapper.compile("grails-app/views/mxml",event.application.metadata['app.name'])
-    			isCompiling.set(false)
-    	}
+    def compileMxml(event) {
+		lastModifiedQueue.offer(event.source.lastModified())
+		executor.execute({
+    			if(lastModifiedQueue.size()>0) {
+        			lastModifiedQueue.clear()
+        			WebCompilerWrapper.compile("grails-app/views/mxml",event.application.metadata['app.name'])
+    		}
+		} as Runnable)
     }
     
     static ConfigObject getGraniteConfig() {
