@@ -63,18 +63,12 @@ target(gas3: "Gas3") {
         }
         domainClasses.each {domainClass->
             String fullName = domainClass.name.replaceAll("\\.","/")+".class"
-            ClassWriter cw = new ClassWriter(true)
-            ClassReader cr = new ClassReader(new FileInputStream("${classesDirPath}/${fullName}"))
-            EntityAnnotationAdapter cp = new EntityAnnotationAdapter(cw,domainClass);
-            cr.accept(cp,false)
-            int idx = fullName.lastIndexOf("/")
-            if(idx!=-1) {
-                File f = new File(tmpPath+fullName[0..idx])
-                if(!f.exists()) {
-                    f.mkdirs()
-                }
+            checkDir(fullName,tmpPath)
+            File src = new File("${classesDirPath}/${fullName}")
+            File target = new File(tmpPath+fullName)
+            if(!target.exists() || target.lastModified()<src.lastModified()) {
+                genClassWithInject(src,target,domainClass)
             }
-            new File(tmpPath+fullName).withOutputStream{os->os.write(cw.toByteArray())}
         }
         File outDir = new File("${basedir}/grails-app/views/mxml")
         if(!outDir.exists()) {
@@ -90,6 +84,24 @@ target(gas3: "Gas3") {
     }
 }
 
+def genClassWithInject(src,target,domainClass) {
+    ClassWriter cw = new ClassWriter(true)
+    ClassReader cr = new ClassReader(new FileInputStream(src))
+    EntityAnnotationAdapter cp = new EntityAnnotationAdapter(cw,domainClass);
+    cr.accept(cp,false)
+    target.withOutputStream{os->os.write(cw.toByteArray())}
+    
+}
+def checkDir(fullName,tempPath) {
+    int idx = fullName.lastIndexOf("/")
+    if(idx!=-1) {
+        File f = new File(tmpPath+fullName[0..idx])
+        if(!f.exists()) {
+            f.mkdirs()
+        }
+    }
+    
+}
 def mergeClasses(domainClasses) {
     def otherClassesMap = [:]
     domainClasses.each{grailsClass->
@@ -148,6 +160,8 @@ public class EntityAnnotationAdapter extends ClassAdapter {
     private final static String ENTITY =  Type.getDescriptor(Entity.class)
     private final static String ID = Type.getDescriptor(Id.class)
     private final static String VERSION = Type.getDescriptor(Version.class)
+    private final static def ENTITIES = [ENTITY,Type.getDescriptor(Embeddable.class),
+    Type.getDescriptor(MappedSuperclass.class)]
     private boolean isAnnotationPresent = false
     private Class clazz
     public EntityAnnotationAdapter(ClassVisitor cv,Class clazz) {
@@ -161,7 +175,7 @@ public class EntityAnnotationAdapter extends ClassAdapter {
     }
     
     public AnnotationVisitor visitAnnotation(String desc,boolean visible) {
-        if (visible && desc==ENTITY) {
+        if (visible && ENTITIES.contains(desc)) {
             isAnnotationPresent = true
         }
         return cv.visitAnnotation(desc, visible)
