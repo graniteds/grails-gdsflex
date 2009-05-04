@@ -20,12 +20,15 @@ import org.codehaus.groovy.grails.plugins.PluginManagerHolder
 import org.springframework.core.io.FileSystemResourceLoader
 import org.springframework.mock.web.MockServletContext
 import org.springframework.util.ClassUtils
+import groovyjarjarasm.asm.*
+import java.lang.reflect.Method
+import javax.persistence.*
 
 
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
-tmpPath = System.properties."java.io.tmpdir"+File.separator+"gdsflex-tmp"
+tmpPath = System.properties."java.io.tmpdir"+"/gdsflex-tmp/"
 as3Config = [:]
 if(new File("${basedir}/grails-app/conf/GraniteDSConfig.groovy").exists()) {
     as3Config = new ConfigSlurper().parse(
@@ -41,7 +44,7 @@ Ant.path(id: "gas3.compile.classpath", compileClasspath)
 
 target(gas3: "Gas3") {
     def domainJar = as3Config.domainJar
-    def genClassPath =  domainJar?tmpPath:classesDirPath
+    def genClassPath =  tmpPath
     Ant.path(id: "gas3.generate.classpath") { path(location: genClassPath) }
     
     def grailsApp = initGrailsApp()
@@ -52,11 +55,26 @@ target(gas3: "Gas3") {
             Ant.mkdir(dir:tmpPath)
             Ant.unzip(dest:tmpPath,src:domainJar) {
                 patternset() {
-                    domainClasses.each{grailsClass->
-                        include(name: grailsClass.name.replaceAll("\\.","/")+"*")
+                    domainClasses.each{domainClass->
+                        include(name: domainClass.name.replaceAll("\\.","/")+"*")
                     }                
                 }
             }
+        }
+        domainClasses.each {domainClass->
+            String fullName = domainClass.name.replaceAll("\\.","/")+".class"
+            ClassWriter cw = new ClassWriter(true)
+            ClassReader cr = new ClassReader(new FileInputStream("${classesDirPath}/${fullName}"))
+            EntityAnnotationAdapter cp = new EntityAnnotationAdapter(cw,domainClass);
+            cr.accept(cp,false)
+            int idx = fullName.lastIndexOf("/")
+            if(idx!=-1) {
+                File f = new File(tmpPath+fullName[0..idx])
+                if(!f.exists()) {
+                    f.mkdirs()
+                }
+            }
+            new File(tmpPath+fullName).withOutputStream{os->os.write(cw.toByteArray())}
         }
         File outDir = new File("${basedir}/grails-app/views/mxml")
         if(!outDir.exists()) {
@@ -64,8 +82,8 @@ target(gas3: "Gas3") {
         }
         Ant.gas3(outputdir: outDir, tide: "true", classpathref: "gas3.generate.classpath") {
             fileset(dir: genClassPath) {
-                domainClasses.each{grailsClass->
-                    include(name: grailsClass.name.replaceAll("\\.","/")+".class")
+                domainClasses.each{domainClass->
+                    include(name: domainClass.name.replaceAll("\\.","/")+".class")
                 }
             }
         }
@@ -81,7 +99,7 @@ def mergeClasses(domainClasses) {
         }
         grailsClass.persistentProperties.each{
             if(it.type&& !ClassUtils.isPrimitiveOrWrapper(it.type) &&
-            it.type.isAnnotationPresent(javax.persistence.Embeddable.class) ) {
+            it.type.isAnnotationPresent(Embeddable.class) ) {
                 checkMap(otherClassesMap,it.type)
             }
         }
@@ -124,4 +142,53 @@ def initGrailsApp() {
     def config = new org.codehaus.groovy.grails.commons.spring.GrailsRuntimeConfigurator(grailsApp,appCtx)
     appCtx = config.configure(servletContext)
     return grailsApp
+}
+
+public class EntityAnnotationAdapter extends ClassAdapter {
+    private final static String ENTITY =  Type.getDescriptor(Entity.class)
+    private final static String ID = Type.getDescriptor(Id.class)
+    private final static String VERSION = Type.getDescriptor(Version.class)
+    private boolean isAnnotationPresent = false
+    private Class clazz
+    public EntityAnnotationAdapter(ClassVisitor cv,Class clazz) {
+        super(cv)
+        this.clazz= clazz
+    }
+    public void visit(int version, int access, String name,
+    String signature, String superName, String[] interfaces) {
+        int v = (version & 0xFF) < Opcodes.V1_5 ? Opcodes.V1_5 : version;
+        cv.visit(v, access, name, signature, superName, interfaces);
+    }
+    
+    public AnnotationVisitor visitAnnotation(String desc,boolean visible) {
+        if (visible && desc==ENTITY) {
+            isAnnotationPresent = true
+        }
+        return cv.visitAnnotation(desc, visible)
+    }
+    public void visitEnd() {
+        if(!isAnnotationPresent) {
+            createAnnotation(cv.visitAnnotation(ENTITY, true))
+            isAnnotationPresent = true
+        }
+        cv.visitEnd()
+    }
+    public MethodVisitor visitMethod(int access, String name,String desc, String signature,String[] exceptions) {
+        MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions)
+        if("getId"==name) {
+            Method m = clazz.getMethod(name)
+            if(m.getAnnotation(Id.class)==null)
+                createAnnotation(mv.visitAnnotation(ID, true))
+        }else if("getVersion"==name) {
+            Method m = clazz.getMethod(name)
+            if(m.getAnnotation(Version.class)==null)
+                createAnnotation(mv.visitAnnotation(VERSION, true))
+        }
+        return mv
+    }
+    private def createAnnotation(AnnotationVisitor av) {
+        if (av != null) {
+            av.visitEnd();
+        }
+    }
 }
