@@ -49,10 +49,10 @@ target(gas3: "Gas3") {
     
     def grailsApp = initGrailsApp()
     def domainClasses = grailsApp.getArtefacts('Domain') as List
+    Ant.mkdir(dir:tmpPath)
     if (domainClasses.size()>0) {
         domainClasses = mergeClasses(domainClasses)
         if(domainJar)  {
-            Ant.mkdir(dir:tmpPath)
             Ant.unzip(dest:tmpPath,src:domainJar) {
                 patternset() {
                     domainClasses.each{domainClass->
