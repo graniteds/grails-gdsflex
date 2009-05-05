@@ -44,6 +44,7 @@ Ant.path(id: "gas3.compile.classpath", compileClasspath)
 
 target(gas3: "Gas3") {
     def domainJar = as3Config.domainJar
+    def extraClasses = as3Config.extraClasses
     def genClassPath =  tmpPath
     Ant.path(id: "gas3.generate.classpath") { path(location: genClassPath) }
     
@@ -51,7 +52,7 @@ target(gas3: "Gas3") {
     def domainClasses = grailsApp.getArtefacts('Domain') as List
     Ant.mkdir(dir:tmpPath)
     if (domainClasses.size()>0) {
-        domainClasses = mergeClasses(domainClasses)
+        domainClasses = mergeClasses(domainClasses,extraClasses)
         if(domainJar)  {
             Ant.unzip(dest:tmpPath,src:domainJar) {
                 patternset() {
@@ -102,7 +103,7 @@ def checkDir(fullName,tempPath) {
     }
     
 }
-def mergeClasses(domainClasses) {
+def mergeClasses(domainClasses,extraClasses) {
     def otherClassesMap = [:]
     domainClasses.each{grailsClass->
         Class idClazz = grailsClass.identifier.type
@@ -120,6 +121,9 @@ def mergeClasses(domainClasses) {
             checkMap(otherClassesMap,clazz)
             clazz = clazz.superclass
         }
+    }
+    extraClasses?.each{className->
+        checkMap(otherClassesMap,ClassUtils.forName(className))
     }
     return otherClassesMap.values() as List
 }
