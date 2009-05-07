@@ -43,7 +43,6 @@ Ant.taskdef(name: "gas3", classname: "org.granite.generator.ant.AntJavaAs3Task")
 Ant.path(id: "gas3.compile.classpath", compileClasspath)
 
 isInjectClass = false
-
 target(gas3: "Gas3") {
     def domainJar = as3Config.domainJar
     def extraClasses = as3Config.extraClasses
@@ -52,9 +51,10 @@ target(gas3: "Gas3") {
     
     def grailsApp = initGrailsApp()
     def domainClasses = grailsApp.getArtefacts('Domain') as List
+    def embedDomainClasses = [:]
     Ant.mkdir(dir:tmpPath)
     if (domainClasses.size()>0) {
-        domainClasses = mergeClasses(domainClasses,extraClasses)
+        domainClasses = mergeClasses(domainClasses,extraClasses,embedDomainClasses)
         if(domainJar)  {
             Ant.unzip(dest:tmpPath,src:domainJar) {
                 patternset() {
@@ -72,7 +72,7 @@ target(gas3: "Gas3") {
                 File target = new File("${genClassPath}/${fullName}")
                 if(!target.exists()|| !domainClass.isAnnotationPresent(Entity.class) ||
                 target.lastModified()<src.lastModified()) {
-                    genClassWithInject(src,target,cl.loadClass(domainClass.name))
+                    genClassWithInject(src,target,cl.loadClass(domainClass.name),embedDomainClasses)
                     isInjectClass = true
                 }
             }
@@ -91,10 +91,16 @@ target(gas3: "Gas3") {
     }
 }
 
-def genClassWithInject(src,target,domainClass) {
+def genClassWithInject(src,target,domainClass,embedDomainClasses) {
     ClassWriter cw = new ClassWriter(true)
     ClassReader cr = new ClassReader(new FileInputStream(src))
-    EntityAnnotationAdapter cp = new EntityAnnotationAdapter(cw,domainClass);
+    
+    EntityAnnotationAdapter cp = null
+    if(embedDomainClasses.containsKey(domainClass.name)) {
+        cp = new EntityAnnotationAdapter(cw,domainClass,Embeddable.class);
+    }else {
+        cp = new EntityAnnotationAdapter(cw,domainClass,Entity.class,[getId:Id.class,getVersion:Version.class]);
+    }
     cr.accept(cp,false)
     target.withOutputStream{os->os.write(cw.toByteArray())}
     
@@ -109,7 +115,7 @@ def checkDir(fullName,tempPath) {
     }
     
 }
-def mergeClasses(domainClasses,extraClasses) {
+def mergeClasses(domainClasses,extraClasses,embedDomainClasses) {
     def otherClassesMap = [:]
     domainClasses.each{grailsClass->
         Class idClazz = grailsClass.identifier.type
@@ -120,6 +126,9 @@ def mergeClasses(domainClasses,extraClasses) {
             if(it.type&& !ClassUtils.isPrimitiveOrWrapper(it.type) &&
             it.type.isAnnotationPresent(Embeddable.class) ) {
                 checkMap(otherClassesMap,it.type)
+            }
+            if(it.isEmbedded() && !embedDomainClasses.containsKey(it.type.name)) {
+                embedDomainClasses.put(it.type.name,it.type)
             }
         }
         Class clazz = grailsClass.clazz
@@ -167,16 +176,18 @@ def initGrailsApp() {
 }
 
 public class EntityAnnotationAdapter extends ClassAdapter {
-    private final static String ENTITY =  Type.getDescriptor(Entity.class)
-    private final static String ID = Type.getDescriptor(Id.class)
-    private final static String VERSION = Type.getDescriptor(Version.class)
-    private final static def ENTITIES = [ENTITY,Type.getDescriptor(Embeddable.class),
+    private final static def ENTITIES = [Type.getDescriptor(Entity.class),
+    Type.getDescriptor(Embeddable.class),
     Type.getDescriptor(MappedSuperclass.class)]
     private boolean isAnnotationPresent = false
     private Class clazz
-    public EntityAnnotationAdapter(ClassVisitor cv,Class clazz) {
+    private final String annName
+    private def annMethods = [:]
+    public EntityAnnotationAdapter(ClassVisitor cv,Class clazz,annClass,annMethods=[:]) {
         super(cv)
         this.clazz= clazz
+        this.annName = Type.getDescriptor(annClass)
+        this.annMethods = annMethods
     }
     public void visit(int version, int access, String name,
     String signature, String superName, String[] interfaces) {
@@ -192,21 +203,18 @@ public class EntityAnnotationAdapter extends ClassAdapter {
     }
     public void visitEnd() {
         if(!isAnnotationPresent) {
-            createAnnotation(cv.visitAnnotation(ENTITY, true))
+            createAnnotation(cv.visitAnnotation(annName, true))
             isAnnotationPresent = true
         }
         cv.visitEnd()
     }
     public MethodVisitor visitMethod(int access, String name,String desc, String signature,String[] exceptions) {
         MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions)
-        if("getId"==name) {
+        if(annMethods.containsKey(name)) {
             Method m = clazz.getMethod(name)
-            if(m.getAnnotation(Id.class)==null)
-                createAnnotation(mv.visitAnnotation(ID, true))
-        }else if("getVersion"==name) {
-            Method m = clazz.getMethod(name)
-            if(m.getAnnotation(Version.class)==null)
-                createAnnotation(mv.visitAnnotation(VERSION, true))
+            Class cls = annMethods.get(name)
+            if(m.getAnnotation(cls)==null)
+                createAnnotation(mv.visitAnnotation(Type.getDescriptor(cls), true))
         }
         return mv
     }
