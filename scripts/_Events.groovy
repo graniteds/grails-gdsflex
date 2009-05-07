@@ -13,13 +13,14 @@
  You should have received a copy of the GNU Lesser General Public License
  along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
-
+import grails.util.Environment
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
 includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
 
 packageCompileFlag = false
+touchClassDir = false
 eventCompileEnd = {
     if (checkDir() && packageCompileFlag) {
         gas3()
@@ -31,12 +32,26 @@ eventPackagingEnd = {
             gas3()
             packageCompileFlag = true
         }
-        includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
-        println "Starting compile mxml files"
-        flexCompile()
+        if(Environment.current==Environment.PRODUCTION) {
+            includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
+            println "Starting compile mxml files"
+            flexCompile()
+        }
     }
 }
 
+eventStatusFinal = { message->
+    if(message.startsWith("Server running")) {
+        if(isInjectClass && !touchClassDir) {
+        	new Thread({
+                Thread.sleep(500)
+                classesDir.setLastModified(System.currentTimeMillis())
+                isInjectClass = false
+                touchClassDir = true
+        	} as Runnable).start()
+        }
+    }
+}
 def checkDir() {
     return gdsflexPluginDir.path != basedir
 }
