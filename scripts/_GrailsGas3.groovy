@@ -70,8 +70,7 @@ target(gas3: "Gas3") {
                 checkDir(fullName,genClassPath)
                 File src = new File("${classesDirPath}/${fullName}")
                 File target = new File("${genClassPath}/${fullName}")
-                if(!target.exists()|| !domainClass.isAnnotationPresent(Entity.class) ||
-                target.lastModified()<src.lastModified()) {
+                if(!target.exists()||target.lastModified()<src.lastModified()) {
                     genClassWithInject(src,target,cl.loadClass(domainClass.name),embedDomainClasses)
                     isInjectClass = true
                 }
