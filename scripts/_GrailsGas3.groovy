@@ -70,7 +70,8 @@ target(gas3: "Gas3") {
                 checkDir(fullName,genClassPath)
                 File src = new File("${classesDirPath}/${fullName}")
                 File target = new File("${genClassPath}/${fullName}")
-                if(!target.exists()||target.lastModified()<src.lastModified()) {
+                if(!target.exists() ||!isEntityAnnoation(domainClass)
+                ||target.lastModified()<src.lastModified()) {
                     genClassWithInject(src,target,cl.loadClass(domainClass.name),embedDomainClasses)
                     isInjectClass = true
                 }
@@ -104,15 +105,19 @@ def genClassWithInject(src,target,domainClass,embedDomainClasses) {
     target.withOutputStream{os->os.write(cw.toByteArray())}
     
 }
+def isEntityAnnoation(cls) {
+    return cls.isAnnotationPresent(Embeddable.class) ||
+    cls.isAnnotationPresent(Entity.class) ||
+    cls.isAnnotationPresent(MappedSuperclass.class)
+}
 def checkDir(fullName,tempPath) {
     int idx = fullName.lastIndexOf("/")
     if(idx!=-1) {
-        File f = new File("${tmpPath}/${fullName[0..idx]}")
+        File f = new File("${tempPath}/${fullName[0..idx]}")
         if(!f.exists()) {
             f.mkdirs()
         }
     }
-    
 }
 def mergeClasses(domainClasses,extraClasses,embedDomainClasses) {
     def otherClassesMap = [:]
