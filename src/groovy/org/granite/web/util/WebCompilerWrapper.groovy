@@ -26,7 +26,7 @@ public class WebCompilerWrapper {
         appXmlList.each { file->
             try {
                 String sep = File.separator=="\\"?"\\\\":File.separator
-                File swfDir = new File(file.parent.replaceAll("views${sep}mxml","views${sep}swf"))
+                File swfDir = new File(file.parent.replaceAll("views${sep}flex","views${sep}swf"))
                 if(!swfDir.exists()) {
                     swfDir.mkdirs()
                 }

@@ -10,7 +10,7 @@ GroovyObject groovyObject = (GroovyObject) groovyClass.newInstance()
 
 groovyObject.init("${basedir}/web-app/WEB-INF")
 
-target(flexCompile: "Compile the mxml to swf file") {
+target(flexCompile: "Compile the flex file to swf file") {
     if(Environment.current==Environment.DEVELOPMENT) {
         Ant.copy(tofile: "${basedir}/web-app/WEB-INF/flex/flex-config.xml",
                  file:"${gdsflexPluginDir}/src/flex/flex-config-debug.xml")
@@ -19,5 +19,5 @@ target(flexCompile: "Compile the mxml to swf file") {
                  file:"${pluginBasedir}/src/flex/flex-config-release.xml",
                  overwrite: true)
     }
-    groovyObject.compile("${basedir}/grails-app/views/mxml",grailsAppName)
+    groovyObject.compile("${basedir}/grails-app/views/flex",grailsAppName)
 }

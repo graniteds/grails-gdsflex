@@ -77,7 +77,7 @@ target(gas3: "Gas3") {
                 }
             }
         }
-        File outDir = new File("${basedir}/grails-app/views/mxml")
+        File outDir = new File("${basedir}/grails-app/views/flex")
         if(!outDir.exists()) {
             outDir.mkdirs()
         }

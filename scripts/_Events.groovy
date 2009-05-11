@@ -34,7 +34,7 @@ eventPackagingEnd = {
         }
         if(Environment.current==Environment.PRODUCTION) {
             includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
-            println "Starting compile mxml files"
+            println "Starting compile flex files"
             flexCompile()
         }
     }
