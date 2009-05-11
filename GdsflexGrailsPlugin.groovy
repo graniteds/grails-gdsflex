@@ -37,9 +37,9 @@ class GdsflexGrailsPlugin {
     def description = ""
     def documentation = "http://www.graniteds.org/"
 	
-	def watchedResources = ["file:./grails-app/views/mxml/**/*.mxml",
-	                        "file:./grails-app/views/mxml/**/*.css",
-	                        "file:./grails-app/views/mxml/**/*.as"]
+	def watchedResources = ["file:./grails-app/views/flex/**/*.mxml",
+	                        "file:./grails-app/views/flex/**/*.css",
+	                        "file:./grails-app/views/flex/**/*.as"]
     private static LinkedBlockingQueue lastModifiedQueue = new LinkedBlockingQueue()
     private static ExecutorService executor = Executors.newFixedThreadPool(1) 
     
@@ -181,7 +181,7 @@ class GdsflexGrailsPlugin {
 		executor.execute({
     			if(lastModifiedQueue.size()>0) {
         			lastModifiedQueue.clear()
-        			WebCompilerWrapper.compile("grails-app/views/mxml",event.application.metadata['app.name'])
+        			WebCompilerWrapper.compile("grails-app/views/flex",event.application.metadata['app.name'])
     		}
 		} as Runnable)
     }
