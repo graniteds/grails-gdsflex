@@ -29,7 +29,7 @@
     
     <externalizers>
     	<configuration>
-    		<!-- dynamicclass>true</dynamicclass-->
+    		<dynamic-class>true</dynamic-class>
     	</configuration>
         <externalizer type="org.granite.hibernate.HibernateExternalizer">
             <include annotated-with="javax.persistence.Entity"/>

@@ -33,7 +33,7 @@
                 </channels>
                 <properties>
                     <factory>tideSpringFactory</factory>
-                    <persistenceManagerBeanName>tidePersistenceManager</persistenceManagerBeanName>
+                    <persistence-manager-bean-name>tidePersistenceManager</persistence-manager-bean-name>
                 </properties>
             </destination>
         </service>
