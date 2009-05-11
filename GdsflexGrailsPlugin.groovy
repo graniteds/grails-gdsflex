@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 
 class GdsflexGrailsPlugin {
-    def version = "0.3.2"
+    def version = "0.4"
     def author = "William Drai"
     def authorEmail = "william.drai@graniteds.org"
     def title = "Integration between Grails and GraniteDS/Flex"
