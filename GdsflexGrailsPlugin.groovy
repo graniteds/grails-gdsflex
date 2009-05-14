@@ -177,13 +177,15 @@ class GdsflexGrailsPlugin {
     }
     
     def compileMxml(event) {
-		lastModifiedQueue.offer(event.source.lastModified())
-		executor.execute({
+    	if(!lastModifiedQueue.contains(event.source.lastModified())) {
+    		lastModifiedQueue.offer(event.source.lastModified())
+    		executor.execute({
     			if(lastModifiedQueue.size()>0) {
         			lastModifiedQueue.clear()
         			WebCompilerWrapper.compile("grails-app/views/flex",event.application.metadata['app.name'])
-    		}
-		} as Runnable)
+    			}
+    		} as Runnable)
+    	}
     }
     
     static ConfigObject getGraniteConfig() {
