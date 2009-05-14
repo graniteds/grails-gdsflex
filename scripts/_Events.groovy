@@ -20,7 +20,6 @@ grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
 
 packageCompileFlag = false
-touchClassDir = false
 eventCompileEnd = {
     if (checkDir() && packageCompileFlag) {
         gas3()
@@ -42,12 +41,11 @@ eventPackagingEnd = {
 
 eventStatusFinal = { message->
     if(message.startsWith("Server running")) {
-        if(isInjectClass && !touchClassDir) {
+        if(isInjectClass) {
         	new Thread({
-                Thread.sleep(500)
+                Thread.sleep(100)
                 classesDir.setLastModified(System.currentTimeMillis())
                 isInjectClass = false
-                touchClassDir = true
         	} as Runnable).start()
         }
     }
