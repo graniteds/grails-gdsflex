@@ -34,11 +34,12 @@ public class WebCompilerWrapper {
                 webCompiler.compileMxmlFile(file, 
                         new File(swfDir,file.name.replaceAll("mxml\$","swf")),
                         true,WebCompilerType.application,"/${appName}")
-            }catch(WebCompilerException ex) {
+            }
+            catch(WebCompilerException ex) {
               println "error during compilation " + ex.getMessage()
               println ex.toString()
             }
+	        println file.name + " compilation ended at: " + new Date()
         }
-        println "compiling files end at:"+new Date()
     }
 }
