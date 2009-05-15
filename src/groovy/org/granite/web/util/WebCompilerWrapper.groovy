@@ -17,7 +17,7 @@ public class WebCompilerWrapper {
             root.eachFileRecurse{ file->
                 if(file.name.endsWith(".mxml")) {
                     String content = file.text
-                    if(content.indexOf("<mx:Application ") != -1 ||content.indexOf("<mx:Module ")!=-1) {
+                    if(content.indexOf("</mx:Application>") != -1 ||content.indexOf("</mx:Module>")!=-1) {
                         appXmlList.add(file)
                     }
                 }
@@ -30,10 +30,13 @@ public class WebCompilerWrapper {
                 if(!swfDir.exists()) {
                     swfDir.mkdirs()
                 }
+                println "compiling file " + file.name
                 webCompiler.compileMxmlFile(file, 
                         new File(swfDir,file.name.replaceAll("mxml\$","swf")),
                         true,WebCompilerType.application,"/${appName}")
             }catch(WebCompilerException ex) {
+              println "error during compilation " + ex.getMessage()
+              println ex.toString()
             }
         }
         println "compiling files end at:"+new Date()

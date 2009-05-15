@@ -77,8 +77,6 @@ public class WebCompiler {
         
         this.flexPath = this.basePath + File.separator + "flex";
         
-        this.createFlexDir();
-        
         this.configFile = new File(this.flexPath, "flex-config.xml");
         
         if(!this.configFile.exists()) {
@@ -88,20 +86,6 @@ public class WebCompiler {
     
     public ResourceBundle getCompilerBundle(WebCompilerType type) {
         return ResourceBundle.getBundle("compiler" + "-" + type.toString());
-    }
-    
-    protected void createFlexDir() throws IOException {
-        WebCompilerUtils.createFileFromStream("flex/flex-config.xml", this.basePath);
-        WebCompilerUtils.createFileFromStream("flex/fonts/macFonts.ser", this.basePath);
-        WebCompilerUtils.createFileFromStream("flex/fonts/winFonts.ser", this.basePath);
-        WebCompilerUtils.createFileFromStream("flex/libs/flex.swc", this.basePath);
-        WebCompilerUtils.createFileFromStream("flex/libs/framework.swc", this.basePath);
-        WebCompilerUtils.createFileFromStream("flex/libs/rpc.swc", this.basePath);
-        WebCompilerUtils.createFileFromStream("flex/libs/utilities.swc", this.basePath);
-        WebCompilerUtils.createFileFromStream("flex/libs/player/playerglobal9.swc", this.basePath, "flex/libs/player/9/playerglobal.swc");
-        WebCompilerUtils.createFileFromStream("flex/libs/player/playerglobal10.swc", this.basePath, "flex/libs/player/10/playerglobal.swc");
-        WebCompilerUtils.createFileFromStream("flex/locale/en_US/framework_rb.swc", this.basePath);
-        WebCompilerUtils.createFileFromStream("flex/locale/en_US/rpc_rb.swc", this.basePath);
     }
     
     protected List<File> getDependencies(String name, WebCompilerType type, int majorVersion) {
