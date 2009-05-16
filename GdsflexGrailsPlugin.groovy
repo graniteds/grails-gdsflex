@@ -18,15 +18,13 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-import grails.util.GrailsUtil
+import java.util.concurrent.*
 import org.springframework.orm.hibernate3.AbstractSessionFactoryBean
-import org.codehaus.groovy.grails.plugins.support.GrailsPluginUtils
 import org.granite.tide.hibernate.HibernateSessionManager
 import org.springframework.transaction.interceptor.TransactionProxyFactoryBean
 import org.granite.tide.spring.security.Identity
 import org.granite.web.util.WebCompilerWrapper
-import java.util.concurrent.*
-import java.util.concurrent.atomic.AtomicBoolean
+import org.granite.config.GraniteConfigUtil
 
 
 class GdsflexGrailsPlugin {
@@ -41,7 +39,13 @@ class GdsflexGrailsPlugin {
 	                        "file:./grails-app/views/flex/**/*.css",
 	                        "file:./grails-app/views/flex/**/*.as"]
     private static LinkedBlockingQueue lastModifiedQueue = new LinkedBlockingQueue()
-    private static ExecutorService executor = Executors.newFixedThreadPool(1) 
+    private static ExecutorService executor = Executors.newFixedThreadPool(1)
+    private static final def config
+    
+    static {
+    	WebCompilerWrapper.init("web-app/WEB-INF")
+    	config = GraniteConfigUtil.getUserConfig()
+    }
     
 	def doWithSpring = {
         
@@ -54,7 +58,6 @@ class GdsflexGrailsPlugin {
 			transactionAttributes = ["*" : "PROPAGATION_REQUIRED,readOnly"]
 		}
 		
-        def config = graniteConfig
         if (config) {
         	def conf = config.graniteConfig
         	
@@ -66,7 +69,6 @@ class GdsflexGrailsPlugin {
 	
 	
 	def doWithApplicationContext = { applicationContext ->
-        def config = graniteConfig
         if (config) {
         	def conf = config.graniteConfig
         	if (conf.dataDispatchEnabled) {
@@ -135,7 +137,6 @@ class GdsflexGrailsPlugin {
         }
         
         
-        def config = graniteConfig
         if (config) {
         	def conf = config.graniteConfig
 
@@ -171,7 +172,7 @@ class GdsflexGrailsPlugin {
     }
 
     def onChange = { event ->
-        if(event.source) {
+        if(event.source && config.as3Config.autoCompileFlex) {
         		compileMxml(event)
         }
     }
@@ -189,28 +190,6 @@ class GdsflexGrailsPlugin {
     }
     
     static ConfigObject getGraniteConfig() {
-    	WebCompilerWrapper.init("web-app/WEB-INF")
-    
-		GroovyClassLoader classLoader = new GroovyClassLoader(GdsflexGrailsPlugin.getClassLoader())
-
-		def slurper = new ConfigSlurper(GrailsUtil.environment)
-		ConfigObject userConfig
-		try {
-			userConfig = slurper.parse(classLoader.loadClass('GraniteDSConfig'))
-		}
-		catch (e) {
-		}
-
-		ConfigObject config
-		ConfigObject defaultConfig = slurper.parse(classLoader.loadClass('DefaultGraniteDSConfig'))
-		if (userConfig) {
-			config = defaultConfig.merge(userConfig)
-		}
-		else {
-			config = defaultConfig
-		}
-
-		return config
     }
     
     

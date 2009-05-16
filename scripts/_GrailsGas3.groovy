@@ -29,12 +29,12 @@ Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
 tmpPath = System.properties."java.io.tmpdir"+"/gdsflex-tmp"
-as3Config = [:]
-if(new File("${basedir}/grails-app/conf/GraniteDSConfig.groovy").exists()) {
-    as3Config = new ConfigSlurper().parse(
-            new File("${basedir}/grails-app/conf/GraniteDSConfig.groovy").toURI().toURL()
-            ).as3Config
-}
+
+GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
+loader.addURL(new File(classesDirPath).toURI().toURL())
+Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
+GroovyObject groovyObject = (GroovyObject) groovyClass.newInstance()
+		
 rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator.jar").toURI().toURL())
 rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator-share.jar").toURI().toURL())
 
@@ -44,6 +44,7 @@ Ant.path(id: "gas3.compile.classpath", compileClasspath)
 
 isInjectClass = false
 target(gas3: "Gas3") {
+	 def as3Config = groovyObject.getUserConfig()?.as3Config
     def domainJar = as3Config.domainJar
     def extraClasses = as3Config.extraClasses
     def genClassPath =  domainJar?tmpPath:classesDirPath
