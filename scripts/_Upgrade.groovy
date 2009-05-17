@@ -26,6 +26,5 @@ Ant.copy(todir: "${basedir}/web-app/WEB-INF/flex", overwrite: true) {
     fileset(dir: "${pluginBasedir}/src/flex") {
     	include(name: "**/*")
     	exclude(name: "services-config.xml")
-    	exclude(name: "**/playerglobal*.swc")
     }
 }
