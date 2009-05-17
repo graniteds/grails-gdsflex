@@ -21,7 +21,7 @@ import org.springframework.core.io.FileSystemResourceLoader
 import org.springframework.mock.web.MockServletContext
 import org.springframework.util.ClassUtils
 import groovyjarjarasm.asm.*
-import java.lang.reflect.Method
+import java.lang.reflect.*
 import javax.persistence.*
 
 
@@ -34,7 +34,7 @@ GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
 loader.addURL(new File(classesDirPath).toURI().toURL())
 Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
 GroovyObject groovyObject = (GroovyObject) groovyClass.newInstance()
-		
+
 rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator.jar").toURI().toURL())
 rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator-share.jar").toURI().toURL())
 
@@ -44,7 +44,7 @@ Ant.path(id: "gas3.compile.classpath", compileClasspath)
 
 isInjectClass = false
 target(gas3: "Gas3") {
-	 def as3Config = groovyObject.getUserConfig()?.as3Config
+    def as3Config = groovyObject.getUserConfig()?.as3Config
     def domainJar = as3Config.domainJar
     def extraClasses = as3Config.extraClasses
     def genClassPath =  domainJar?tmpPath:classesDirPath
@@ -53,9 +53,10 @@ target(gas3: "Gas3") {
     def grailsApp = initGrailsApp()
     def domainClasses = grailsApp.getArtefacts('Domain') as List
     def embedDomainClasses = [:]
+    def abstractDomainClasses = [:]
     Ant.mkdir(dir:tmpPath)
     if (domainClasses.size()>0) {
-        domainClasses = mergeClasses(domainClasses,extraClasses,embedDomainClasses)
+        domainClasses = mergeClasses(domainClasses,extraClasses,embedDomainClasses,abstractDomainClasses)
         if(domainJar)  {
             Ant.unzip(dest:tmpPath,src:domainJar) {
                 patternset() {
@@ -66,6 +67,9 @@ target(gas3: "Gas3") {
             }
         }else {            
             def cl = new URLClassLoader([classesDir.toURI().toURL()] as URL[], rootLoader)
+            abstractDomainClasses.each{key,value->
+                abstractDomainClasses[key] = cl.loadClass(value.name)
+            }
             domainClasses.each {domainClass->
                 String fullName = domainClass.name.replaceAll("\\.","/")+".class"
                 checkDir(fullName,genClassPath)
@@ -74,7 +78,7 @@ target(gas3: "Gas3") {
                 def newDomainClass = cl.loadClass(domainClass.name)
                 if(!target.exists() ||!isEntityAnnoation(newDomainClass)
                 ||target.lastModified()<src.lastModified()) {
-                    genClassWithInject(src,target,newDomainClass,embedDomainClasses)
+                    genClassWithInject(src,target,newDomainClass,embedDomainClasses,abstractDomainClasses)
                     isInjectClass = true
                 }
             }
@@ -93,15 +97,28 @@ target(gas3: "Gas3") {
     }
 }
 
-def genClassWithInject(src,target,domainClass,embedDomainClasses) {
+def genClassWithInject(src,target,domainClass,embedDomainClasses,abstractDomainClasses) {
     ClassWriter cw = new ClassWriter(true)
     ClassReader cr = new ClassReader(new FileInputStream(src))
     
     EntityAnnotationAdapter cp = null
     if(embedDomainClasses.containsKey(domainClass.name)) {
-        cp = new EntityAnnotationAdapter(cw,domainClass,Embeddable.class);
+        cp = new EntityAnnotationAdapter(cw,domainClass,Embeddable.class)
+    } else if(abstractDomainClasses.containsKey(domainClass.name)){
+        cp = new EntityAnnotationAdapter(cw,domainClass,MappedSuperclass.class,[getId:Id.class,getVersion:Version.class])
     }else {
-        cp = new EntityAnnotationAdapter(cw,domainClass,Entity.class,[getId:Id.class,getVersion:Version.class]);
+        boolean hasSuperDomainClass = false
+        for (Class clazz:abstractDomainClasses.values()) {
+            if(clazz.isAssignableFrom(domainClass)) {
+                hasSuperDomainClass = true
+                break
+            }
+        }
+        if(!hasSuperDomainClass) {
+            cp = new EntityAnnotationAdapter(cw,domainClass,Entity.class,[getId:Id.class,getVersion:Version.class])
+        }else {
+            cp = new EntityAnnotationAdapter(cw,domainClass,Entity.class,[:],["getId","setId","getVersion","setVersion"],["id","version"])
+        }
     }
     cr.accept(cp,false)
     target.withOutputStream{os->os.write(cw.toByteArray())}
@@ -121,7 +138,7 @@ def checkDir(fullName,tempPath) {
         }
     }
 }
-def mergeClasses(domainClasses,extraClasses,embedDomainClasses) {
+def mergeClasses(domainClasses,extraClasses,embedDomainClasses,abstractDomainClasses) {
     def otherClassesMap = [:]
     domainClasses.each{grailsClass->
         Class idClazz = grailsClass.identifier.type
@@ -139,6 +156,9 @@ def mergeClasses(domainClasses,extraClasses,embedDomainClasses) {
         }
         Class clazz = grailsClass.clazz
         while(clazz && clazz != Object.class) {
+            if(Modifier.isAbstract(clazz.getModifiers()) && !abstractDomainClasses.containsKey(clazz.name)) {
+                abstractDomainClasses.put(clazz.name,clazz)
+            }
             checkMap(otherClassesMap,clazz)
             clazz = clazz.superclass
         }
@@ -189,11 +209,15 @@ public class EntityAnnotationAdapter extends ClassAdapter {
     private Class clazz
     private final String annName
     private def annMethods = [:]
-    public EntityAnnotationAdapter(ClassVisitor cv,Class clazz,annClass,annMethods=[:]) {
+    private def excludeMethods = []
+    private def excludeFields = []
+    public EntityAnnotationAdapter(ClassVisitor cv,Class clazz,annClass,annMethods=[:],excludeMethods=[],excludeFields=[]) {
         super(cv)
         this.clazz= clazz
         this.annName = Type.getDescriptor(annClass)
         this.annMethods = annMethods
+        this.excludeMethods = excludeMethods
+        this.excludeFields = excludeFields
     }
     public void visit(int version, int access, String name,
     String signature, String superName, String[] interfaces) {
@@ -215,6 +239,9 @@ public class EntityAnnotationAdapter extends ClassAdapter {
         cv.visitEnd()
     }
     public MethodVisitor visitMethod(int access, String name,String desc, String signature,String[] exceptions) {
+        if(excludeMethods.contains(name)) {
+            return null
+        }
         MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions)
         if(annMethods.containsKey(name)) {
             Method m = clazz.getMethod(name)
@@ -223,6 +250,12 @@ public class EntityAnnotationAdapter extends ClassAdapter {
                 createAnnotation(mv.visitAnnotation(Type.getDescriptor(cls), true))
         }
         return mv
+    }
+    public FieldVisitor visitField(int access,String name,String desc,String signature,Object value) {
+        if(excludeFields.contains(name)) {
+            return null
+        }
+        return cv.visitField(access, name, desc, signature, value)
     }
     private def createAnnotation(AnnotationVisitor av) {
         if (av != null) {
