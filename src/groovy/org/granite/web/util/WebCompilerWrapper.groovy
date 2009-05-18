@@ -37,7 +37,6 @@ public class WebCompilerWrapper {
             }
             catch(WebCompilerException ex) {
               println "error during compilation " + ex.getMessage()
-              println ex.toString()
             }
 	        println file.name + " compilation ended at: " + new Date()
         }
