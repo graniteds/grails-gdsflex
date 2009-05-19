@@ -181,8 +181,7 @@ class GdsflexGrailsPlugin {
     	long lastModified = event.source.lastModified()
     	println "compile ${event.source} last modified ${lastModified}"
     	Long currentLastModified = lastModifiedQueue.peek() 
-    	if(!lastModifiedQueue.contains(lastModified) || currentLastModified == null || 
-						lastModified-currentLastModified > 1000L) {
+    	if( currentLastModified == null || lastModified-currentLastModified > 1000L) {
     		lastModifiedQueue.offer(lastModified)
     		executor.execute({
     			if(lastModifiedQueue.size()>0) {
