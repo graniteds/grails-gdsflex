@@ -179,14 +179,14 @@ class GdsflexGrailsPlugin {
     
     def compileMxml(event) {
     	long lastModified = event.source.lastModified()
-    	println "compile ${event.source} last modified ${lastModified}"
     	Long currentLastModified = lastModifiedQueue.peek() 
-    	if( currentLastModified == null || lastModified-currentLastModified > 1000L) {
+    	println "compile ${event.source} last modified ${lastModified} current last ${currentLastModified}"
+    	if(currentLastModified == null || lastModified-currentLastModified > 1000L) {
     		lastModifiedQueue.offer(lastModified)
     		executor.execute({
     			if(lastModifiedQueue.size()>0) {
-        			lastModifiedQueue.clear()
         			WebCompilerWrapper.compile("grails-app/views/flex",event.application.metadata['app.name'])
+        			lastModifiedQueue.clear()
     			}
     		} as Runnable)
     	}
