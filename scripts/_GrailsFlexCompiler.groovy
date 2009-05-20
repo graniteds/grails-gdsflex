@@ -16,7 +16,7 @@ target(flexCompile: "Compile the flex file to swf file") {
                  file:"${gdsflexPluginDir}/src/flex/flex-config-debug.xml")
     }else {
         Ant.copy(tofile: "${basedir}/web-app/WEB-INF/flex/flex-config.xml",
-                 file:"${pluginBasedir}/src/flex/flex-config-release.xml",
+                 file:"${gdsflexPluginDir}/src/flex/flex-config-release.xml",
                  overwrite: true)
     }
     groovyObject.compile("${basedir}/grails-app/views/flex",grailsAppName)
