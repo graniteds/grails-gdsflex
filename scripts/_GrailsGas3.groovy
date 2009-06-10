@@ -32,25 +32,25 @@ tmpPath = System.properties."java.io.tmpdir"+"/gdsflex-tmp"
 
 
 def configureGas3() {	
-	GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
-	loader.addURL(new File(classesDirPath).toURI().toURL())
-	Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
-	GroovyObject groovyObject = (GroovyObject) groovyClass.newInstance()
-	
-	rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator.jar").toURI().toURL())
-	rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator-share.jar").toURI().toURL())
-	
-	Ant.taskdef(name: "gas3", classname: "org.granite.generator.ant.AntJavaAs3Task")
-	
-	Ant.path(id: "gas3.compile.classpath", compileClasspath)
-	
-	return groovyObject
+    GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
+    loader.addURL(new File(classesDirPath).toURI().toURL())
+    Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
+    GroovyObject groovyObject = (GroovyObject) groovyClass.newInstance()
+    
+    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator.jar").toURI().toURL())
+    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator-share.jar").toURI().toURL())
+    
+    Ant.taskdef(name: "gas3", classname: "org.granite.generator.ant.AntJavaAs3Task")
+    
+    Ant.path(id: "gas3.compile.classpath", compileClasspath)
+    
+    return groovyObject
 }
 
 isInjectClass = false
 target(gas3: "Gas3") {
-	GroovyObject groovyObject = configureGas3()
-
+    GroovyObject groovyObject = configureGas3()
+    
     def as3Config = groovyObject.getUserConfig()?.as3Config
     def domainJar = as3Config.domainJar
     def extraClasses = as3Config.extraClasses
@@ -85,8 +85,10 @@ target(gas3: "Gas3") {
                 def newDomainClass = cl.loadClass(domainClass.name)
                 if(!target.exists() ||!isEntityAnnoation(newDomainClass)
                 ||target.lastModified()<src.lastModified()) {
-                    genClassWithInject(src,target,newDomainClass,embedDomainClasses,abstractDomainClasses)
-                    isInjectClass = true
+                    boolean genResult = genClassWithInject(src,target,newDomainClass,embedDomainClasses,abstractDomainClasses)
+                    if(genResult) {
+                        isInjectClass = true
+                    }
                 }
             }
         }
@@ -105,6 +107,10 @@ target(gas3: "Gas3") {
 }
 
 def genClassWithInject(src,target,domainClass,embedDomainClasses,abstractDomainClasses) {
+    if(domainClass.isEnum()){
+        return false
+    }
+    
     ClassWriter cw = new ClassWriter(true)
     ClassReader cr = new ClassReader(new FileInputStream(src))
     
@@ -129,8 +135,9 @@ def genClassWithInject(src,target,domainClass,embedDomainClasses,abstractDomainC
     }
     cr.accept(cp,false)
     target.withOutputStream{os->os.write(cw.toByteArray())}
-    
+    return true
 }
+
 def isEntityAnnoation(cls) {
     return cls.isAnnotationPresent(Embeddable.class) ||
     cls.isAnnotationPresent(Entity.class) ||
@@ -154,7 +161,7 @@ def mergeClasses(domainClasses,extraClasses,embedDomainClasses,abstractDomainCla
         }
         grailsClass.persistentProperties.each{
             if(it.type&& !ClassUtils.isPrimitiveOrWrapper(it.type) &&
-            it.type.isAnnotationPresent(Embeddable.class) ) {
+            (it.type.isAnnotationPresent(Embeddable.class)||it.type.isEnum()) ) {
                 checkMap(otherClassesMap,it.type)
             }
             if(it.isEmbedded() && !embedDomainClasses.containsKey(it.type.name)) {
