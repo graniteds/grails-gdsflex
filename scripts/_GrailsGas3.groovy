@@ -37,8 +37,9 @@ def configureGas3() {
     Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
     GroovyObject groovyObject = (GroovyObject) groovyClass.newInstance()
     
-    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator.jar").toURI().toURL())
-    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/granite-generator-share.jar").toURI().toURL())
+    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator.jar").toURI().toURL())
+    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator-share.jar").toURI().toURL())
+    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/jdo2-api-2.2.jar").toURI().toURL())
     
     Ant.taskdef(name: "gas3", classname: "org.granite.generator.ant.AntJavaAs3Task")
     
