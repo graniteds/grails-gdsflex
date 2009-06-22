@@ -18,31 +18,22 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-import java.util.concurrent.*
 import org.springframework.orm.hibernate3.AbstractSessionFactoryBean
 import org.granite.tide.hibernate.HibernateSessionManager
 import org.springframework.transaction.interceptor.TransactionProxyFactoryBean
 import org.granite.tide.spring.security.Identity
-import org.granite.web.util.WebCompilerWrapper
 import org.granite.config.GraniteConfigUtil
-import grails.util.Environment
 
 
 class GdsflexGrailsPlugin {
-    def version = "0.4"
+    def version = "0.5"
     def author = "William Drai"
     def authorEmail = "william.drai@graniteds.org"
     def title = "Integration between Grails and GraniteDS/Flex"
     def description = ""
     def documentation = "http://www.graniteds.org/"
 	
-	def watchedResources = ["file:./grails-app/views/flex/**/*.mxml",
-	                        "file:./grails-app/views/flex/**/*.css",
-	                        "file:./grails-app/views/flex/**/*.as"]
-    private static LinkedBlockingQueue lastModifiedQueue = new LinkedBlockingQueue()
-    private static ExecutorService executor = Executors.newFixedThreadPool(1)
     private static final def config
-	private static boolean isFirst = false
     
     static {
     	config = GraniteConfigUtil.getUserConfig()
@@ -135,12 +126,9 @@ class GdsflexGrailsPlugin {
 			}
         }
         
-        
         if (config) {
         	def conf = config.graniteConfig
-
         	if (conf.gravityEnabled) {
-	        	
 	        	def listeners = xml.listener
 	        	listeners[listeners.size() - 1] + {
 	        		listener {
@@ -170,31 +158,6 @@ class GdsflexGrailsPlugin {
         }
     }
 
-    def onChange = { event ->
-		if(Environment.current==Environment.DEVELOPMENT) {
-			if(!isFirst) {
-				WebCompilerWrapper.init("web-app/WEB-INF")
-				isFirst = true
-			}
-	        if(event.source && config.as3Config.autoCompileFlex) {
-	    		compileMxml(event)
-	        }
-		}
-    }
-    
-    def compileMxml(event) {
-    	if(!lastModifiedQueue.contains(event.source.lastModified())) {
-    		lastModifiedQueue.offer(event.source.lastModified())
-    		executor.execute({
-    			if(lastModifiedQueue.size()>0) {
-        			lastModifiedQueue.clear()
-        			WebCompilerWrapper.compile("grails-app/views/flex",event.application.metadata['app.name'])
-    			}
-    		} as Runnable)
-    	}
-    }
-        
-    
     def addDataPublishListener(listeners, type) {
         def previousListeners = listeners."${type}EventListeners"
         def newListeners = new Object[previousListeners.length + 1]
