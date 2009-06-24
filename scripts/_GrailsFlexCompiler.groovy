@@ -6,7 +6,7 @@ import org.granite.webcompiler.WebCompilerType
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
-includeTargets << grailsScript("_GrailsArgParsing")
+includeTargets << grailsScript("_GrailsCompile")
 def configureFlexCompilation() {
 	rootLoader.addURL(new File(classesDirPath).toURI().toURL())
     new File("${gdsflexPluginDir}/scripts/lib/compile").listFiles().each {
@@ -58,13 +58,13 @@ private def checkXmlList(appXmlList,file) {
         if(content.indexOf("</mx:Application>") != -1 ) {
             appXmlList.add([file:file,type:WebCompilerType.application])
         }else if(content.indexOf("</mx:Module>")!=-1){
-            appXmlList.add([file:file,type:WebCompilerType.module])
+            appXmlList.add([file:file,type:WebCompilerType.application])
         }
     }
 }
 
 target(flexCompile: "Compile the flex file to swf file") {
-    depends(parseArguments)
+    depends(compilePlugins)
     WebCompiler webCompiler = configureFlexCompilation()
     if(Environment.current==Environment.DEVELOPMENT) {
         Ant.copy(tofile: "${basedir}/web-app/WEB-INF/flex/flex-config.xml",
