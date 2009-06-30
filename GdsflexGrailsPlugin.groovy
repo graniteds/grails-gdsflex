@@ -18,22 +18,34 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
+import java.util.concurrent.*
 import org.springframework.orm.hibernate3.AbstractSessionFactoryBean
 import org.granite.tide.hibernate.HibernateSessionManager
+import org.granite.tide.data.JDOPersistenceContextManager
 import org.springframework.transaction.interceptor.TransactionProxyFactoryBean
 import org.granite.tide.spring.security.Identity
 import org.granite.config.GraniteConfigUtil
+import grails.util.Environment
+import org.codehaus.groovy.grails.cli.GrailsScriptRunner
 
 
 class GdsflexGrailsPlugin {
-    def version = "0.5"
-    def author = "William Drai"
+    def version = "0.6"
+    def author = "William Drai, Ford Guo"
     def authorEmail = "william.drai@graniteds.org"
     def title = "Integration between Grails and GraniteDS/Flex"
     def description = ""
     def documentation = "http://www.graniteds.org/"
 	
+	def watchedResources = ["file:./grails-app/views/flex/**/*.mxml",
+	                        "file:./grails-app/views/flex/**/*.css",
+	                        "file:./grails-app/views/flex/**/*.as"]
+    private static LinkedBlockingQueue lastModifiedQueue = new LinkedBlockingQueue()
+    private static ExecutorService executor = Executors.newFixedThreadPool(1)
     private static final def config
+    private static boolean isFirst = false
+    
+//    def artefacts = [ org.granite.grails.integration.GrailsDomainClassHandler ]
     
     static {
     	config = GraniteConfigUtil.getUserConfig()
@@ -41,13 +53,20 @@ class GdsflexGrailsPlugin {
     
 	def doWithSpring = {
         
-		tidePersistenceManagerTarget(HibernateSessionManager, ref("sessionFactory")) {
-		}
-		
-		tidePersistenceManager(TransactionProxyFactoryBean) {
-			transactionManager = ref("transactionManager")
-			target = ref("tidePersistenceManagerTarget")
-			transactionAttributes = ["*" : "PROPAGATION_REQUIRED,readOnly"]
+        if (manager?.hasGrailsPlugin("app-engine")) {
+			tidePersistenceManager(JDOPersistenceContextManager, ref("persistenceManagerFactory")) {
+			}
+        }
+        
+        if (manager?.hasGrailsPlugin("hibernate")) {
+			tidePersistenceManagerTarget(HibernateSessionManager, ref("sessionFactory")) {
+			}
+			
+			tidePersistenceManager(TransactionProxyFactoryBean) {
+				transactionManager = ref("transactionManager")
+				target = ref("tidePersistenceManagerTarget")
+				transactionAttributes = ["*" : "PROPAGATION_REQUIRED,readOnly"]
+			}
 		}
 		
         if (config) {
@@ -63,7 +82,7 @@ class GdsflexGrailsPlugin {
 	def doWithApplicationContext = { applicationContext ->
         if (config) {
         	def conf = config.graniteConfig
-        	if (conf.dataDispatchEnabled) {
+        	if (conf.dataDispatchEnabled && manager?.hasGrailsPlugin("hibernate")) {        	
         		applicationContext.getBeansOfType(AbstractSessionFactoryBean.class).values().each { sf ->
 		        	def listeners = sf.sessionFactory.eventListeners
 		        	[ "postInsert", "postUpdate", "postDelete"].each {
@@ -103,12 +122,23 @@ class GdsflexGrailsPlugin {
                 'load-on-startup'("1")
             }
 			
-			servlet {
-				'servlet-name'("MXMLWebCompiler")
-				'display-name'("MXML Web Compiler")
-				'description'("GraniteDS Web Compiler")
-				'servlet-class'("org.granite.grails.web.GrailsWebCompilerServlet")
-				'load-on-startup'("1")
+	        if (manager?.hasGrailsPlugin("app-engine")) {
+				servlet {
+					'servlet-name'("MXMLWebCompiler")
+					'display-name'("MXML Web Compiler")
+					'description'("GraniteDS Web Compiler")
+					'servlet-class'("org.granite.grails.web.GrailsGAEWebCompilerServlet")
+					'load-on-startup'("1")
+				}
+	        }
+	        else {
+				servlet {
+					'servlet-name'("MXMLWebCompiler")
+					'display-name'("MXML Web Compiler")
+					'description'("GraniteDS Web Compiler")
+					'servlet-class'("org.granite.grails.web.GrailsWebCompilerServlet")
+					'load-on-startup'("1")
+				}
 			}
         }
     
@@ -157,12 +187,37 @@ class GdsflexGrailsPlugin {
 		   	}
         }
     }
-
+/*
+    def onChange = { event ->
+		if(Environment.current==Environment.DEVELOPMENT) {
+			if (!isFirst) {
+				WebCompilerWrapper.init("web-app/WEB-INF")
+				isFirst = true
+			}
+	        if (event.source && config.as3Config.autoCompileFlex) {
+	    		compileMxml(event)
+	        }
+		}
+    }
+    
+    def compileMxml(event) {
+    	if (!lastModifiedQueue.contains(event.source.lastModified())) {
+    		lastModifiedQueue.offer(event.source.lastModified())
+    		executor.execute({
+    			if(lastModifiedQueue.size()>0) {
+        			lastModifiedQueue.clear()
+        			new GrailsScriptRunner().executeCommand("mxmlc", null);
+    			}
+    		} as Runnable)
+    	}
+    }
+ */      
+    
     def addDataPublishListener(listeners, type) {
         def previousListeners = listeners."${type}EventListeners"
         def newListeners = new Object[previousListeners.length + 1]
         System.arraycopy(previousListeners, 0, newListeners, 0, previousListeners.length)
-        newListeners[-1] = new org.granite.tide.hibernate.HibernateDataPublishListener()
+        newListeners[-1] = Class.forName("org.granite.tide.hibernate.HibernateDataPublishListener").newInstance()
         listeners."${type}EventListeners" = newListeners
     }
 }
