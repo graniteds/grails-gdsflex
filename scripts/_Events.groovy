@@ -39,17 +39,6 @@ eventPackagingEnd = {
     }
 }
 
-eventStatusFinal = { message->
-    if(message.startsWith("Server running")) {
-        if(isInjectClass) {
-        	new Thread({
-                Thread.sleep(100)
-                classesDir.setLastModified(System.currentTimeMillis())
-                isInjectClass = false
-        	} as Runnable).start()
-        }
-    }
-}
 def checkDir() {
     return gdsflexPluginDir.path != basedir
 }
