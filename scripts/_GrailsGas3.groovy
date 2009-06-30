@@ -40,15 +40,73 @@ def configureGas3() {
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator.jar").toURI().toURL())
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator-share.jar").toURI().toURL())
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/jdo2-api-2.2.jar").toURI().toURL())
+    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/appengine.jar").toURI().toURL())
     
     Ant.taskdef(name: "gas3", classname: "org.granite.generator.ant.AntJavaAs3Task")
-    
-    Ant.path(id: "gas3.compile.classpath", compileClasspath)
+	
+//	Ant.path(id: 'gas3.classpath') {
+//		fileset(dir: "${gdsflexPluginDir}/scripts/lib", includes: "*.jar")
+//	}       
     
     return groovyObject
 }
 
-isInjectClass = false
+
+target(gas3: "Gas3") {
+    depends(classpath)
+    
+    Ant.path(id: "gas3.generate.classpath", compileClasspath)
+
+    GroovyObject groovyObject = configureGas3()
+    
+    def as3Config = groovyObject.getUserConfig()?.as3Config
+    def domainJar = as3Config.domainJar
+    def extraClasses = as3Config.extraClasses
+    
+	Ant.path(id: "gas3.generate.classpath") {
+		path(location: "${classesDirPath}")
+		if (domainJar)
+			pathelement(location: domainJar)
+	}
+	
+	def domainDir = new File("${basedir}/grails-app/domain")
+
+	files = new ArrayList();
+	list(domainDir, files);
+	
+	if (!files.isEmpty() || domainJar || (extraClasses && !extraClasses.isEmpty())) {
+        File outDir = new File("${basedir}/grails-app/views/flex")
+        if (!outDir.exists())
+            outDir.mkdirs()
+        
+		Ant.gas3(outputdir: outDir, 
+			tide: "true", 
+        	transformer: "org.granite.generator.as3.GrailsAs3GroovyTransformer",
+			classpathref: "gas3.generate.classpath") {
+			fileset(dir: "${classesDirPath}") {
+				for (currentFile in files)
+					include(name: currentFile.getPath().substring(domainDir.getPath().length()+1).replace(".groovy", ".class"))
+				for (currentFile in extraClasses)
+					include(name: currentFile.getPath().substring(domainDir.getPath().length()+1).replace(".groovy", ".class"))
+			}
+			if (domainJar)
+				fileset(file: domainJar)
+		}
+	}
+}
+
+def list(File dir, List files) {
+	fs = dir.listFiles()
+	
+	for (f in fs) {
+		if (f.isDirectory())
+			list(f, files)
+		else if (f.getPath().endsWith(".groovy"))
+			files.add(f);
+	}
+}
+
+/*
 target(gas3: "Gas3") {
     GroovyObject groovyObject = configureGas3()
     
@@ -73,7 +131,8 @@ target(gas3: "Gas3") {
                     }                
                 }
             }
-        }else {            
+        }
+        else {            
             def cl = new URLClassLoader([classesDir.toURI().toURL()] as URL[], rootLoader)
             abstractDomainClasses.each{key,value->
                 abstractDomainClasses[key] = cl.loadClass(value.name)
@@ -97,7 +156,8 @@ target(gas3: "Gas3") {
         if(!outDir.exists()) {
             outDir.mkdirs()
         }
-        Ant.gas3(outputdir: outDir, tide: "true", classpathref: "gas3.generate.classpath") {
+        Ant.gas3(outputdir: outDir, tide: "true", classpathref: "gas3.generate.classpath",
+        	transformer: "org.granite.generator.as3.GrailsAs3GroovyTransformer") {
             fileset(dir: genClassPath) {
                 domainClasses.each{domainClass->
                     include(name: domainClass.name.replaceAll("\\.","/")+".class")
@@ -278,3 +338,4 @@ public class EntityAnnotationAdapter extends ClassAdapter {
         }
     }
 }
+*/
