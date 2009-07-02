@@ -46,10 +46,12 @@ class GdsflexGrailsPlugin {
     
 //    def artefacts = [ org.granite.grails.integration.GrailsDomainClassHandler ]
     
+    
     static {
     	config = GraniteConfigUtil.getUserConfig()
-		WebCompilerWrapper.init("web-app/WEB-INF")
+		WebCompilerWrapper.init("")
     }
+
     
 	def doWithSpring = {
         
@@ -124,24 +126,24 @@ class GdsflexGrailsPlugin {
 			
 	        if (manager?.hasGrailsPlugin("app-engine")) {
 				servlet {
-					'servlet-name'("MXMLWebCompiler")
-					'display-name'("MXML Web Compiler")
-					'description'("GraniteDS Web Compiler")
-					'servlet-class'("org.granite.grails.web.GrailsGAEWebCompilerServlet")
+					'servlet-name'("WebSWFServlet")
+					'display-name'("Web SWF")
+					'description'("GraniteDS Web SWF")
+					'servlet-class'("org.granite.grails.web.GrailsGAEWebSWFServlet")
 					'load-on-startup'("1")
 				}
 	        }
 	        else {
 				servlet {
-					'servlet-name'("MXMLWebCompiler")
-					'display-name'("MXML Web Compiler")
-					'description'("GraniteDS Web Compiler")
-					'servlet-class'("org.granite.grails.web.GrailsWebCompilerServlet")
+					'servlet-name'("WebSWFServlet")
+					'display-name'("Web SWF")
+					'description'("GraniteDS Web SWF")
+					'servlet-class'("org.granite.grails.web.GrailsWebSWFServlet")
 					'load-on-startup'("1")
 				}
 			}
         }
-    
+    	
         // servlet mappings
         def servletMappings = xml.'servlet-mapping'
         servletMappings[servletMappings.size() - 1] + {
@@ -151,7 +153,7 @@ class GdsflexGrailsPlugin {
             }
 			
 			'servlet-mapping' {
-				'servlet-name'("MXMLWebCompiler")
+				'servlet-name'("WebSWFServlet")
 				'url-pattern'("*.swf")
 			}
         }
