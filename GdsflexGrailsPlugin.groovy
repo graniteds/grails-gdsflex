@@ -27,7 +27,7 @@ import org.granite.tide.spring.security.Identity
 import org.granite.config.GraniteConfigUtil
 import grails.util.Environment
 import org.codehaus.groovy.grails.cli.GrailsScriptRunner
-
+import org.granite.web.util.WebCompilerWrapper
 
 class GdsflexGrailsPlugin {
     def version = "0.6"
@@ -43,12 +43,12 @@ class GdsflexGrailsPlugin {
     private static LinkedBlockingQueue lastModifiedQueue = new LinkedBlockingQueue()
     private static ExecutorService executor = Executors.newFixedThreadPool(1)
     private static final def config
-    private static boolean isFirst = false
     
 //    def artefacts = [ org.granite.grails.integration.GrailsDomainClassHandler ]
     
     static {
     	config = GraniteConfigUtil.getUserConfig()
+		WebCompilerWrapper.init("web-app/WEB-INF")
     }
     
 	def doWithSpring = {
@@ -187,13 +187,8 @@ class GdsflexGrailsPlugin {
 		   	}
         }
     }
-/*
     def onChange = { event ->
 		if(Environment.current==Environment.DEVELOPMENT) {
-			if (!isFirst) {
-				WebCompilerWrapper.init("web-app/WEB-INF")
-				isFirst = true
-			}
 	        if (event.source && config.as3Config.autoCompileFlex) {
 	    		compileMxml(event)
 	        }
@@ -206,12 +201,11 @@ class GdsflexGrailsPlugin {
     		executor.execute({
     			if(lastModifiedQueue.size()>0) {
         			lastModifiedQueue.clear()
-        			new GrailsScriptRunner().executeCommand("mxmlc", null);
+        			WebCompilerWrapper.compile("grails-app/views/flex",event.application.metadata['app.name'])
     			}
     		} as Runnable)
     	}
     }
- */      
     
     def addDataPublishListener(listeners, type) {
         def previousListeners = listeners."${type}EventListeners"
