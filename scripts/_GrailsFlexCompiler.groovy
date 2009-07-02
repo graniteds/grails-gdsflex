@@ -7,7 +7,7 @@ grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
 includeTargets << grailsScript("_GrailsCompile")
 def configureFlexCompilation() {
-	//rootLoader.addURL(new File(classesDirPath).toURI().toURL())
+	rootLoader.addURL(new File(classesDirPath).toURI().toURL())
     WebCompilerWrapper.init("${basedir}/web-app/WEB-INF")
 }
 

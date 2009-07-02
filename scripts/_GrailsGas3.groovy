@@ -58,6 +58,9 @@ target(gas3: "Gas3") {
     def as3Config = groovyObject.getUserConfig()?.as3Config
     def domainJar = as3Config.domainJar
     def extraClasses = as3Config.extraClasses
+    def entityBaseTemplate = as3Config.entityBaseTemplate
+    if (entityBaseTemplate == null || "".equals(entityBaseTemplate))
+    	entityBaseTemplate = org.granite.generator.template.StandardTemplateUris.TIDE_ENTITY_BASE
     
 	Ant.path(id: "gas3.generate.classpath") {
 		path(location: "${classesDirPath}")

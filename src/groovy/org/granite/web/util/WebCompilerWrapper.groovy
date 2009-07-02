@@ -1,16 +1,24 @@
 package org.granite.web.util
 
+import java.io.File
 import org.granite.webcompiler.WebCompiler
 import org.granite.webcompiler.WebCompilerException
 import org.granite.webcompiler.WebCompilerType
 
 public class WebCompilerWrapper {
+
     private static WebCompiler webCompiler = WebCompiler.getInstance()
     
+    
     static def init(basePath) {
-        webCompiler.init(basePath)
+    	if (!("".equals(basePath)))
+    		webCompiler.init(basePath)
+    	else if (new File("web-app/WEB-INF").exists())
+	        webCompiler.init("web-app/WEB-INF")
+    	else
+    		webCompiler.init("WEB-INF")
     }
-        
+     
      static def compile(sourceDir,appName,mxmlFiles=null) {
         def appXmlList = []
         if(!mxmlFiles) {

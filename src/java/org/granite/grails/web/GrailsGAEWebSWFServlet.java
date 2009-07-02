@@ -24,52 +24,21 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.codehaus.groovy.grails.commons.GrailsResourceUtils;
-import org.codehaus.groovy.grails.web.pages.GroovyPageResourceLoader;
-import org.codehaus.groovy.grails.web.servlet.DefaultGrailsApplicationAttributes;
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes;
-import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.web.context.support.ServletContextResourceLoader;
-import org.springframework.web.context.support.WebApplicationContextUtils;
 
 
-public class GrailsWebCompilerServlet extends HttpServlet {
+public class GrailsGAEWebSWFServlet extends GrailsWebSWFServlet {
     
     private static final long serialVersionUID = 1L;
-
-
-    protected ResourceLoader resourceLoader = null;
-    protected ResourceLoader servletContextLoader = null;
-    
-    protected GrailsApplicationAttributes grailsAttributes;
     
     
-    @Override
-    public void init(ServletConfig servletConfig) throws ServletException {
-        this.servletContextLoader = new ServletContextResourceLoader(servletConfig.getServletContext());
-        ApplicationContext springContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletConfig.getServletContext());
-		if (springContext.containsBean(GroovyPageResourceLoader.BEAN_ID))
-			this.resourceLoader = (ResourceLoader)springContext.getBean(GroovyPageResourceLoader.BEAN_ID);
-		
-        this.grailsAttributes = new DefaultGrailsApplicationAttributes(servletConfig.getServletContext());
-    }
-
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        doPost(request, response);
-    }
-
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {        
 
@@ -77,36 +46,35 @@ public class GrailsWebCompilerServlet extends HttpServlet {
 
         // Get the name of the Groovy script (intern the name so that we can
         // lock on it)
-        String pageName = "/swf"+request.getServletPath();        
+        String pageName = "/swf"+request.getServletPath();      
+        
         Resource requestedFile = getResourceForUri(pageName);
+        
         File swfFile = requestedFile.getFile();
         if (requestedFile == null || swfFile==null || !swfFile.exists()) {
             response.sendError(404, "\"" + pageName + "\" not found.");
             return;
         }
+        
         response.setContentType("application/x-shockwave-flash");
         response.setContentLength((int)swfFile.length());
         response.setBufferSize((int)swfFile.length());
         response.setDateHeader("Expires", 0);
         
+        byte[] buf = new byte[1000000];
         FileInputStream is = null;
-        FileChannel inChan = null;
         try {
             is = new FileInputStream(swfFile);
             OutputStream os = response.getOutputStream();
-            inChan = is.getChannel();
-            long fSize =  inChan.size();
-            MappedByteBuffer mBuf = inChan.map(FileChannel.MapMode.READ_ONLY, 0,fSize);
-            byte[] buf = new byte[(int)fSize];
-            mBuf.get(buf);
-            os.write(buf);
-        } finally {
-            if (is != null)  {
-                is.close();
-            } 
-            if (inChan != null) {
-                inChan.close();
+            int read = is.read(buf, 0, 1000000);
+            while (read > 0) {
+            	os.write(buf, 0, read);
+            	read = is.read(buf, 0, 1000000);
             }
+        } 
+        finally {
+            if (is != null)
+                is.close();
         }
     }
 
