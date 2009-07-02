@@ -20,7 +20,7 @@
 
 import java.util.concurrent.*
 import org.springframework.orm.hibernate3.AbstractSessionFactoryBean
-import org.granite.tide.hibernate.HibernateSessionManager
+import org.granite.grails.integration.GrailsHibernateSessionManager
 import org.granite.tide.data.JDOPersistenceContextManager
 import org.springframework.transaction.interceptor.TransactionProxyFactoryBean
 import org.granite.tide.spring.security.Identity
@@ -61,7 +61,7 @@ class GdsflexGrailsPlugin {
         }
         
         if (manager?.hasGrailsPlugin("hibernate")) {
-			tidePersistenceManagerTarget(HibernateSessionManager, ref("sessionFactory")) {
+			tidePersistenceManagerTarget(GrailsHibernateSessionManager, ref("sessionFactory")) {
 			}
 			
 			tidePersistenceManager(TransactionProxyFactoryBean) {
