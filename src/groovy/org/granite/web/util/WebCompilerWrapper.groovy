@@ -15,7 +15,7 @@ public class WebCompilerWrapper {
     		webCompiler.init(basePath)
     	else if (new File("web-app/WEB-INF").exists())
 	        webCompiler.init("web-app/WEB-INF")
-    	else
+    	else if (new File("WEB-INF").exists())
     		webCompiler.init("WEB-INF")
     }
      
