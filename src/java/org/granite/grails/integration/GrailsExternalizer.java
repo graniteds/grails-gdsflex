@@ -42,7 +42,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 /**
- * @author William Draï
+ * @author William Draï¿½
  */
 public class GrailsExternalizer extends DefaultExternalizer {
 	
@@ -74,8 +74,8 @@ public class GrailsExternalizer extends DefaultExternalizer {
     public void configure(XMap properties) {
     	super.configure(properties);
     	
-    	enumExternalizer.configure(properties);
     	getDelegate();
+    	enumExternalizer.configure(properties);
     	if (delegate != null)
     		delegate.configure(properties);
     }
