@@ -29,6 +29,7 @@ import grails.util.Environment
 import org.codehaus.groovy.grails.cli.GrailsScriptRunner
 import org.granite.web.util.WebCompilerWrapper
 
+
 class GdsflexGrailsPlugin {
     def version = "0.6"
     def author = "William Drai, Ford Guo"
@@ -164,7 +165,7 @@ class GdsflexGrailsPlugin {
 	        	def listeners = xml.listener
 	        	listeners[listeners.size() - 1] + {
 	        		listener {
-	        			'listener-class'("org.granite.config.GraniteConfigListener")
+	        			'listener-class'("org.granite.grails.integration.GrailsGraniteConfigListener")
 	        		}
 	        	}
 	        	
@@ -189,6 +190,8 @@ class GdsflexGrailsPlugin {
 		   	}
         }
     }
+    
+    
     def onChange = { event ->
 		if(Environment.current==Environment.DEVELOPMENT) {
 	        if (event.source && config.as3Config.autoCompileFlex) {
@@ -208,6 +211,7 @@ class GdsflexGrailsPlugin {
     		} as Runnable)
     	}
     }
+    
     
     def addDataPublishListener(listeners, type) {
         def previousListeners = listeners."${type}EventListeners"

@@ -25,7 +25,6 @@ import java.lang.reflect.Method;
 
 import org.granite.tide.data.JTAPersistenceContextManager;
 import org.granite.util.Reflections;
-import org.hibernate.Hibernate;
 import org.hibernate.SessionFactory;
 
 /**
@@ -81,11 +80,13 @@ public class GrailsHibernateSessionManager extends JTAPersistenceContextManager 
 			return null;
 		
 		try {
-			sessionFactory.getCurrentSession().refresh(entity);
+			Method getter = (Method)Reflections.getGetterMethod(entity.getClass(), "id");
+			Serializable id = (Serializable)getter.invoke(entity);
+			entity = sessionFactory.getCurrentSession().load(entity.getClass(), id);
 	   	    return entity;
 		}
 		catch (Exception e) {
-			throw new RuntimeException("Could not get id of entity " + entity.getClass(), e);
+			throw new RuntimeException("Could not refresh entity " + entity.getClass(), e);
 		}
 	}
 }

@@ -67,23 +67,24 @@ public class GrailsClassGetter extends DefaultClassGetter {
 		return getDelegate().getFieldValues(obj, dest);
 	}
 
-
 	@Override
 	public void initialize(Object owner, String propertyName,
 			Object propertyValue) {
 		getDelegate().initialize(owner, propertyName, propertyValue);
 	}
 
+	@Override
+    public Class<?> getClass(Object o) {
+		return getDelegate().getClass(o);
+	}
 
 	@Override
 	public boolean isEntity(Object o) {
 		return grailsApplication.isArtefactOfType("Domain", o.getClass());
 	}
-
-
+    
 	@Override
-	public boolean isInitialized(Object owner, String propertyName,
-			Object propertyValue) {
+    public boolean isInitialized(Object owner, String propertyName, Object propertyValue) {
 		return getDelegate().isInitialized(owner, propertyName, propertyValue);
 	}
 }
