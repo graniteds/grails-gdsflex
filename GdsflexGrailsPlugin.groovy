@@ -26,7 +26,6 @@ import org.springframework.transaction.interceptor.TransactionProxyFactoryBean
 import org.granite.tide.spring.security.Identity
 import org.granite.config.GraniteConfigUtil
 import grails.util.Environment
-import org.codehaus.groovy.grails.cli.GrailsScriptRunner
 import org.granite.web.util.WebCompilerWrapper
 
 
@@ -43,16 +42,12 @@ class GdsflexGrailsPlugin {
 	                        "file:./grails-app/views/flex/**/*.as"]
     private static LinkedBlockingQueue lastModifiedQueue = new LinkedBlockingQueue()
     private static ExecutorService executor = Executors.newFixedThreadPool(1)
-    private static final def config
+    private static final def config = GraniteConfigUtil.getUserConfig()
+	private static boolean isFirst = true
     
 //    def artefacts = [ org.granite.grails.integration.GrailsDomainClassHandler ]
     
     
-    static {
-    	config = GraniteConfigUtil.getUserConfig()
-		WebCompilerWrapper.init("")
-    }
-
     
 	def doWithSpring = {
         
@@ -195,6 +190,10 @@ class GdsflexGrailsPlugin {
     def onChange = { event ->
 		if(Environment.current==Environment.DEVELOPMENT) {
 	        if (event.source && config.as3Config.autoCompileFlex) {
+	        	if(isFirst) {
+	        		WebCompilerWrapper.init("")
+	        		isFirst = false
+	        	}
 	    		compileMxml(event)
 	        }
 		}

@@ -36,7 +36,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 /**
- * @author William Draï
+ * @author William Draï¿½
  */
 public class GrailsSecurityService extends AbstractSecurityService {
     
@@ -48,7 +48,6 @@ public class GrailsSecurityService extends AbstractSecurityService {
 	public GrailsSecurityService() {
 	}
 
-	@Override
 	public void configure(Map<String, String> params) {
 		this.conf = params;
 	}
@@ -74,7 +73,6 @@ public class GrailsSecurityService extends AbstractSecurityService {
         return delegate;
     }
     
-	@Override
 	public Object authorize(AbstractSecurityContext context) throws Exception {
 		AbstractSecurityService delegate = getDelegate();
 		if (delegate != null)
@@ -83,14 +81,12 @@ public class GrailsSecurityService extends AbstractSecurityService {
 		return context.invoke();
 	}
 
-	@Override
 	public void login(Object credentials) throws SecurityServiceException {
 		AbstractSecurityService delegate = getDelegate();
 		if (delegate != null)
 			delegate.login(credentials);
 	}
 
-	@Override
 	public void logout() throws SecurityServiceException {
 		AbstractSecurityService delegate = getDelegate();
 		if (delegate != null)
