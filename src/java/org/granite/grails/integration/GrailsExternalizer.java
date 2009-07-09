@@ -20,6 +20,8 @@
 
 package org.granite.grails.integration;
 
+import groovy.lang.Closure;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -104,7 +106,7 @@ public class GrailsExternalizer extends DefaultExternalizer {
     public void writeExternal(Object o, ObjectOutput out) throws IOException, IllegalAccessException {
     	if (o instanceof Enum)
     		enumExternalizer.writeExternal(o, out);
-    	else
+    	else if (!Closure.class.isAssignableFrom(o.getClass()))
     		getDelegate().writeExternal(o, out);
     }
 

@@ -36,7 +36,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 /**
- * @author William Dra�
+ * @author William Drai
  */
 public class GrailsSecurityService extends AbstractSecurityService {
     
