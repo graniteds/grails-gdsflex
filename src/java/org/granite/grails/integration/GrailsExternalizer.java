@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.servlet.ServletContext;
 
@@ -51,6 +53,20 @@ public class GrailsExternalizer extends DefaultExternalizer {
 	private GrailsApplication grailsApplication;
 	private Externalizer delegate;
 	private EnumExternalizer enumExternalizer;
+
+	public static final Set<String> EVENTS = new HashSet<String>();
+	static {
+		EVENTS.add("onLoad");
+		EVENTS.add("onSave"); 
+		EVENTS.add("beforeLoad");
+		EVENTS.add("beforeInsert");
+		EVENTS.add("afterInsert");
+		EVENTS.add("beforeUpdate");
+		EVENTS.add("afterUpdate");
+		EVENTS.add("beforeDelete");
+		EVENTS.add("afterDelete");
+		EVENTS.add("afterLoad");
+	};
     
 
     private Externalizer getDelegate() {

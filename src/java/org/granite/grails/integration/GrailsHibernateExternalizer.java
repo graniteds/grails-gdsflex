@@ -21,19 +21,30 @@
 package org.granite.grails.integration;
 
 import groovy.lang.Closure;
+import groovy.lang.GroovyObject;
 
-import java.io.IOException;
-import java.io.ObjectOutput;
-import java.io.Serializable;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.codehaus.groovy.grails.commons.GrailsApplication;
 import org.granite.context.GraniteContext;
 import org.granite.hibernate.HibernateExternalizer;
-import org.granite.messaging.amf.io.util.ClassGetter;
+import org.granite.messaging.amf.io.convert.Converters;
+import org.granite.messaging.amf.io.util.FieldProperty;
+import org.granite.messaging.amf.io.util.MethodProperty;
 import org.granite.messaging.amf.io.util.Property;
-import org.hibernate.collection.PersistentCollection;
-import org.hibernate.proxy.HibernateProxy;
+import org.granite.messaging.amf.io.util.externalizer.annotation.ExternalizedProperty;
+import org.granite.messaging.amf.io.util.externalizer.annotation.IgnoredProperty;
+import org.granite.util.ClassUtil;
 
 /**
  * @author William Draï
@@ -47,58 +58,119 @@ public class GrailsHibernateExternalizer extends HibernateExternalizer {
 		this.grailsApplication = grailsApplication;
 	}
     
+    
 	@Override
 	protected boolean isRegularEntity(Class<?> clazz) {
 		return grailsApplication.isArtefactOfType("Domain", clazz);
 	}
 
+	@Override
+	protected boolean isValueIgnored(Object value) {
+		return value instanceof Closure;
+	}
+    
+    
+    private boolean isRoot(Class<?> clazz) {
+        return clazz.getSuperclass() != null && 
+        	(clazz.getSuperclass().equals(GroovyObject.class) ||
+            clazz.getSuperclass().equals(Object.class) ||
+            Modifier.isAbstract(clazz.getSuperclass().getModifiers()));
+    }
+    
     @Override
-    public void writeExternal(Object o, ObjectOutput out) throws IOException, IllegalAccessException {
+    public List<Property> findOrderedFields(final Class<?> clazz, boolean returnSettersWhenAvailable) {
+        List<Property> fields = !dynamicClass ? (returnSettersWhenAvailable ? orderedSetterFields.get(clazz) : orderedFields.get(clazz)) : null;
 
-        ClassGetter classGetter = GraniteContext.getCurrentInstance().getGraniteConfig().getClassGetter();
-        Class<?> oClass = classGetter.getClass(o);
+        if (fields == null) {
+        	if (dynamicClass)
+        		Introspector.flushFromCaches(clazz);
+            PropertyDescriptor[] propertyDescriptors = ClassUtil.getProperties(clazz);
+            Converters converters = GraniteContext.getCurrentInstance().getGraniteConfig().getConverters();
 
-        if (o instanceof HibernateProxy) {        	
-            HibernateProxy proxy = (HibernateProxy)o;
+            fields = new ArrayList<Property>();
+            
+            List<Property> idVersionFields = new ArrayList<Property>();
 
-            // Only write initialized flag & detachedState & entity id if proxy is uninitialized.
-            if (proxy.getHibernateLazyInitializer().isUninitialized()) {
-            	String detachedState = getProxyDetachedState(proxy);
-            	Serializable id = proxy.getHibernateLazyInitializer().getIdentifier();
-            	
-            	// Write initialized flag.
-            	out.writeObject(Boolean.FALSE);
-            	// Write detachedState.
-            	out.writeObject(detachedState);
-            	// Write entity id.
-                out.writeObject(id);
-                return;
+            Set<String> allFieldNames = new HashSet<String>();
+            for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
+
+                List<Property> newFields = new ArrayList<Property>();
+
+                // Standard declared fields.
+                for (Field field : c.getDeclaredFields()) {
+                    if (!allFieldNames.contains(field.getName()) &&
+                        !Modifier.isTransient(field.getModifiers()) &&
+                        !Modifier.isStatic(field.getModifiers()) &&
+                        !field.isAnnotationPresent(IgnoredProperty.class) &&
+                        !GrailsExternalizer.EVENTS.contains(field.getName())) {
+
+                    	boolean found = false;
+                    	if (returnSettersWhenAvailable && propertyDescriptors != null) {
+                    		for (PropertyDescriptor pd : propertyDescriptors) {
+                    			if (pd.getName().equals(field.getName()) && pd.getWriteMethod() != null) {
+                        			if ("id".equals(field.getName()) || "version".equals(field.getName())) { 
+                        				if (c == clazz)
+                            				idVersionFields.add(new MethodProperty(converters, field.getName(), pd.getWriteMethod(), pd.getReadMethod()));
+                        			}
+                        			else
+                        				newFields.add(new MethodProperty(converters, field.getName(), pd.getWriteMethod(), pd.getReadMethod()));
+                    				found = true;
+                    				break;
+                    			}
+                    		}
+                    	}
+                		if (!found) {
+                			if ("id".equals(field.getName()) || "version".equals(field.getName())) { 
+                				if (c == clazz)
+                					idVersionFields.add(new FieldProperty(converters, field));
+                			}
+                			else
+                				newFields.add(new FieldProperty(converters, field));
+                		}
+                    }
+                    allFieldNames.add(field.getName());
+                }
+
+                // Getter annotated  by @ExternalizedProperty.
+                if (propertyDescriptors != null) {
+                    for (PropertyDescriptor property : propertyDescriptors) {
+                        Method getter = property.getReadMethod();
+                        if (getter != null &&
+                            getter.isAnnotationPresent(ExternalizedProperty.class) &&
+                            getter.getDeclaringClass().equals(c) &&
+                            !allFieldNames.contains(property.getName()) &&
+                            !GrailsExternalizer.EVENTS.contains(property.getName())) {
+
+                            newFields.add(new MethodProperty(
+                                converters,
+                                property.getName(),
+                                null,
+                                getter
+                            ));
+                            allFieldNames.add(property.getName());
+                        }
+                    }
+                }
+
+                if (isRoot(c))
+                	newFields.addAll(idVersionFields);
+                
+                Collections.sort(newFields, new Comparator<Property>() {
+                    public int compare(Property o1, Property o2) {
+                        return o1.getName().compareTo(o2.getName());
+                    }
+                });
+
+                fields.addAll(0, newFields);
             }
 
-            // Proxy is initialized, get the underlying persistent object.
-            o = proxy.getHibernateLazyInitializer().getImplementation();
-        }
-
-        if (!isRegularEntity(o.getClass())) { // @Embeddable or others...
-            super.writeExternal(o, out);
-        }
-        else {
-            // Write initialized flag.
-            out.writeObject(Boolean.TRUE);
-            // Write detachedState.
-            out.writeObject(null);
-
-            // Externalize entity fields.
-            List<Property> fields = findOrderedFields(oClass, false);
-            for (Property field : fields) {
-                Object value = field.getProperty(o);
-                if (value instanceof PersistentCollection)
-                	value = newExternalizableCollection((PersistentCollection)value);
-                if (!(value instanceof Closure))
-                	out.writeObject(value);
-                else
-                	out.writeObject(null);
+            if (!dynamicClass) {
+	            List<Property> previousFields = (returnSettersWhenAvailable ? orderedSetterFields : orderedFields).putIfAbsent(clazz, fields);
+	            if (previousFields != null)
+	                fields = previousFields;
             }
         }
+
+        return fields;
     }
 }
