@@ -206,9 +206,9 @@ package ${jClass.as3Type.packageName} {
     
     if (jClass.hasMany) {%>    	
     
-    	public static const meta_hasMany:Object = {<%    	
-    	jClass.hasMany.eachWithIndex{me,i->%>
-    		<% if (i >0 ) {%>,<%}%>${me.key}: ${me.value.name}<%}%>
+    	public static const meta_hasMany:Object = {
+			<% jClass.hasMany.eachWithIndex{me,i->if (i >0 ) {%>,
+    		<%}%>${me.key}: ${me.value.name}<%}%>
 		}<%
     }
     
