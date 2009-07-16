@@ -1,11 +1,10 @@
-<plugin name='gdsflex' version='0.6.1' grailsVersion='1.1.1 &gt; *'>
+<plugin name='gdsflex' version='0.6.2' grailsVersion='1.1.1 &gt; *'>
   <author>William Drai, Ford Guo</author>
   <authorEmail>william.drai@graniteds.org</authorEmail>
   <title>Integration between Grails and GraniteDS/Flex</title>
   <documentation>http://www.graniteds.org/</documentation>
   <resources>
     <resource>DefaultGraniteDSConfig</resource>
-    <resource>UrlMappings</resource>
   </resources>
   <dependencies />
 </plugin>
