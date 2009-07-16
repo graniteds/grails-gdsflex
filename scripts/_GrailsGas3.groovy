@@ -86,8 +86,8 @@ target(gas3: "Gas3") {
 			fileset(dir: "${classesDirPath}") {
 				for (currentFile in files)
 					include(name: currentFile.getPath().substring(domainDir.getPath().length()+1).replace(".groovy", ".class"))
-				for (currentFile in extraClasses)
-					include(name: currentFile.getPath().substring(domainDir.getPath().length()+1).replace(".groovy", ".class"))
+				for (currentClass in extraClasses)
+					include(name: currentClass.replace('.', '/') + ".class")
 			}
 			if (domainJar)
 				fileset(file: domainJar)
