@@ -1,0 +1,70 @@
+<mx:HBox
+    xmlns:mx="http://www.adobe.com/2006/mxml"
+    xmlns="*"
+    width="100%"
+    creationComplete="buildColumns()">
+	
+	<mx:Script>
+        <![CDATA[
+        	import org.granite.tide.BaseContext;
+        	import mx.controls.dataGridClasses.DataGridColumn;
+        	import mx.collections.ListCollectionView;
+        	
+        	
+            private function addElement():void {
+                var element:Object = new _elementClass(entity);
+                collection.addItem(element);
+                elementGrid.editedItemPosition = {columnIndex: 0, rowIndex: collection.length-1 };
+            }
+           
+            private function removeElement():void {
+                collection.removeItemAt(elementGrid.selectedIndex);
+            }
+			
+			private function get context():BaseContext {
+				return entity.meta_getEntityManager() as BaseContext;
+			}
+			
+			[Bindable]
+			public var entity:Object;
+			
+			[Bindable]
+			public var collection:ListCollectionView;
+			
+			public var _elementClass:Class;
+			
+            public function set elementClass(elementClass:Class):void {
+            	_elementClass = elementClass;
+			}
+			
+			[Bindable]
+			private var _columns:Array = null;
+			
+			private function buildColumns():void {
+				var columns:Array = new Array();
+				
+				var metadata:Array = context.tideEntityMetadataBuilder.buildMetadata(_elementClass);
+	            for each (var property:Object in metadata) {
+	            	if (property.kind == 'simple') {
+						var column:DataGridColumn = new DataGridColumn(property.name);
+						column.headerText = property.name.substring(0, 1).toUpperCase() + property.name.substring(1);
+						columns.push(column);
+	            	}
+				}
+				_columns = columns;
+			}
+      	]]>
+	</mx:Script>
+
+	<mx:DataGrid id="elementGrid" dataProvider="{collection}" editable="true" columns="{_columns}" width="50%"/>
+
+	<mx:VBox>
+		<mx:Button label="Add"
+			click="addElement()"/>
+		<mx:Button label="Remove"
+			enabled="{Boolean(elementGrid.selectedItem)}"
+			click="removeElement()"/>
+	</mx:VBox>
+	
+	<mx:Spacer width="50%"/>
+</mx:HBox>

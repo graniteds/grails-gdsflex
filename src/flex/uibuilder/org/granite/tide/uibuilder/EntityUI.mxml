@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<mx:VBox
+    xmlns:mx="http://www.adobe.com/2006/mxml"
+    xmlns="*"
+    width="100%"
+    creationComplete="buildColumns(); list()">
+   
+    <mx:Script>
+        <![CDATA[
+        	import org.granite.tide.uibuilder.events.EndEditEntityEvent;
+        	import org.granite.tide.Tide;
+        	import org.granite.tide.uibuilder.events.ListEntityEvent;
+        	import org.granite.tide.BaseContext;
+        	import mx.events.PropertyChangeEvent;
+        	import flash.utils.describeType;
+        	import mx.controls.dataGridClasses.DataGridColumn;
+        	import mx.utils.ObjectUtil;
+        	import org.granite.tide.BaseContext;
+        	import flash.utils.getQualifiedClassName;
+            import mx.events.ItemClickEvent;
+            import mx.collections.ArrayCollection;
+            import mx.controls.Alert;
+            import mx.binding.utils.BindingUtils;
+            import org.granite.tide.events.TideUIConversationEvent;
+            import org.granite.tide.events.TideResultEvent;
+            import org.granite.tide.spring.Spring;
+            import org.granite.tide.spring.PagedQuery;
+            import org.granite.tide.uibuilder.events.EditEntityEvent;
+            import org.granite.tide.uibuilder.util.ReflectionUtil;
+            
+            
+            private var _entityClass:Class;
+            private var _entitySubclasses:Array;
+            private var _entityName:String;
+            private var _qualifiedEntityName:String;
+            
+            [Bindable]
+            private var _buttons:Array = new Array();
+            
+            
+            private function upperCaseEntityName():String {
+            	return _entityName.substring(0, 1).toUpperCase() + _entityName.substring(1);
+            }
+            
+            public function set context(context:BaseContext):void {
+            	_context = context;
+            }
+            
+            public function set entityClass(entityClass:Class):void {
+            	if (entityClass != _entityClass) {
+	            	_entityClass = entityClass;
+	            	var className:String = getQualifiedClassName(entityClass);
+	            	_entityName = className.substring(className.lastIndexOf("::")+2).toLowerCase();
+	            	_qualifiedEntityName = className.replace("::", ".").toLowerCase();
+	            	
+	            	Spring.getInstance().addComponent(_entityName + 'Instance', _entityClass, true);
+		            Spring.getInstance().addComponentWithFactory(_entityName + "List", PagedQuery, 
+	    	            { useGrailsController: true, remoteComponentName: _entityName + "Controller", maxResults: 36 }, 
+	    	            false, true, Tide.RESTRICT_UNKNOWN, null, false);
+	        	    Spring.getInstance().addComponentWithFactory(_qualifiedEntityName + ".entityEdit", EntityEdit, 
+	        	    	{ entityClass: _entityClass }, true, true, Tide.RESTRICT_UNKNOWN, null, false);
+	        	    Spring.getInstance().addComponentWithFactory(_qualifiedEntityName + ".entityEditCtl", EntityEditCtl, 
+	        	    	{ entityClass: _entityClass }, true, true, Tide.RESTRICT_UNKNOWN, null, false);
+            	}
+			}
+			
+			public function set entitySubclasses(entitySubclasses:Array):void {
+				_entitySubclasses = entitySubclasses;
+			}
+			
+			
+			[Bindable]
+			protected var _columns:Array = null;
+			protected var _labels:Object = new Object();
+			
+			protected function buildColumns():void {
+        	    _context[_qualifiedEntityName + '.entityUI'] = this;
+        	    
+				var metadata:Array = IEntityMetadataBuilder(_context.tideEntityMetadataBuilder).buildMetadata(_entityClass);
+				
+				var builder:IUIBuilder = _context.meta_getInstance(_qualifiedEntityName + '.tideUIBuilder') as IUIBuilder;
+				if (builder == null)
+					builder = IUIBuilder(_context.tideUIBuilder);
+				_columns = builder.buildListColumns(metadata, elementLabel);
+				
+				for each (var property:Object in metadata)
+					_labels[property.name] = property.label;
+			}
+			
+			protected function elementLabel(item:Object, column:DataGridColumn):String {
+				return item[column.dataField][_labels[column.dataField]];
+			}
+            
+
+            [Bindable]
+            protected var _context:BaseContext;
+           	
+           	
+            [Observer]
+            public function list(event:ListEntityEvent = null):void {
+                _context[_entityName + 'List'].fullRefresh();
+            }
+            
+            private function initButtonBar():void {
+        	    var buttons:Array = new Array();
+        	    buttons.push("New " + upperCaseEntityName());
+        	    buttons.push("Edit " + upperCaseEntityName());
+				for each (var entityClass:Class in _entitySubclasses)
+					buttons.splice(_buttons.length-1, 0, "New " + ReflectionUtil.getUpperCaseEntityName(entityClass));
+				_buttons = buttons;
+            }
+            
+            private function completeButtonBar():void {
+                BindingUtils.bindProperty(bbMain.getChildAt(_buttons.length-1), "enabled", dgList, "selectedItem");
+            }
+           
+            private function clickHandler(event:ItemClickEvent):void {
+                if (event.index == 0)
+                    dispatchEvent(new EditEntityEvent(_entityClass));
+                else if (event.index > 0 && event.index < _buttons.length-1)
+                    dispatchEvent(new EditEntityEvent(_entitySubclasses[event.index-1]));
+                else if (event.index == _buttons.length-1 && dgList.selectedItem)
+                    dispatchEvent(new EditEntityEvent(dgList.selectedItem));
+            }
+			
+			private var _previousSelected:Object = null;
+			
+            [Observer]
+        	public function edit(event:EditEntityEvent):void {
+        		_previousSelected = _context.application.mainStack.selectedChild;
+            	if (_previousSelected !== this)
+            		_context.application.mainStack.selectedChild = this;
+        	}
+			
+            [Observer]
+        	public function endEdit(event:EndEditEntityEvent):void {
+            	_context.application.mainStack.selectedChild = _previousSelected;
+        	}
+        ]]>       
+    </mx:Script>
+   
+    <mx:TabNavigator id="nav" width="100%" height="100%">
+        <mx:VBox label="{upperCaseEntityName() + ' List'}"
+        	width="100%" height="100%" paddingLeft="4" paddingRight="4" paddingTop="4" paddingBottom="4">
+        	
+            <mx:ButtonBar id="bbMain" initialize="initButtonBar()" creationComplete="completeButtonBar()" itemClick="clickHandler(event);"
+            	dataProvider="{_buttons}"/>
+           
+            <mx:DataGrid id="dgList" dataProvider="{_context[_entityName + 'List']}"
+            	columns="{_columns}" 
+            	width="100%" height="100%">
+            </mx:DataGrid>
+            
+            <mx:Button label="Refresh" click="list()"/>
+        </mx:VBox>
+    </mx:TabNavigator>
+   
+</mx:VBox>

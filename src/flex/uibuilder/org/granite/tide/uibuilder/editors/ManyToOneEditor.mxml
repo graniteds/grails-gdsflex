@@ -1,0 +1,59 @@
+<mx:HBox
+    xmlns:mx="http://www.adobe.com/2006/mxml"
+    xmlns="*"
+    creationComplete="init()">
+	
+	<mx:Script>
+        <![CDATA[
+        	import org.granite.tide.events.TideResultEvent;
+        	import org.granite.tide.Component;
+        	import org.granite.tide.BaseContext;
+        	import flash.utils.getQualifiedClassName;
+        	import mx.events.FlexEvent;
+        	
+        	
+			[Bindable]
+			public var entity:Object;
+			
+			[Bindable]
+			public var property:Object;
+			
+			public var _elementClass:Class;
+			private var _entityName:String;
+			private var _elementLabel:String;
+			
+			
+			private function get context():BaseContext {
+				return entity.meta_getEntityManager() as BaseContext;
+			}
+			
+			private function get controller():Component {
+				return context[_entityName + 'Controller'];
+			}
+			
+            public function set elementClass(elementClass:Class):void {
+            	_elementClass = elementClass;
+            	var className:String = getQualifiedClassName(elementClass);
+            	_entityName = className.substring(className.lastIndexOf("::")+2).toLowerCase();
+			}
+			
+			private function init():void {
+				controller.list(context, {offset: 0, max: 100, order: _elementLabel, desc: false}, listResult);
+			}
+			
+			private function listResult(event:TideResultEvent):void {
+            	propertyInput.labelField = context.tideEntityMetadataBuilder.getDisplayLabel(_elementClass);            	
+				propertyInput.dataProvider = context[_entityName + 'InstanceList'];
+				propertyInput.selectedIndex = propertyInput.dataProvider.getItemIndex(property); 
+			}
+			
+			private function valueChanged():void {
+				property = propertyInput.selectedItem;
+			}
+      	]]>
+	</mx:Script>
+
+	<mx:ComboBox id="propertyInput" dataProvider="{context[_entityName + 'InstanceList']}"
+		selectedIndex="{context[_entityName + 'InstanceList'].getItemIndex(property)}"
+		change="valueChanged()"/>
+</mx:HBox>

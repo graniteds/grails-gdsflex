@@ -1,0 +1,120 @@
+<mx:HBox
+    xmlns:mx="http://www.adobe.com/2006/mxml"
+    xmlns="*"
+    width="100%"
+    creationComplete="buildColumns()">
+	
+	<mx:Script>
+        <![CDATA[
+        	import org.granite.tide.events.TideResultEvent;
+        	import org.granite.tide.Component;
+        	import flash.utils.getQualifiedClassName;
+        	import mx.collections.ArrayCollection;
+        	import mx.core.IUIComponent;
+        	import mx.managers.DragManager;
+        	import mx.events.DragEvent;
+        	import org.granite.tide.BaseContext;
+        	import mx.controls.dataGridClasses.DataGridColumn;
+        	import mx.collections.ListCollectionView;
+        	
+        	
+            private function removeElement():void {
+                collection.removeItemAt(elementGrid.selectedIndex);
+            }
+			
+			private function get context():BaseContext {
+				return entity.meta_getEntityManager() as BaseContext;
+			}
+			
+			[Bindable]
+			public var entity:Object;
+			
+			[Bindable]
+			public var collection:ListCollectionView;
+			
+			public var _elementClass:Class;
+			private var _elementName:String;
+			private var _elementLabel:String;
+			
+            public function set elementClass(elementClass:Class):void {
+            	_elementClass = elementClass;
+            	var className:String = getQualifiedClassName(elementClass);
+            	_elementName = className.substring(className.lastIndexOf("::")+2).toLowerCase();
+			}
+			
+			private function elementLabel(element:Object):String {
+				return element[_elementLabel];
+			}
+			
+			private function get controller():Component {
+				return context[_elementName + 'Controller'];
+			}
+			
+			
+			[Bindable]
+			private var _columns:Array = null;
+			
+			private function buildColumns():void {
+				var columns:Array = new Array();
+				
+				var metadata:Array = context.tideEntityMetadataBuilder.buildMetadata(_elementClass);
+	            for each (var property:Object in metadata) {
+	            	if (property.kind == 'simple') {
+						var column:DataGridColumn = new DataGridColumn(property.name);
+						column.headerText = property.name.substring(0, 1).toUpperCase() + property.name.substring(1);
+						columns.push(column);
+	            	}
+				}
+				_columns = columns;
+				
+				var elementClassName:String = getQualifiedClassName(_elementClass);
+				_elementName = elementClassName.substring(elementClassName.lastIndexOf("::")+2).toLowerCase();
+				controller.list(context, {offset: 0, max: 100, order: _elementLabel, desc: false}, listResult);
+			}
+			
+			private function listResult(event:TideResultEvent):void {
+            	existingElements.labelField = context.tideEntityMetadataBuilder.getDisplayLabel(_elementClass);            	
+				existingElements.dataProvider = context[_elementName + 'InstanceList'];
+			}
+            
+            
+        	private function dragEnterHandler(event:DragEvent):void {
+        		var data:Object = event.dragSource.dataForFormat('items');
+	            if (data[0] && (collection == null || collection.getItemIndex(data[0]) < 0)) {
+	                DragManager.acceptDragDrop(event.currentTarget as IUIComponent);
+	                DragManager.showFeedback(DragManager.COPY);
+	            }
+	        }
+        	
+            private function dragDropHandler(event:DragEvent):void {
+        		var data:Object = event.dragSource.dataForFormat('items');
+        		if (collection == null)
+        			collection = new ArrayCollection();
+            	collection.addItem(data[0]);
+            }
+            
+            private function dragOverHandler(event:DragEvent):void {
+                event.preventDefault();
+                
+                event.currentTarget.showDropFeedback(event);
+            
+                if (event.dragSource.hasFormat("items"))
+                    DragManager.showFeedback(DragManager.COPY);
+				else
+	                DragManager.showFeedback(DragManager.NONE);                
+            }
+      	]]>
+	</mx:Script>
+
+	<mx:DataGrid id="elementGrid" dataProvider="{collection}" columns="{_columns}" width="50%"		
+    	dragOver="dragOverHandler(event)"
+    	dragEnter="dragEnterHandler(event)"
+    	dragDrop="dragDropHandler(event)">
+	</mx:DataGrid>
+
+	<mx:Button label="Remove"
+		enabled="{Boolean(elementGrid.selectedItem)}"
+		click="removeElement()"/>
+	
+	<mx:List id="existingElements" dragEnabled="true" width="50%"/>
+</mx:HBox>
