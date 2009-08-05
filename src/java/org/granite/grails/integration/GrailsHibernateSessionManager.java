@@ -25,6 +25,7 @@ import java.lang.reflect.Method;
 
 import org.granite.tide.data.JTAPersistenceContextManager;
 import org.granite.util.Reflections;
+import org.hibernate.Query;
 import org.hibernate.SessionFactory;
 
 /**
@@ -66,24 +67,25 @@ public class GrailsHibernateSessionManager extends JTAPersistenceContextManager 
 	 * @return the attached entity
 	 */
 	@Override
-    public Object mergeEntity(Object entity) {
-        return findEntity(entity);
-    }
-	
-    /**
-     * Finds the entity with the JPA context.
-     * @return the entity with the JPA context.
-     */
-	@Override
-	public Object findEntity(Object entity) {
+	public Object findEntity(Object entity, String[] fetch) {
 		if (entity == null)
 			return null;
 		
 		try {
 			Method getter = (Method)Reflections.getGetterMethod(entity.getClass(), "id");
 			Serializable id = (Serializable)getter.invoke(entity);
-			entity = sessionFactory.getCurrentSession().load(entity.getClass(), id);
-	   	    return entity;
+			
+			if (fetch == null)
+				return sessionFactory.getCurrentSession().load(entity.getClass(), id);
+			
+			for (String f : fetch) {
+				System.out.println("Fetching " + f);
+				
+		        Query q = sessionFactory.getCurrentSession().createQuery("select e from " + entity.getClass().getName() + " e left join fetch e." + f + " where e = :entity");
+		        q.setParameter("entity", entity);
+		        entity = q.uniqueResult();
+			}
+			return entity;
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Could not refresh entity " + entity.getClass(), e);
