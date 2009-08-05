@@ -69,6 +69,22 @@ public class GrailsDomainClass extends JavaEntityBean {
     				c.put(constraint.getName(), "\"" + value.substring(value.indexOf('[')+1, value.lastIndexOf(']')) + "\"");
     			}
     			
+    			if (property.isAssociation()) {
+    				if (property.isOneToOne())
+    					c.put("association", "\"oneToOne\"");
+    				else if (property.isManyToOne())
+    					c.put("association", "\"manyToOne\"");
+    				else if (property.isOneToMany())
+    					c.put("association", "\"oneToMany\"");
+    				else if (property.isManyToMany())
+    					c.put("association", "\"manyToMany\"");
+    				
+        			if (property.isBidirectional())
+        				c.put("bidirectional", "\"true\"");
+    				if (property.isOwningSide())
+    					c.put("owningSide", "\"true\"");
+    			}
+    			
 				this.constraints.put(property.getName(), c);
     		}
     	}
