@@ -78,6 +78,7 @@
           <name>Out</name>
           <name>Observer</name>
           <name>Destroy</name>
+          <name>Id</name>
           <name>Version</name>
           <name>Event</name>
       </keep-as3-metadata>
