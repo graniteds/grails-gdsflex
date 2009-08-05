@@ -19,8 +19,13 @@ grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
 
 target ('installFlexTemplates': "install Flex templates") {
-	ant.copy(todir:"${basedir}/src/templates") {
+	ant.mkdir(dir:"${basedir}/src/templates/artifacts")
+	ant.copy(todir:"${basedir}/src/templates/artifacts") {
 		fileset(dir:"${gdsflexPluginDir}/src/templates/artifacts")
+	}
+	
+	ant.mkdir(dir:"${basedir}/src/templates/scaffolding")
+	ant.copy(todir:"${basedir}/src/templates/scaffolding") {
 		fileset(dir:"${gdsflexPluginDir}/src/templates/scaffolding")
 	}
 }

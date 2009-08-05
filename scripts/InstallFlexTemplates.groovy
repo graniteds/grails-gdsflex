@@ -19,4 +19,4 @@ grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
 includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsInstallFlexTemplates.groovy")
 
-target ('default': "Gas3") { depends(installFlexTemplates) }
+target ('default': "Install Flex templates") { depends(installFlexTemplates) }
