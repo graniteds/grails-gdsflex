@@ -245,7 +245,9 @@ package ${jClass.as3Type.packageName} {
         }<%
                 }
                 if (jProperty.readable) {
-                    if (jProperty == versionField) {%>
+                	if (jProperty == jClass.firstIdentifier) {%>
+        [Id]<%
+                    } else if (jProperty == versionField) {%>
         [Version]<%
                     }%>
         public function get ${jProperty.name}():${jProperty.as3Type.name} {
