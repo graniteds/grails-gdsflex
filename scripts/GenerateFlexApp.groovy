@@ -17,8 +17,9 @@
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
-includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsInstallFlexTemplates.groovy")
+includeTargets << grailsScript("_GrailsPackage")
 includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
+includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsInstallFlexTemplates.groovy")
 includeTargets << grailsScript("_GrailsCompile")
 
 
@@ -27,6 +28,7 @@ import groovy.text.SimpleTemplateEngine
 
 
 target ('default': "generate Flex app") {
+	depends(packageApp)
 	depends(installFlexTemplates)
 	depends(gas3)
 	
