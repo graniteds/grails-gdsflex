@@ -101,18 +101,24 @@
     // Base actions for gdsflex
          
     def find = {
+    	// Lookup an entity instance by id
+    	
         def ${propertyName} = ${className}.get(params.id)
 
         return [${propertyName}: ${propertyName}]
     }
 
     def remove = {
+		// Remove an entity by id (delete cannot be used from Flex because it's a keyword)    
+    
         def ${propertyName} = ${className}.get(params.id)
         if (${propertyName})
             ${propertyName}.delete()
     }
 
     def merge = {
+    	// Merge detached entity from Flex
+    	
         def ${propertyName} = params.${propertyName}
         
         if (!${propertyName}.validate())
@@ -124,6 +130,8 @@
     }
 
     def persist = {
+    	// Persist a new entity received from Flex
+    	
         def ${propertyName} = params.${propertyName}
         
         if (!${propertyName}.validate())
@@ -135,13 +143,19 @@
     }
     
     def upload = {
+    	// Handle file upload from a Flex FileReference
+    	// Supports byte[] or Blob mappings
+    	
     	def ${propertyName} = ${className}.get(params.id)
     	
     	if (params[params.property]) {
     		if (java.sql.Blob.class.isAssignableFrom(${className}.metaClass.getMetaProperty(params.property).type))
     			${propertyName}[params.property] = org.hibernate.Hibernate.createBlob(params[params.property].getInputStream())
-    		else
-    			${propertyName}[params.property] = params[params.property]
+    		else {
+    			def baos = new java.io.ByteArrayOutputStream()
+    			baos << params[params.property].getInputStream()
+    			${propertyName}[params.property] = baos.toByteArray()
+    		}
     	}
     	else
     		${propertyName}[params.property] = null;
@@ -158,10 +172,13 @@
     	def output = graniteConfig.newAMF3Serializer(baos)
     	output.writeObject(${propertyName})
     	output.flush()
-    	render(baos.encodeAsBase64())
+    	render(org.granite.util.Base64.encodeToString(baos.toByteArray(), false))
     }
     
     def download = {
+    	// Handle download of a binary property
+    	// Supports byte[] and Blob
+    	
     	def ${propertyName} = ${className}.get(params.id)
     
     	if (${propertyName}[params.property] instanceof java.sql.Blob)
