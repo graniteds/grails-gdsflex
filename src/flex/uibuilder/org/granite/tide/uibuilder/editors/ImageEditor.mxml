@@ -4,25 +4,33 @@
 	
 	<mx:Script>
         <![CDATA[
-        	import mx.controls.Alert;
-        	import mx.utils.Base64Decoder;
-        	import org.granite.tide.events.TideResultEvent;
-        	import org.granite.tide.Component;
-        	import org.granite.tide.BaseContext;
         	import flash.events.Event;
         	import flash.utils.getQualifiedClassName;
         	import flash.net.FileReference;
-        	import mx.events.FlexEvent;
+        	import mx.utils.Base64Decoder;
+        	import mx.controls.Alert;
+        	import mx.controls.Image;
+        	import org.granite.tide.events.TideResultEvent;
+        	import org.granite.tide.Component;
+        	import org.granite.tide.BaseContext;
         	
         	
 			[Bindable]
-			public var entity:Object;
+			private var _entity:Object;
+			
+			public function set entity(entity:Object):void {
+				_entity = entity;
+				dispatchEvent(new Event("imageChange"));
+			}
 			
 			[Bindable]
 			public var propertyName:String;
 			
 			[Bindable]
-			public var fileRef:FileReference;			
+			public var fileRef:FileReference;
+			
+			[Bindable]
+			public var byteArray:ByteArray;
 			
             
             private function uploadImage():void {
@@ -32,11 +40,11 @@
             }
             
             private function selectImage(event:Event):void {
-            	var className:String = getQualifiedClassName(entity);
+            	var className:String = getQualifiedClassName(_entity);
             	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
             	fileRef.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, uploadCompleteHandler);
             	fileRef.addEventListener(ProgressEvent.PROGRESS, uploadProgressHandler);
-            	fileRef.upload(new URLRequest("./" + entityName + "/upload?id=" + entity.id + "&property=" + propertyName), propertyName);
+            	fileRef.upload(new URLRequest("./" + entityName + "/upload?id=" + _entity.id + "&property=" + propertyName), propertyName);
             }          
             
             private function uploadProgressHandler(event:ProgressEvent):void {
@@ -49,9 +57,9 @@
             }
                         
             private function deleteImage():void {
-            	var className:String = getQualifiedClassName(entity);
+            	var className:String = getQualifiedClassName(_entity);
             	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
-            	var req:URLRequest = new URLRequest("./" + entityName + "/upload?id=" + entity.id + "&property=" + propertyName);
+            	var req:URLRequest = new URLRequest("./" + entityName + "/upload?id=" + _entity.id + "&property=" + propertyName);
             	var loader:URLLoader = new URLLoader(req);
             	loader.addEventListener(Event.COMPLETE, deleteCompleteHandler);
             }
@@ -64,29 +72,31 @@
             	var buf:Base64Decoder = new Base64Decoder();
             	buf.decode(data);
             	var obj:Object = buf.toByteArray().readObject();
-            	entity.meta_getEntityManager().meta_mergeExternal(obj, entity);
-            	entity.meta_getEntityManager().meta_mergeInGlobalContext();
+            	_entity.meta_getEntityManager().meta_mergeExternal(obj, _entity);
+            	_entity.meta_getEntityManager().meta_mergeInGlobalContext();
+            	if (_entity[propertyName] is ByteArray)
+            		byteArray = _entity[propertyName] as ByteArray;
             	image.source = null;
-            	dispatchEvent(new Event("imageChange"));            	
+            	dispatchEvent(new Event("imageChange"));        	
             }
             
             
             [Bindable(event="imageChange")]
-            private function getImageSource(entity:Object, propertyName:String):String {
-            	if (entity[propertyName] == null)
+            private function getImageSource(entity:Object, propertyName:String):Object {
+            	if (entity == null || entity[propertyName] == null)
             		return null;
             	var className:String = getQualifiedClassName(entity);
             	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
             	return "./" + entityName + "/download?id=" + entity.id + "&property=" + propertyName;
-            }            
+            }
       	]]>
 	</mx:Script>
 	
-	<mx:Image id="image" source="{getImageSource(entity, propertyName)}"/>
+	<mx:Image id="image" source="{getImageSource(_entity, propertyName)}"/>
 	
 	<mx:VBox>
 		<mx:Button id="upload" label="Upload image" click="uploadImage()"/>
 		<mx:Button id="remove" label="Delete image" click="deleteImage()"
-			enabled="{getImageSource(entity, propertyName) != null}"/>
+			enabled="{getImageSource(_entity, propertyName) != null}"/>
 	</mx:VBox>
 </mx:HBox>
