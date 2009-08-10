@@ -1,5 +1,7 @@
 package org.granite.grails.gas3;
 
+import groovy.lang.GroovyObject;
+
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
@@ -21,8 +23,6 @@ import org.granite.generator.as3.reflect.JavaEntityBean;
 import org.granite.generator.as3.reflect.JavaProperty;
 import org.granite.generator.as3.reflect.JavaTypeFactory;
 import org.granite.grails.integration.GrailsExternalizer;
-
-import groovy.lang.GroovyObject;
 
 
 public class GrailsDomainClass extends JavaEntityBean {
@@ -59,9 +59,21 @@ public class GrailsDomainClass extends JavaEntityBean {
     			if ("uid".equals(property.getName()) || "version".equals(property.getName()) || "id".equals(property.getName()))
     				continue;
     			
-    			Collection<Constraint> appliedConstraints = constraints.get(property.getName()).getAppliedConstraints();
+    			ConstrainedProperty cp = constraints.get(property.getName());
+    			Collection<Constraint> appliedConstraints = cp.getAppliedConstraints();
     	        
     			Map<String, String> c = new HashMap<String, String>();
+    			if (!cp.isDisplay())
+    				c.put("display", "\"false\"");
+    			if (!cp.isEditable())
+    				c.put("editable", "\"false\"");
+    			if (cp.isPassword())
+    				c.put("password", "\"true\"");
+    			if (cp.getWidget() != null)
+    				c.put("widget", "\"" + cp.getWidget() + "\"");
+    			if (cp.getFormat() != null)
+    				c.put("format", "\"" + cp.getFormat() + "\"");
+    			
     			for (Constraint constraint : appliedConstraints) {
     				if ("org.codehaus.groovy.grails.validation.NullableConstraint".equals(constraint.getClass().getName()))
     					continue;
