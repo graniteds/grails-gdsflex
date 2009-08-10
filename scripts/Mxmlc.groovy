@@ -19,6 +19,6 @@ grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
 includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
 
-target ('default': "complite the mxml files") {
+target ('default': "compile the mxml files") {
 	 depends(flexCompile)
  }
