@@ -80,6 +80,7 @@ target(gas3: "Gas3") {
         
 		Ant.gas3(outputdir: outDir, 
 			tide: "true", 
+			as3TypeFactory: "org.granite.grails.gas3.GrailsAs3TypeFactory",
         	transformer: "org.granite.grails.gas3.GrailsAs3GroovyTransformer",
         	entitybasetemplate: "class:org/granite/grails/template/tideDomainClassBase.gsp",
 			classpathref: "gas3.generate.classpath") {
