@@ -149,8 +149,9 @@
     	def ${propertyName} = ${className}.get(params.id)
     	
     	if (params[params.property]) {
-    		if (java.sql.Blob.class.isAssignableFrom(${className}.metaClass.getMetaProperty(params.property).type))
+    		if (java.sql.Blob.class.isAssignableFrom(${className}.metaClass.getMetaProperty(params.property).type)) {
     			${propertyName}[params.property] = org.hibernate.Hibernate.createBlob(params[params.property].getInputStream())
+    		}
     		else {
     			def baos = new java.io.ByteArrayOutputStream()
     			baos << params[params.property].getInputStream()
@@ -162,16 +163,19 @@
     	
     	${propertyName}.save(flush:true)
     	
+    	// Init GraniteDS thread context (we are not in a normal AMF request)
     	def graniteConfig = org.granite.config.GraniteConfig.loadConfig(servletContext)
     	def servicesConfig = org.granite.config.flex.ServicesConfig.loadConfig(servletContext)
         def context = org.granite.messaging.webapp.HttpGraniteContext.createThreadIntance(
             graniteConfig, servicesConfig, servletContext,
             request, response
         ) 	
+    	// Encode updated entity in AMF to return to Flex 
         def baos = new java.io.ByteArrayOutputStream()
     	def output = graniteConfig.newAMF3Serializer(baos)
     	output.writeObject(${propertyName})
     	output.flush()
+    	// Encode in Base64 (Flex file upload responses can only be strings) 
     	render(org.granite.util.Base64.encodeToString(baos.toByteArray(), false))
     }
     

@@ -18,6 +18,7 @@
         		var targetEntity:Object =  data[DataGridListData(listData).dataField];
             	var className:String = getQualifiedClassName(targetEntity);
             	var qualifiedEntityName:String = className.replace("::", ".").toLowerCase();
+            	// Dispatch the EditEntityEvent in the subcontext of the clicked entity
 				context[qualifiedEntityName].dispatchEvent(new EditEntityEvent(targetEntity));        	
 			}
       	]]>

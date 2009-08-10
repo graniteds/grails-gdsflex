@@ -1,6 +1,6 @@
 /*
   GRANITE DATA SERVICES
-  Copyright (C) 2007-2008 ADEQUATE SYSTEMS SARL
+  Copyright (C) 2009 ADEQUATE SYSTEMS SARL
 
   This file is part of Granite Data Services.
 

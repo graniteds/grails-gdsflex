@@ -30,6 +30,12 @@
             protected var _entityName:String;
             protected var _qualifiedEntityName:String;
             
+	        /**
+	         * 	Set the current entity class
+	         *  By default will be set by injection from EntityUI
+	         *  
+	         *  @param entityClass entity class
+	         */
             public function set entityClass(entityClass:Class):void {
             	var className:String = getQualifiedClassName(entityClass);
             	_entityName = className.substring(className.lastIndexOf("::")+2).toLowerCase();
@@ -37,8 +43,10 @@
 			}
            	
            	public function get entityInstance():Object {
-           		if (context == null || _entityName == null)
+           		if (context == null || _entityName == null) {
+           			// Can be null during initialization phases
            			return null;
+           		}
            		return context[_entityName + 'Instance'];
            	}
            	
