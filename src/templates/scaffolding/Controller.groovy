@@ -100,6 +100,12 @@
     
     // Base actions for gdsflex
          
+    def find = {
+        def ${propertyName} = ${className}.get(params.id)
+
+        return [${propertyName}: ${propertyName}]
+    }
+
     def remove = {
         def ${propertyName} = ${className}.get(params.id)
         if (${propertyName})
@@ -127,5 +133,40 @@
         
         return [${propertyName}: ${propertyName}]
     }
-     
+    
+    def upload = {
+    	def ${propertyName} = ${className}.get(params.id)
+    	
+    	if (params[params.property]) {
+    		if (java.sql.Blob.class.isAssignableFrom(${className}.metaClass.getMetaProperty(params.property).type))
+    			${propertyName}[params.property] = org.hibernate.Hibernate.createBlob(params[params.property].getInputStream())
+    		else
+    			${propertyName}[params.property] = params[params.property]
+    	}
+    	else
+    		${propertyName}[params.property] = null;
+    	
+    	${propertyName}.save(flush:true)
+    	
+    	def graniteConfig = org.granite.config.GraniteConfig.loadConfig(servletContext)
+    	def servicesConfig = org.granite.config.flex.ServicesConfig.loadConfig(servletContext)
+        def context = org.granite.messaging.webapp.HttpGraniteContext.createThreadIntance(
+            graniteConfig, servicesConfig, servletContext,
+            request, response
+        ) 	
+        def baos = new java.io.ByteArrayOutputStream()
+    	def output = graniteConfig.newAMF3Serializer(baos)
+    	output.writeObject(${propertyName})
+    	output.flush()
+    	render(baos.encodeAsBase64())
+    }
+    
+    def download = {
+    	def ${propertyName} = ${className}.get(params.id)
+    
+    	if (${propertyName}[params.property] instanceof java.sql.Blob)
+    		response.outputStream << ${propertyName}[params.property].getBinaryStream()
+    	else
+    		response.outputStream << ${propertyName}[params.property];
+    }
 }
