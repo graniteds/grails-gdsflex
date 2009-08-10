@@ -36,7 +36,9 @@
             	_qualifiedEntityName = className.replace("::", ".").toLowerCase();
 			}
            	
-           	protected function get entityInstance():Object {
+           	public function get entityInstance():Object {
+           		if (context == null || _entityName == null)
+           			return null;
            		return context[_entityName + 'Instance'];
            	}
            	

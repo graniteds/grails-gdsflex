@@ -7,6 +7,7 @@
 
 package org.granite.tide.uibuilder {
 	
+	import flash.net.FileReference;
 	import flash.utils.describeType;
 	
 	import mx.collections.ArrayCollection;
@@ -14,6 +15,7 @@ package org.granite.tide.uibuilder {
 	import mx.controls.dataGridClasses.DataGridColumn;
 	import mx.core.ClassFactory;
 	import mx.core.IUIComponent;
+	import mx.formatters.Formatter;
 	import mx.utils.ObjectUtil;
 	import mx.utils.StringUtil;
 	import mx.validators.*;
@@ -23,25 +25,37 @@ package org.granite.tide.uibuilder {
 	
 	
 	[Name("tideUIBuilder")]
+	[Path("fuck")]
     public class DefaultUIBuilder implements IUIBuilder {
     	
     	[In]
     	public var context:Context;
     	
-    	public function buildListColumns(metadata:Array, labelFunction:Function):Array {
+    	public var numberFormatter:Formatter;
+    	
+    	public var dateFormatter:Formatter;
+    	
+    	
+    	public function buildListColumns(metadata:Array, labelFunction:Function, simpleOnly:Boolean = false):Array {
 			var columns:Array = new Array();
 			
-			var column:DataGridColumn = new DataGridColumn("id");
-			column.headerText = "Id";
-			columns.push(column);
+			if (!simpleOnly) {
+				var column:DataGridColumn = new DataGridColumn("id");
+				column.headerText = "Id";
+				columns.push(column);
+			}
 			
 			for each (var property:Object in metadata) {
 				if (property.kind == 'simple') {
 					column = new DataGridColumn(property.name);
 					column.headerText = property.name.substring(0, 1).toUpperCase() + property.name.substring(1);
+					if (property.type == Number && numberFormatter != null)
+						column.labelFunction = formatNumber;
+					if (property.type == Date && dateFormatter != null)
+						column.labelFunction = formatDate;
 					columns.push(column);
             	}
-            	else if (property.kind == 'manyToOne') {
+            	else if (property.kind == 'manyToOne' && !simpleOnly) {
 					column = new DataGridColumn(property.name);
 					column.headerText = property.name.substring(0, 1).toUpperCase() + property.name.substring(1);
 					column.labelFunction = labelFunction;
@@ -54,9 +68,21 @@ package org.granite.tide.uibuilder {
 			
 			return columns;
     	}
+    	
+    	protected function formatNumber(item:Object, column:DataGridColumn):String {
+    		if (item == null || item[column.dataField] == null)
+    			return "";
+    		return numberFormatter.format(item[column.dataField]);
+    	}
+    	
+    	protected function formatDate(item:Object, column:DataGridColumn):String {
+    		if (item == null || item[column.dataField] == null)
+    			return "";
+    		return dateFormatter.format(item[column.dataField]);
+    	}
 
     	
-    	public function buildEditForm(metadata:Array, form:Object):Array {
+    	public function buildEditForm(metadata:Array, form:Object, create:Boolean):Array {
 			var properties:Array = new Array();
 			
 			var desc:XML = describeType(form);
@@ -73,7 +99,7 @@ package org.granite.tide.uibuilder {
 				}
 				
 				if (!found) {
-	            	var componentDescriptor:EntityProperty = buildEditFormItem(property);
+	            	var componentDescriptor:EntityProperty = buildEditFormItem(property, create);
 	            	
 	            	if (componentDescriptor)
 	            		properties.push(componentDescriptor);
@@ -83,7 +109,7 @@ package org.granite.tide.uibuilder {
 			return properties;
     	}
     	
-    	protected function buildEditFormItem(property:Object):EntityProperty {
+    	protected function buildEditFormItem(property:Object, create:Boolean):EntityProperty {
         	var component:Object = null;
         	var editorDataField:String = null;
         	var entityField:String = null;
@@ -101,7 +127,7 @@ package org.granite.tide.uibuilder {
         		editorDataField = "text";
         	}
         	else if (property.type == String) {
-        		if (property.widget == 'textarea' || (property.maxSize && property.maxSize > 255)) {
+        		if (property.widget == 'textArea' || (property.maxSize && property.maxSize > 255)) {
         			component = new TextArea();
         			editorDataField = "text";
         			percentWidth = 100;
@@ -134,6 +160,20 @@ package org.granite.tide.uibuilder {
         	else if (property.type == Date) {
         		component = new DateField();
         		editorDataField = "selectedDate";
+        	}
+        	else if (property.type == FileReference && !create) {
+        		if (property.widget == "image") {
+        			component = new ImageEditor();
+        			component.propertyName = property.name;
+        			editorDataField = "fileRef";
+        			entityField = "entity";
+        		}
+        		else {
+        			component = new BinaryEditor();
+        			component.propertyName = property.name;
+        			editorDataField = "fileRef";
+        			entityField = "entity";
+        		}
         	}
         	else if (property.kind == 'manyToOne') {
         		component = new ManyToOneEditor();

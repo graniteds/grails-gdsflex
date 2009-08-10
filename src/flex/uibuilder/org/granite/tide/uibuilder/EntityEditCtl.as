@@ -16,6 +16,7 @@ package org.granite.tide.uibuilder {
 	
 	import org.granite.tide.events.TideFaultEvent;
 	import org.granite.tide.events.TideResultEvent;
+	import org.granite.tide.TideResponder;
 	import org.granite.tide.spring.Context;
 	import org.granite.tide.uibuilder.events.CancelEntityEvent;
 	import org.granite.tide.uibuilder.events.EditEntityEvent;
@@ -23,6 +24,7 @@ package org.granite.tide.uibuilder {
 	import org.granite.tide.uibuilder.events.ListEntityEvent;
 	import org.granite.tide.uibuilder.events.RemoveEntityEvent;
 	import org.granite.tide.uibuilder.events.SaveEntityEvent;
+	import org.granite.tide.uibuilder.events.ShowEntityEvent;
 	
 	
     public class EntityEditCtl {
@@ -71,24 +73,45 @@ package org.granite.tide.uibuilder {
 			if (builder == null)
 				builder = IUIBuilder(context.tideUIBuilder);
 			
-			_properties = builder.buildEditForm(metadata, form);
+			_properties = builder.buildEditForm(metadata, form, isNaN(entityInstance.id));
 		}
     	
     	
-        // This observer will be called when someone dispatches the editBook Tide event.
+    	[Observer]
+    	public function show(event:ShowEntityEvent):void {
+    		entityClass = event.entityClass;
+    		
+            context[_entityName + 'Controller'].find(context, {id: event.id}, 
+            	new TideResponder(findResult, null, event.id));
+    	}
+    	
+    	private function findResult(event:TideResultEvent, id:Number):void {
+    		var entityInstance:Object = context[_entityName + "Instance"];
+    		if (entityInstance == null)
+    			Alert.show(upperCaseEntityName() + " not found with id " + id);
+    		else
+				dispatchEvent(new EditEntityEvent(entityInstance));
+    	}
+    	
+    	
+        // This observer will be called when someone dispatches the EditEntityEvent Tide event.
         [Observer]
         public function edit(event:EditEntityEvent):void {
         	var entityInstance:Object = event.entityInstance;
         	
             create = entityInstance is Class;
             if (create)
-                entityInstance = new entityInstance();
+                entityInstance = entityInstance is Class ? new entityInstance() : new _entityClass();
             
             context[_entityName + "Instance"] = entityInstance;
             
+            showEditForm();
+        }
+        
+        private function showEditForm():void {            
             _editForm = context.entityEdit;
             
-            buildForm(entityInstance, _editForm);
+            buildForm(context[_entityName + "Instance"], _editForm);
             
             _editForm.entityClass = _entityClass;
             _editForm.label = create 

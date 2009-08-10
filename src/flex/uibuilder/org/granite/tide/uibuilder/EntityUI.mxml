@@ -4,10 +4,14 @@
     xmlns:mx="http://www.adobe.com/2006/mxml"
     xmlns="*"
     width="100%"
+    creationPolicy="none"
+    show="updateURL()"
     creationComplete="buildColumns(); list()">
    
     <mx:Script>
         <![CDATA[
+        	import mx.managers.BrowserManager;
+        	import org.granite.tide.uibuilder.events.ShowEntityEvent;
         	import org.granite.tide.uibuilder.events.EndEditEntityEvent;
         	import org.granite.tide.Tide;
         	import org.granite.tide.uibuilder.events.ListEntityEvent;
@@ -32,6 +36,7 @@
             
             private var _entityClass:Class;
             private var _entitySubclasses:Array;
+            [Bindable]
             private var _entityName:String;
             private var _qualifiedEntityName:String;
             
@@ -51,18 +56,30 @@
             	if (entityClass != _entityClass) {
 	            	_entityClass = entityClass;
 	            	var className:String = getQualifiedClassName(entityClass);
-	            	_entityName = className.substring(className.lastIndexOf("::")+2).toLowerCase();
-	            	_qualifiedEntityName = className.replace("::", ".").toLowerCase();
+	            	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
+	            	var qualifiedEntityName:String = className.replace("::", ".").toLowerCase();
 	            	
-	            	Spring.getInstance().addComponent(_entityName + 'Instance', _entityClass, true);
-		            Spring.getInstance().addComponentWithFactory(_entityName + "List", PagedQuery, 
-	    	            { useGrailsController: true, remoteComponentName: _entityName + "Controller", maxResults: 36 }, 
+	            	Spring.getInstance().addComponent(entityName + 'Instance', _entityClass, true, false);
+		            Spring.getInstance().addComponentWithFactory(entityName + "List", PagedQuery, 
+	    	            { useGrailsController: true, remoteComponentName: entityName + "Controller", maxResults: 36 }, 
 	    	            false, true, Tide.RESTRICT_UNKNOWN, null, false);
-	        	    Spring.getInstance().addComponentWithFactory(_qualifiedEntityName + ".entityEdit", EntityEdit, 
+	        	    Spring.getInstance().addComponentWithFactory(qualifiedEntityName + ".entityEdit", EntityEdit, 
 	        	    	{ entityClass: _entityClass }, true, true, Tide.RESTRICT_UNKNOWN, null, false);
-	        	    Spring.getInstance().addComponentWithFactory(_qualifiedEntityName + ".entityEditCtl", EntityEditCtl, 
+	        	    Spring.getInstance().addComponentWithFactory(qualifiedEntityName + ".entityEditCtl", EntityEditCtl, 
 	        	    	{ entityClass: _entityClass }, true, true, Tide.RESTRICT_UNKNOWN, null, false);
+	        	    
+	        	    _entityName = entityName;
+	        	    _qualifiedEntityName = qualifiedEntityName;
+	        	    	
+    	    		callLater(init);
             	}
+            }
+            
+            private function init():void {
+            	if (_context == null)
+            		_context = Spring.getInstance().getContext();
+    	    	_context[_qualifiedEntityName + ".entityUI"] = this;
+	    		_context.urlMapping.addMapping(_entityName, _qualifiedEntityName + ".entityUI");
 			}
 			
 			public function set entitySubclasses(entitySubclasses:Array):void {
@@ -75,17 +92,15 @@
 			protected var _labels:Object = new Object();
 			
 			protected function buildColumns():void {
-        	    _context[_qualifiedEntityName + '.entityUI'] = this;
-        	    
 				var metadata:Array = IEntityMetadataBuilder(_context.tideEntityMetadataBuilder).buildMetadata(_entityClass);
+				
+				for each (var property:Object in metadata)
+					_labels[property.name] = property.label;
 				
 				var builder:IUIBuilder = _context.meta_getInstance(_qualifiedEntityName + '.tideUIBuilder') as IUIBuilder;
 				if (builder == null)
 					builder = IUIBuilder(_context.tideUIBuilder);
 				_columns = builder.buildListColumns(metadata, elementLabel);
-				
-				for each (var property:Object in metadata)
-					_labels[property.name] = property.label;
 			}
 			
 			protected function elementLabel(item:Object, column:DataGridColumn):String {
@@ -98,7 +113,7 @@
            	
            	
             [Observer]
-            public function list(event:ListEntityEvent = null):void {
+            public function refreshList(event:ListEntityEvent = null):void {
                 _context[_entityName + 'List'].fullRefresh();
             }
             
@@ -124,35 +139,72 @@
                     dispatchEvent(new EditEntityEvent(dgList.selectedItem));
             }
 			
-			private var _previousSelected:Object = null;
-			
             [Observer]
         	public function edit(event:EditEntityEvent):void {
-        		_previousSelected = _context.application.mainStack.selectedChild;
-            	if (_previousSelected !== this)
-            		_context.application.mainStack.selectedChild = this;
+        		dispatchEvent(new Event("showEntityUI", true));
         	}
 			
             [Observer]
         	public function endEdit(event:EndEditEntityEvent):void {
-            	_context.application.mainStack.selectedChild = _previousSelected;
+        		dispatchEvent(new Event("endEntityUI", true));
         	}
-        ]]>       
+        	
+        	
+        	private function setURL(url:String):void {
+        		_context.urlMapping.updateURL(_entityName + "/" + url);
+        	}
+			
+			private function updateURL():void {
+				if (nav.selectedIndex == 0)
+					callLater(setURL, [ "list" ]);
+				else {
+					var entityInstance:Object = Object(nav.selectedChild).entityInstance;
+					callLater(setURL, [ entityInstance.id ? "show/" + entityInstance.id : "create" ]);
+				}
+			}
+        	
+        	[Path("list")]
+        	public function list():void {
+        		dispatchEvent(new Event("showEntityUI", true));
+        		if (nav != null)
+        			nav.selectedIndex = 0;
+        	}
+        	
+        	[Path("create")]
+        	public function create():void {
+        		dispatchEvent(new Event("showEntityUI", true));
+        		_context.application.callLater(doCreate);
+        	}
+        	
+        	private function doCreate():void {
+                dispatchEvent(new EditEntityEvent(_entityClass));
+        	}
+        	
+        	[Path("show/{id}")]
+        	public function show(id:Number):void {
+        		dispatchEvent(new Event("showEntityUI", true));
+        		_context.application.callLater(doShow, [id]);
+        	}
+        	
+        	private function doShow(id:Number):void {
+                dispatchEvent(new ShowEntityEvent(_entityClass, id));
+        	}
+        ]]>
     </mx:Script>
    
-    <mx:TabNavigator id="nav" width="100%" height="100%">
+    <mx:TabNavigator id="nav" width="100%" height="100%" change="updateURL()">
         <mx:VBox label="{upperCaseEntityName() + ' List'}"
         	width="100%" height="100%" paddingLeft="4" paddingRight="4" paddingTop="4" paddingBottom="4">
         	
             <mx:ButtonBar id="bbMain" initialize="initButtonBar()" creationComplete="completeButtonBar()" itemClick="clickHandler(event);"
             	dataProvider="{_buttons}"/>
            
-            <mx:DataGrid id="dgList" dataProvider="{_context[_entityName + 'List']}"
+            <mx:DataGrid id="dgList" dataProvider="{_entityName ? _context[_entityName + 'List'] : null}"
             	columns="{_columns}" 
             	width="100%" height="100%">
             </mx:DataGrid>
             
-            <mx:Button label="Refresh" click="list()"/>
+            <mx:Button label="Refresh" click="refreshList()"/>
         </mx:VBox>
     </mx:TabNavigator>
    

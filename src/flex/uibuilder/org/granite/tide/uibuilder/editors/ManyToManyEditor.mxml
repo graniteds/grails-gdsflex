@@ -6,6 +6,8 @@
 	
 	<mx:Script>
         <![CDATA[
+        	import org.granite.tide.uibuilder.IUIBuilder;
+        	import org.granite.tide.uibuilder.IEntityMetadataBuilder;
         	import org.granite.tide.events.TideResultEvent;
         	import org.granite.tide.Component;
         	import flash.utils.getQualifiedClassName;
@@ -55,17 +57,8 @@
 			private var _columns:Array = null;
 			
 			private function buildColumns():void {
-				var columns:Array = new Array();
-				
-				var metadata:Array = context.tideEntityMetadataBuilder.buildMetadata(_elementClass);
-	            for each (var property:Object in metadata) {
-	            	if (property.kind == 'simple') {
-						var column:DataGridColumn = new DataGridColumn(property.name);
-						column.headerText = property.name.substring(0, 1).toUpperCase() + property.name.substring(1);
-						columns.push(column);
-	            	}
-				}
-				_columns = columns;
+				var metadata:Array = IEntityMetadataBuilder(context.tideEntityMetadataBuilder).buildMetadata(_elementClass);
+				_columns = IUIBuilder(context.tideUIBuilder).buildListColumns(metadata, null, true);
 				
 				var elementClassName:String = getQualifiedClassName(_elementClass);
 				_elementName = elementClassName.substring(elementClassName.lastIndexOf("::")+2).toLowerCase();

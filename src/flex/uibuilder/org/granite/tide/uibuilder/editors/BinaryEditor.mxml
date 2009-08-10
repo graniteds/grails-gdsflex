@@ -1,0 +1,100 @@
+<mx:HBox
+    xmlns:mx="http://www.adobe.com/2006/mxml"
+    xmlns="*">
+	
+	<mx:Script>
+        <![CDATA[
+        	import mx.utils.Base64Decoder;
+        	import mx.controls.Alert;
+        	import org.granite.tide.events.TideResultEvent;
+        	import org.granite.tide.Component;
+        	import org.granite.tide.BaseContext;
+        	import flash.events.Event;
+        	import flash.utils.getQualifiedClassName;
+        	import flash.net.FileReference;
+        	import mx.events.FlexEvent;
+        	
+        	
+			[Bindable]
+			public var entity:Object;
+			
+			[Bindable]
+			public var propertyName:String;
+			
+			[Bindable]
+			public var fileRef:FileReference;
+			
+			
+            
+            private function uploadFile():void {
+            	fileRef = new FileReference();
+            	fileRef.addEventListener(Event.SELECT, selectFile, false, 0, true);
+            	fileRef.browse();
+            }
+            
+            private function selectFile(event:Event):void {
+            	var className:String = getQualifiedClassName(entity);
+            	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
+            	fileRef.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, uploadCompleteHandler);
+            	fileRef.addEventListener(ProgressEvent.PROGRESS, uploadProgressHandler);
+            	fileRef.upload(new URLRequest("./" + entityName + "/upload?id=" + entity.id), propertyName);
+            }          
+            
+            private function uploadProgressHandler(event:ProgressEvent):void {
+            	upload.label = "Upload file (" + (event.bytesLoaded*100.0/event.bytesTotal) + "%)";
+            }
+                        
+            private function deleteFile():void {
+            	var className:String = getQualifiedClassName(entity);
+            	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
+            	var req:URLRequest = new URLRequest("./" + entityName + "/upload?id=" + entity.id + "&property=" + propertyName);
+            	var loader:URLLoader = new URLLoader(req);
+            	loader.addEventListener(Event.COMPLETE, uploadCompleteHandler);
+            }
+            
+            private function uploadCompleteHandler(event:DataEvent):void {
+            	var buf:Base64Decoder = new Base64Decoder();
+            	buf.decode(event.data);
+            	var obj:Object = buf.toByteArray().readObject();
+            	entity.meta_getEntityManager().meta_mergeExternal(obj, entity);
+            	entity.meta_getEntityManager().meta_mergeInGlobalContext();
+            	Alert.show("File uploaded");
+            	upload.label = "Upload file";            	
+            }
+            
+            private function downloadFile():void {
+            	var className:String = getQualifiedClassName(entity);
+            	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
+            	fileRef = new FileReference();
+            	fileRef.addEventListener(Event.COMPLETE, downloadCompleteHandler);
+            	fileRef.addEventListener(ProgressEvent.PROGRESS, downloadProgressHandler);
+            	fileRef.download(new URLRequest("./" + entityName + "/download?id=" + entity.id + "&property=" + propertyName));
+            }
+            
+            private function downloadProgressHandler(event:ProgressEvent):void {
+            	download.label = "Download file (" + (event.bytesLoaded*100.0/event.bytesTotal) + "%)";
+            }
+            
+            private function downloadCompleteHandler(event:Event):void {
+            	Alert.show("File downloaded");
+            	download.label = "Download file";            	
+            }
+            
+          	private function getFileSource(entity:Object, propertyName:String):String {
+            	if (entity[propertyName] == null)
+            		return null;
+            	var className:String = getQualifiedClassName(entity);
+            	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
+            	return "./" + entityName + "/download?id=" + entity.id + "&property=" + propertyName;
+           	}
+		]]>
+	</mx:Script>
+
+	<mx:Button id="upload" label="Upload file" click="uploadFile()"/>
+	
+	<mx:Button id="download" label="Download file" click="downloadFile()"
+		enabled="{getFileSource(entity, propertyName) != null}"/>
+	
+	<mx:Button id="remove" label="Delete file" click="deleteFile()"
+		enabled="{getFileSource(entity, propertyName) != null}"/>
+</mx:HBox>

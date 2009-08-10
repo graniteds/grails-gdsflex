@@ -27,23 +27,20 @@ package org.granite.tide.uibuilder.events
     import org.granite.tide.uibuilder.util.ReflectionUtil;
     
     
-    public class EditEntityEvent extends AbstractTideEvent implements IConversationEvent {
+    public class ShowEntityEvent extends AbstractTideEvent implements IConversationEvent {
         
         private var _conversationId:String;
-        public var entityInstance:Object;
+        public var entityClass:Class;
+        public var id:Number;
         
         
-        public function EditEntityEvent(entityInstance:Object):void {
+        public function ShowEntityEvent(entityClass:Class, id:Number):void {
         	super();
         	
-        	this.entityInstance = entityInstance;
+        	this.entityClass = entityClass;
+        	this.id = id;
         	
-        	if (entityInstance is Class)
-        		_conversationId = "New " + ReflectionUtil.getUpperCaseEntityName(entityInstance);
-        	else if (entityInstance is String)
-        		_conversationId = "New " + entityInstance.substring(0, 1).toUpperCase() + entityInstance.substring(1);
-        	else
-        		_conversationId = ReflectionUtil.getUpperCaseEntityName(entityInstance) + "#" + entityInstance.id;
+    		_conversationId = ReflectionUtil.getUpperCaseEntityName(entityClass) + "#" + id;
         }
         
         public function get conversationId():String {
@@ -51,7 +48,7 @@ package org.granite.tide.uibuilder.events
         }
         
         public override function clone():Event {
-        	return new EditEntityEvent(entityInstance);
+        	return new ShowEntityEvent(entityClass, id);
         }
     }
 }
