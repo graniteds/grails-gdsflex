@@ -58,7 +58,7 @@ target(flexHtmlWrapper: "Flex html wrapper") {
             output: "${basedir}/web-app/") {
 	}
 	
-	Ant.copy(tofile: "${basedir}/grails-app/views/flexindex.gsp", file: ${basedir}/web-app/${grailsAppName}.html") {
+	Ant.copy(tofile: "${basedir}/grails-app/views/flexindex.gsp", file: "${basedir}/web-app/${grailsAppName}.html") {
 	}
 	
 	println "html wrapper generated in web-app folder and flexindex.gsp in grails-app/views"
