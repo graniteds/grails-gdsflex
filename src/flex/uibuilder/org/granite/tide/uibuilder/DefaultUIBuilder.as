@@ -10,13 +10,15 @@ package org.granite.tide.uibuilder {
 	import flash.net.FileReference;
 	import flash.utils.ByteArray;
 	import flash.utils.describeType;
+	import flash.utils.getQualifiedClassName;
 	
 	import mx.collections.ArrayCollection;
 	import mx.controls.*;
 	import mx.controls.dataGridClasses.DataGridColumn;
 	import mx.core.ClassFactory;
 	import mx.core.IUIComponent;
-	import mx.formatters.Formatter;
+	import mx.formatters.DateFormatter;
+	import mx.formatters.NumberFormatter;
 	import mx.utils.ObjectUtil;
 	import mx.utils.StringUtil;
 	import mx.validators.*;
@@ -26,18 +28,15 @@ package org.granite.tide.uibuilder {
 	
 	
 	[Name("tideUIBuilder")]
-	[Path("fuck")]
     public class DefaultUIBuilder implements IUIBuilder {
     	
     	[In]
     	public var context:Context;
     	
-    	public var numberFormatter:Formatter;
-    	
-    	public var dateFormatter:Formatter;
+    	public var formatters:Object = new Object();
     	
     	
-    	public function buildListColumns(metadata:Array, labelFunction:Function, simpleOnly:Boolean = false):Array {
+    	public function buildListColumns(className:String, metadata:Array, labelFunction:Function, simpleOnly:Boolean = false):Array {
 			var columns:Array = new Array();
 			
 			if (!simpleOnly) {
@@ -47,13 +46,28 @@ package org.granite.tide.uibuilder {
 			}
 			
 			for each (var property:Object in metadata) {
+				if (property.display == false)
+					continue;
+				
 				if (property.kind == 'simple') {
 					column = new DataGridColumn(property.name);
 					column.headerText = property.name.substring(0, 1).toUpperCase() + property.name.substring(1);
-					if (property.type == Number && numberFormatter != null)
-						column.labelFunction = formatNumber;
-					if (property.type == Date && dateFormatter != null)
-						column.labelFunction = formatDate;
+					if (property.type == Number) {
+						if (property.format) {
+							var nfmt:NumberFormatter = new NumberFormatter();
+							nfmt.precision = new Number(nfmt);
+							formatters[className + "." + property.name] = nfmt;
+						}
+						column.labelFunction = format;
+					}
+					if (property.type == Date) {
+						if (property.format) {
+							var dfmt:DateFormatter = new DateFormatter();
+							dfmt.formatString = property.format;
+							formatters[className + "." + property.name] = dfmt;
+						}
+						column.labelFunction = format;
+					}
 					columns.push(column);
             	}
             	else if (property.kind == 'manyToOne' && !simpleOnly) {
@@ -70,20 +84,17 @@ package org.granite.tide.uibuilder {
 			return columns;
     	}
     	
-    	protected function formatNumber(item:Object, column:DataGridColumn):String {
+    	protected function format(item:Object, column:DataGridColumn):String {
     		if (item == null || item[column.dataField] == null)
     			return "";
-    		return numberFormatter.format(item[column.dataField]);
-    	}
-    	
-    	protected function formatDate(item:Object, column:DataGridColumn):String {
-    		if (item == null || item[column.dataField] == null)
-    			return "";
-    		return dateFormatter.format(item[column.dataField]);
+    		var className:String = getQualifiedClassName(item);
+    		if (formatters[className + "." + column.dataField])
+    			return formatters[className + "." + column.dataField].format(item[column.dataField]);
+    		return item[column.dataField] as String;
     	}
 
     	
-    	public function buildEditForm(metadata:Array, form:Object, create:Boolean):Array {
+    	public function buildEditForm(className:String, metadata:Array, form:Object, create:Boolean):Array {
 			var properties:Array = new Array();
 			
 			var desc:XML = describeType(form);
@@ -138,6 +149,8 @@ package org.granite.tide.uibuilder {
         		else {
         			component = new TextInput();
         			editorDataField = "text";
+        			if (property.password == 'true')
+        				component.displayAsPassword = true;
         		}
         		if (property.email) {
         			validator = new EmailValidator();

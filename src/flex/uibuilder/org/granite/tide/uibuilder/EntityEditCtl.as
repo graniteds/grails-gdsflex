@@ -73,7 +73,7 @@ package org.granite.tide.uibuilder {
 			if (builder == null)
 				builder = IUIBuilder(context.tideUIBuilder);
 			
-			_properties = builder.buildEditForm(metadata, form, isNaN(entityInstance.id));
+			_properties = builder.buildEditForm(getQualifiedClassName(_entityClass), metadata, form, isNaN(entityInstance.id));
 		}
     	
     	

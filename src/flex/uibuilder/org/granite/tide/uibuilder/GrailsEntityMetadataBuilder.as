@@ -110,6 +110,18 @@ package org.granite.tide.uibuilder {
         			if (constraints[name].email == 'true')
         				property.email = true;
         				
+        			if (constraints[name].password == 'true')
+        				property.password = true;
+        			
+        			if (constraints[name].display == 'false')
+        				property.display = false;
+        			
+        			if (constraints[name].editable == 'false')
+        				property.editable = false;
+        			
+        			if (constraints[name].format)
+        				property.format = constraints[name].format;
+        				
         			if (constraints[name].inList)
         				property.inList = constraints[name].inList;
         			

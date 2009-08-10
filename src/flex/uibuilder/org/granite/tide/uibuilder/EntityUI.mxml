@@ -10,26 +10,23 @@
    
     <mx:Script>
         <![CDATA[
-        	import mx.managers.BrowserManager;
-        	import org.granite.tide.uibuilder.events.ShowEntityEvent;
-        	import org.granite.tide.uibuilder.events.EndEditEntityEvent;
-        	import org.granite.tide.Tide;
-        	import org.granite.tide.uibuilder.events.ListEntityEvent;
-        	import org.granite.tide.BaseContext;
-        	import mx.events.PropertyChangeEvent;
         	import flash.utils.describeType;
-        	import mx.controls.dataGridClasses.DataGridColumn;
-        	import mx.utils.ObjectUtil;
-        	import org.granite.tide.BaseContext;
         	import flash.utils.getQualifiedClassName;
+        	import mx.utils.ObjectUtil;
+        	import mx.events.PropertyChangeEvent;
+            import mx.binding.utils.BindingUtils;
             import mx.events.ItemClickEvent;
             import mx.collections.ArrayCollection;
             import mx.controls.Alert;
-            import mx.binding.utils.BindingUtils;
-            import org.granite.tide.events.TideUIConversationEvent;
+        	import mx.controls.dataGridClasses.DataGridColumn;
+        	import org.granite.tide.Tide;
+        	import org.granite.tide.BaseContext;
             import org.granite.tide.events.TideResultEvent;
             import org.granite.tide.spring.Spring;
             import org.granite.tide.spring.PagedQuery;
+        	import org.granite.tide.uibuilder.events.ListEntityEvent;
+        	import org.granite.tide.uibuilder.events.ShowEntityEvent;
+        	import org.granite.tide.uibuilder.events.EndEditEntityEvent;
             import org.granite.tide.uibuilder.events.EditEntityEvent;
             import org.granite.tide.uibuilder.util.ReflectionUtil;
             
@@ -100,7 +97,7 @@
 				var builder:IUIBuilder = _context.meta_getInstance(_qualifiedEntityName + '.tideUIBuilder') as IUIBuilder;
 				if (builder == null)
 					builder = IUIBuilder(_context.tideUIBuilder);
-				_columns = builder.buildListColumns(metadata, elementLabel);
+				_columns = builder.buildListColumns(getQualifiedClassName(_entityClass), metadata, elementLabel);
 			}
 			
 			protected function elementLabel(item:Object, column:DataGridColumn):String {

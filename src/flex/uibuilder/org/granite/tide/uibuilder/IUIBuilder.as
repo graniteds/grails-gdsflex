@@ -9,8 +9,8 @@ package org.granite.tide.uibuilder {
 	
     public interface IUIBuilder {
     	
-    	function buildListColumns(metadata:Array, labelFunction:Function, simpleOnly:Boolean = false):Array;
+    	function buildListColumns(className:String, metadata:Array, labelFunction:Function, simpleOnly:Boolean = false):Array;
     	
-    	function buildEditForm(metadata:Array, form:Object, create:Boolean):Array;
+    	function buildEditForm(className:String, metadata:Array, form:Object, create:Boolean):Array;
     }
 }
