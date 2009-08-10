@@ -10,6 +10,7 @@
    
     <mx:Script>
         <![CDATA[
+        	import mx.core.Container;
         	import org.granite.tide.spring.Context;
             import org.granite.tide.spring.Spring;
         	import org.granite.tide.validators.ValidatorExceptionHandler;
