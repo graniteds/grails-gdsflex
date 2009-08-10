@@ -10,9 +10,10 @@
    
     <mx:Script>
         <![CDATA[
-        	import org.granite.tide.validators.ValidatorExceptionHandler;
         	import org.granite.tide.spring.Context;
             import org.granite.tide.spring.Spring;
+        	import org.granite.tide.validators.ValidatorExceptionHandler;
+        	import org.granite.tide.deeplinking.TideUrlMapping;
             import org.granite.tide.uibuilder.GrailsEntityMetadataBuilder;
             import org.granite.tide.uibuilder.DefaultUIBuilder;
             import org.granite.tide.uibuilder.DefaultUIFormLayout;
@@ -22,8 +23,30 @@
             [Bindable]
             private var context:Context = Spring.getInstance().getSpringContext();
             
+            Spring.getInstance().addPlugin(TideUrlMapping.getInstance());
             Spring.getInstance().addComponents([GrailsEntityMetadataBuilder, DefaultUIBuilder, DefaultUIFormLayout]);
             Spring.getInstance().addExceptionHandler(ValidatorExceptionHandler);
+            
+            
+            private function init():void {
+ 				context.urlMapping.init("", "GraniteDS / Grails generated application");        
+ 				
+ 				addEventListener("showEntityUI", showEntityUI);
+ 				addEventListener("endEntityUI", endEntityUI);
+			}
+            
+			private var _previousSelected:Container = null;
+			
+            private function showEntityUI(event:Event):void {
+        		_previousSelected = mainStack.selectedChild;
+            	if (_previousSelected !== this)
+            		mainStack.selectedChild = event.target as Container;
+            }
+            
+            private function endEntityUI(event:Event):void {
+            	if (_previousSelected != null)
+            		mainStack.selectedChild = _previousSelected;
+            }
         ]]>
     </mx:Script>
 
@@ -42,7 +65,7 @@
 	
 	        <mx:ViewStack id="mainStack" width="100%" height="100%"><%
             	domainClassList.each { domainClass -> %>
-			    <ui:EntityUI id="${domainClass.substring(domainClass.indexOf(".")+1).toLowerCase()}UI" context="{context}" 
+			    <ui:EntityUI id="${domainClass.substring(domainClass.indexOf(".")+1).toLowerCase()}UI" 
 			    	entityClass="{${domainClass.substring(domainClass.indexOf(".")+1)}}" 
 			    	width="100%" height="100%"/>
 	            <% } %>
