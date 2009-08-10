@@ -61,6 +61,7 @@
 
     as3Imports.add("flash.utils.IDataInput");
     as3Imports.add("flash.utils.IDataOutput");
+    as3Imports.add("flash.net.FileReference");
     if (generateDefaultUidMethods)
         as3Imports.add("mx.utils.UIDUtil");
     as3Imports.add("org.granite.meta");
@@ -348,8 +349,14 @@ package ${jClass.as3Type.packageName} {
                 super.meta_merge(em, obj);<%
     }
 
-    for (jProperty in jClass.properties) {%>
-               em.meta_mergeExternal(src._${jProperty.name}, _${jProperty.name}, null, this, '${jProperty.name}', function setter(o:*):void{_${jProperty.name} = o as ${jProperty.as3Type.name}});<%
+    for (jProperty in jClass.properties) {
+    	if (java.sql.Blob.class.isAssignableFrom(jProperty.getType())
+    		|| java.sql.Clob.class.isAssignableFrom(jProperty.getType())) {%>
+    		    _${jProperty.name} = src._${jProperty.name};<%
+    	} 
+    	else {%>
+               	em.meta_mergeExternal(src._${jProperty.name}, _${jProperty.name}, null, this, '${jProperty.name}', function setter(o:*):void{_${jProperty.name} = o as ${jProperty.as3Type.name}});<%
+        }
     }%>
             }<%
 
@@ -392,7 +399,11 @@ package ${jClass.as3Type.packageName} {
         else if (jProperty.isEnum()) {%>
                 _${jProperty.name} = Enum.readEnum(input) as ${jProperty.as3Type.name};<%
         }
-        else {%>
+    	else if ((java.sql.Blob.class.isAssignableFrom(jProperty.getType())
+    			|| java.sql.Clob.class.isAssignableFrom(jProperty.getType()))) {%>
+                _${jProperty.name} = input.readObject() != null ? new FileReference() : null;<%
+    	}
+    	else {%>
                 _${jProperty.name} = input.readObject() as ${jProperty.as3Type.name};<%
         }
     }%>
@@ -433,8 +444,13 @@ package ${jClass.as3Type.packageName} {
                 super.writeExternal(output);<%
     }
 
-    for (jProperty in jClass.properties) {%>
+    for (jProperty in jClass.properties) {
+    	if (java.sql.Blob.class.isAssignableFrom(jProperty.getType())
+    			|| java.sql.Clob.class.isAssignableFrom(jProperty.getType())) {%>
+    			output.writeObject(_${jProperty.name} != null ? "" : null);<%
+    	} else { %> 
                 output.writeObject((_${jProperty.name} is IPropertyHolder) ? IPropertyHolder(_${jProperty.name}).object : _${jProperty.name});<%
+        }
     }%>
             }<%
 
