@@ -8,6 +8,7 @@
 package org.granite.tide.uibuilder {
 	
 	import flash.net.FileReference;
+	import flash.utils.ByteArray;
 	import flash.utils.describeType;
 	
 	import mx.collections.ArrayCollection;
@@ -172,6 +173,20 @@ package org.granite.tide.uibuilder {
         			component = new BinaryEditor();
         			component.propertyName = property.name;
         			editorDataField = "fileRef";
+        			entityField = "entity";
+        		}
+        	}
+        	else if (property.type == ByteArray && !create) {
+        		if (property.widget == "image") {
+        			component = new ImageEditor();
+        			component.propertyName = property.name;
+        			editorDataField = "byteArray";
+        			entityField = "entity";
+        		}
+        		else {
+        			component = new BinaryEditor();
+        			component.propertyName = property.name;
+        			editorDataField = "byteArray";
         			entityField = "entity";
         		}
         	}

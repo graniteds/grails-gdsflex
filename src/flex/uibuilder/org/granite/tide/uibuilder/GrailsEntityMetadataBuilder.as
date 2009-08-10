@@ -8,6 +8,7 @@
 package org.granite.tide.uibuilder {
 	
 	import flash.net.FileReference;
+	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
 	import flash.utils.describeType;
 	import flash.utils.getDefinitionByName;
@@ -89,6 +90,11 @@ package org.granite.tide.uibuilder {
             	if (g.@type.toXMLString() == 'flash.net::FileReference') {
             		property.kind = "binary";
             		property.type = FileReference;
+            	}
+            	
+            	if (g.@type.toXMLString() == 'flash.utils::ByteArray') {
+            		property.kind = "binary";
+            		property.type = ByteArray;
             	}
             	
         		if (constraints[name]) {
