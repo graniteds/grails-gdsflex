@@ -27,6 +27,7 @@
 	
     <converters>
 		<converter type="org.granite.messaging.amf.io.convert.impl.GAEKeyConverter"/>
+		<converter type="org.granite.grails.integration.GrailsBinaryConverter"/>
 	</converters>
 
     <class-getter type="org.granite.grails.integration.GrailsClassGetter"/>
