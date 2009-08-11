@@ -5,6 +5,7 @@
   <documentation>http://www.graniteds.org/</documentation>
   <resources>
     <resource>DefaultGraniteDSConfig</resource>
+    <resource>UrlMappings</resource>
   </resources>
   <dependencies />
 </plugin>
