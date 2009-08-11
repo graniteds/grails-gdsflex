@@ -6,7 +6,8 @@
     xmlns="*"
     layout="vertical"
     backgroundGradientColors="[#0e2e7d, #6479ab]"
-    preinitialize="Spring.getInstance().initApplication()">
+    preinitialize="Spring.getInstance().initApplication()"
+    initialize="init()">
    
     <mx:Script>
         <![CDATA[
@@ -59,15 +60,15 @@
 		<mx:HBox width="100%" height="100%">
 			<mx:Panel width="200" height="100%" title="Controllers" paddingTop="4" paddingBottom="4"><%
             domainClassList.each { domainClass -> %>
-				<mx:LinkButton label="${domainClass.substring(domainClass.indexOf(".")+1)}s" width="100%" textAlign="left"
-					click="mainStack.selectedChild = ${domainClass.substring(domainClass.indexOf(".")+1).toLowerCase()}UI" />
+				<mx:LinkButton label="${domainClass.substring(domainClass.lastIndexOf(".")+1)}s" width="100%" textAlign="left"
+					click="mainStack.selectedChild = ${domainClass.substring(domainClass.lastIndexOf(".")+1).toLowerCase()}UI" />
             <% } %>
 			</mx:Panel>
 	
 	        <mx:ViewStack id="mainStack" width="100%" height="100%"><%
             	domainClassList.each { domainClass -> %>
-			    <ui:EntityUI id="${domainClass.substring(domainClass.indexOf(".")+1).toLowerCase()}UI" 
-			    	entityClass="{${domainClass.substring(domainClass.indexOf(".")+1)}}" 
+			    <ui:EntityUI id="${domainClass.substring(domainClass.lastIndexOf(".")+1).toLowerCase()}UI" 
+			    	entityClass="{${domainClass.substring(domainClass.lastIndexOf(".")+1)}}" 
 			    	width="100%" height="100%"/>
 	            <% } %>
 			</mx:ViewStack>
