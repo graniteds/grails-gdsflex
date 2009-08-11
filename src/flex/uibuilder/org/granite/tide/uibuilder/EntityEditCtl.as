@@ -75,7 +75,7 @@ package org.granite.tide.uibuilder {
         public function set entityClass(entityClass:Class):void {
         	_entityClass = entityClass;
         	var className:String = getQualifiedClassName(entityClass);
-        	_entityName = className.substring(className.lastIndexOf("::")+2).toLowerCase();
+	        _entityName = className.indexOf("::") > 0 ? className.substring(className.lastIndexOf("::")+2).toLowerCase() : className.toLowerCase();
         	_qualifiedEntityName = className.replace("::", ".").toLowerCase();
 		}
 		

@@ -67,7 +67,7 @@
             		// Stores current entity class and derives other necessary entity names 
 	            	_entityClass = entityClass;
 	            	var className:String = getQualifiedClassName(entityClass);
-	            	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
+	            	var entityName:String = className.indexOf("::") > 0 ? className.substring(className.lastIndexOf("::")+2).toLowerCase() : className.toLowerCase();
 	            	var qualifiedEntityName:String = className.replace("::", ".").toLowerCase();
 	            	
 	            	// Registers the entity instance conversation component (used to exchange with Grails controller)

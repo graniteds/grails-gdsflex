@@ -163,6 +163,15 @@ package org.granite.tide.uibuilder {
         			if (constraints[name].editable == 'false')
         				property.editable = false;
         			
+        			if (constraints[name].inline == "true")
+        				property.inline = true;
+        			
+        			if (constraints[name].inCreate == "false")
+        				property.inCreate = false;
+        			
+        			if (constraints[name].inEdit == "false")
+        				property.inEdit = false;
+        				
         			if (constraints[name].format)
         				property.format = constraints[name].format;
         				

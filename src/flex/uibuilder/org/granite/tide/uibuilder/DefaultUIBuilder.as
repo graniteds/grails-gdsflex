@@ -73,16 +73,16 @@ package org.granite.tide.uibuilder {
 							var nfmt:NumberFormatter = new NumberFormatter();
 							nfmt.precision = new Number(nfmt);
 							_formatters[className + "." + property.name] = nfmt;
+							column.labelFunction = format;
 						}
-						column.labelFunction = format;
 					}
 					if (property.type == Date) {
 						if (property.format) {
 							var dfmt:DateFormatter = new DateFormatter();
 							dfmt.formatString = property.format;
 							_formatters[className + "." + property.name] = dfmt;
+							column.labelFunction = format;
 						}
-						column.labelFunction = format;
 					}
 					columns.push(column);
             	}
@@ -106,7 +106,7 @@ package org.granite.tide.uibuilder {
     		var className:String = getQualifiedClassName(item);
     		if (_formatters[className + "." + column.dataField])
     			return _formatters[className + "." + column.dataField].format(item[column.dataField]);
-    		return item[column.dataField] as String;
+    		return item[column.dataField].toString();
     	}
 		
 		protected function elementLabel(item:Object, column:DataGridColumn):String {
@@ -131,6 +131,15 @@ package org.granite.tide.uibuilder {
 				}
 				
 				if (!found) {
+					if (property.display == false)
+						continue;
+					
+					if (create && property.inCreate == false)
+						continue;
+					
+					if (!create && property.inEdit == false)
+						continue;
+				
 	            	var componentDescriptor:EntityProperty = buildEditFormItem(property, create);
 	            	
 	            	if (componentDescriptor)

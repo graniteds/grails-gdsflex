@@ -27,7 +27,7 @@ package org.granite.tide.uibuilder.util
         
         public static function getUpperCaseEntityName(entity:Object):String {
         	var className:String = getQualifiedClassName(entity);
-        	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
+	        var entityName:String = className.indexOf("::") > 0 ? className.substring(className.lastIndexOf("::")+2).toLowerCase() : className.toLowerCase();
         	return entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
         }
         
