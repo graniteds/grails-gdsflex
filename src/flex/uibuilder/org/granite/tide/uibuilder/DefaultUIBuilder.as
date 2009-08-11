@@ -104,13 +104,28 @@ package org.granite.tide.uibuilder {
     		if (item == null || item[column.dataField] == null)
     			return "";
     		var className:String = getQualifiedClassName(item);
-    		if (_formatters[className + "." + column.dataField])
-    			return _formatters[className + "." + column.dataField].format(item[column.dataField]);
+    		var formatter:Formatter = _formatters[className + "." + column.dataField];
+    		while (!formatter && className != 'Object') {
+    			var clazz:Class = getDefinitionByName(className) as Class;
+    			className = getQualifiedSuperclassName(clazz);
+    			formatter = _formatters[className + "." + column.dataField];
+    		}
+    		if (formatter)
+    			return formatter.format(item[column.dataField]);
     		return item[column.dataField].toString();
     	}
 		
 		protected function elementLabel(item:Object, column:DataGridColumn):String {
-			return item[column.dataField][_labels[getQualifiedClassName(item) + "." + column.dataField]];
+			var className:String = getQualifiedClassName(item);
+			var label:String = _labels[className + "." + column.dataField];
+			while (!label && className != 'Object') {
+    			var clazz:Class = getDefinitionByName(className) as Class;
+    			className = getQualifiedSuperclassName(clazz);
+    			label = _labels[className + "." + column.dataField];
+			}
+			if (label)
+				return item[column.dataField][label];
+			return "";
 		}
 
     	
