@@ -34,10 +34,12 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.codehaus.groovy.grails.commons.GrailsApplication;
 import org.granite.context.GraniteContext;
 import org.granite.hibernate.HibernateExternalizer;
+import org.granite.hibernate.ProxyFactory;
 import org.granite.messaging.amf.io.convert.Converters;
 import org.granite.messaging.amf.io.util.FieldProperty;
 import org.granite.messaging.amf.io.util.MethodProperty;
@@ -173,4 +175,9 @@ public class GrailsHibernateExternalizer extends HibernateExternalizer {
 
         return fields;
     }
+    
+    @Override
+	protected Object newProxyInstantiator(ConcurrentHashMap<String, ProxyFactory> proxyFactories, String detachedState) {
+        return new GrailsHibernateProxyInstantiator(proxyFactories, detachedState);
+	}
 }
