@@ -32,10 +32,6 @@ target ('default': "generate Flex app") {
 	depends(installFlexTemplates)
 	depends(gas3)
 	
-	ant.copy(todir:"${basedir}/grails-app/views/flex", overwrite: "true") {
-		fileset(dir:"${gdsflexPluginDir}/src/flex/uibuilder")
-	}
-		
 	def domainDir = new File("${basedir}/grails-app/domain")
 
 	domainClassList = []

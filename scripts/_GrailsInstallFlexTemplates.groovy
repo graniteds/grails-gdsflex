@@ -28,4 +28,9 @@ target ('installFlexTemplates': "install Flex templates") {
 	ant.copy(todir:"${basedir}/src/templates/scaffolding", overwrite:"yes") {
 		fileset(dir:"${gdsflexPluginDir}/src/templates/scaffolding")
 	}
+	
+	ant.copy(todir:"${basedir}/grails-app/views/flex", overwrite: "true") {
+		fileset(dir:"${gdsflexPluginDir}/src/flex/uibuilder")
+	}
+		
 }
