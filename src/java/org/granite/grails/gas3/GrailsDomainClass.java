@@ -27,6 +27,8 @@ import org.granite.grails.integration.GrailsExternalizer;
 
 public class GrailsDomainClass extends JavaEntityBean {
 	
+	private static final String[] META_CONSTRAINTS = { "inline", "inCreate", "inEdit" };
+	
 	private Map<String, As3Type> hasMany = null;
 	private Map<String, Map<String, String>> constraints = null;
 	private org.codehaus.groovy.grails.commons.GrailsDomainClass domainClass = null;
@@ -73,6 +75,11 @@ public class GrailsDomainClass extends JavaEntityBean {
     				c.put("widget", "\"" + cp.getWidget() + "\"");
     			if (cp.getFormat() != null)
     				c.put("format", "\"" + cp.getFormat() + "\"");
+    			
+    			for (String mcName : META_CONSTRAINTS) {
+    				if (cp.getMetaConstraintValue(mcName) != null)
+    					c.put(mcName, "\"" + cp.getMetaConstraintValue(mcName) + "\"");
+    			}
     			
     			for (Constraint constraint : appliedConstraints) {
     				if ("org.codehaus.groovy.grails.validation.NullableConstraint".equals(constraint.getClass().getName()))
