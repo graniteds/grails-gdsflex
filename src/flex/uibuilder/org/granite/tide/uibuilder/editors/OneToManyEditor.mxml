@@ -40,6 +40,9 @@
 			}
 			
 			[Bindable]
+			public var editable:Boolean = true;
+			
+			[Bindable]
 			private var _columns:Array = null;
 			
 			private function buildColumns():void {
@@ -49,9 +52,9 @@
       	]]>
 	</mx:Script>
 
-	<mx:DataGrid id="elementGrid" dataProvider="{collection}" editable="true" columns="{_columns}" width="50%"/>
+	<mx:DataGrid id="elementGrid" dataProvider="{collection}" editable="{editable}" columns="{_columns}" width="50%"/>
 
-	<mx:VBox>
+	<mx:VBox visible="{editable}">
 		<mx:Button label="Add"
 			click="addElement()"/>
 		<mx:Button label="Remove"

@@ -48,6 +48,9 @@
 				return element[_elementLabel];
 			}
 			
+			[Bindable]
+			public var editable:Boolean = true;
+			
 			private function get controller():Component {
 				return context[_elementName + 'Controller'];
 			}
@@ -62,7 +65,8 @@
 				
 				var elementClassName:String = getQualifiedClassName(_elementClass);
 				_elementName = elementClassName.substring(elementClassName.lastIndexOf("::")+2).toLowerCase();
-				controller.list(context, {offset: 0, max: 100, order: _elementLabel, desc: false}, listResult);
+				if (editable)
+					controller.list(context, {offset: 0, max: 100, order: _elementLabel, desc: false}, listResult);
 			}
 			
 			private function listResult(event:TideResultEvent):void {
@@ -105,9 +109,9 @@
     	dragDrop="dragDropHandler(event)">
 	</mx:DataGrid>
 
-	<mx:Button label="Remove"
+	<mx:Button label="Remove" visible="{editable}"
 		enabled="{Boolean(elementGrid.selectedItem)}"
 		click="removeElement()"/>
 	
-	<mx:List id="existingElements" dragEnabled="true" width="50%"/>
+	<mx:List id="existingElements" dragEnabled="true" width="50%" visible="{editable}"/>
 </mx:HBox>

@@ -178,7 +178,7 @@ package org.granite.tide.uibuilder {
         		else {
         			component = new TextInput();
         			editorDataField = "text";
-        			if (property.password == 'true')
+        			if (property.password == true)
         				component.displayAsPassword = true;
         		}
         		if (property.email) {
@@ -245,6 +245,8 @@ package org.granite.tide.uibuilder {
         		component.elementClass = property.type;
         		editorDataField = "collection";
         		entityField = "entity";
+        		if (property.editable == false)
+        			component.editable = false;
     			percentWidth = 100;
         	}
         	else if (property.kind == 'manyToMany') {
@@ -252,6 +254,8 @@ package org.granite.tide.uibuilder {
         		component.elementClass = property.type;
         		editorDataField = "collection";
         		entityField = "entity";
+        		if (property.editable == false)
+        			component.editable = false;
     			percentWidth = 100;
         	}
         	
