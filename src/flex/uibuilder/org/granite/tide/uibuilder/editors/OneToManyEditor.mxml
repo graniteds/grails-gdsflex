@@ -46,8 +46,9 @@
 			private var _columns:Array = null;
 			
 			private function buildColumns():void {
+				var elementClassName:String = getQualifiedClassName(_elementClass);
 				var metadata:Array = IEntityMetadataBuilder(context.tideEntityMetadataBuilder).buildMetadata(_elementClass);
-				_columns = IUIBuilder(context.tideUIBuilder).buildListColumns(getQualifiedClassName(_elementClass), metadata, true);
+				_columns = IUIBuilder(context.tideUIBuilder).buildListColumns(elementClassName, metadata, true);
 			}
       	]]>
 	</mx:Script>

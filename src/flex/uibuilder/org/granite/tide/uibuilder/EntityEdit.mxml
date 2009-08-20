@@ -9,10 +9,6 @@
     <mx:Script>
         <![CDATA[
         	import mx.containers.Form;
-        	import org.granite.tide.uibuilder.events.RemoveEntityEvent;
-        	import org.granite.tide.uibuilder.events.SaveEntityEvent;
-        	import org.granite.tide.uibuilder.events.CancelEntityEvent;
-        	
         	import mx.formatters.DateFormatter;
         	import mx.formatters.Formatter;
         	import mx.validators.Validator;
@@ -21,6 +17,10 @@
             import mx.collections.ArrayCollection;
             import org.granite.tide.spring.Context;
         	import org.granite.tide.validators.TideEntityValidator;
+        	import org.granite.tide.uibuilder.events.RemoveEntityEvent;
+        	import org.granite.tide.uibuilder.events.SaveEntityEvent;
+        	import org.granite.tide.uibuilder.events.CancelEntityEvent;
+        	import org.granite.tide.uibuilder.util.ReflectionUtil;
            
            
            	[Bindable] [In]
@@ -38,8 +38,8 @@
 	         */
             public function set entityClass(entityClass:Class):void {
             	var className:String = getQualifiedClassName(entityClass);
-	        	_entityName = className.indexOf("::") > 0 ? className.substring(className.lastIndexOf("::")+2).toLowerCase() : className.toLowerCase();
-            	_qualifiedEntityName = className.replace("::", ".").toLowerCase();
+            	_entityName = ReflectionUtil.getEntityName(className);
+            	_qualifiedEntityName = ReflectionUtil.getQualifiedEntityName(className);
 			}
            	
            	public function get entityInstance():Object {

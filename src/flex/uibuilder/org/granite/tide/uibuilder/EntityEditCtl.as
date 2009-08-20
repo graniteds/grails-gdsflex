@@ -31,6 +31,7 @@ package org.granite.tide.uibuilder {
 	import org.granite.tide.events.TideResultEvent;
 	import org.granite.tide.TideResponder;
 	import org.granite.tide.spring.Context;
+	import org.granite.tide.uibuilder.util.ReflectionUtil;
 	import org.granite.tide.uibuilder.events.CancelEntityEvent;
 	import org.granite.tide.uibuilder.events.EditEntityEvent;
 	import org.granite.tide.uibuilder.events.EndEditEntityEvent;
@@ -62,6 +63,7 @@ package org.granite.tide.uibuilder {
         private var _entityLabel:String;
         private var _editForm:EntityEdit;
         
+        
         private function upperCaseEntityName():String {
         	return _entityName.substring(0, 1).toUpperCase() + _entityName.substring(1);
         }
@@ -75,8 +77,8 @@ package org.granite.tide.uibuilder {
         public function set entityClass(entityClass:Class):void {
         	_entityClass = entityClass;
         	var className:String = getQualifiedClassName(entityClass);
-	        _entityName = className.indexOf("::") > 0 ? className.substring(className.lastIndexOf("::")+2).toLowerCase() : className.toLowerCase();
-        	_qualifiedEntityName = className.replace("::", ".").toLowerCase();
+        	_entityName = ReflectionUtil.getEntityName(className);
+        	_qualifiedEntityName = ReflectionUtil.getQualifiedEntityName(className);
 		}
 		
 		[In]
@@ -103,10 +105,10 @@ package org.granite.tide.uibuilder {
     	public function show(event:ShowEntityEvent):void {
     		entityClass = event.entityClass;
     		
-    		// context[_entityName + 'Controller'] is a proxy to the Grails controller for the current entity
+    		// context[_qualifiedEntityName + 'Controller'] is a proxy to the Grails controller for the current entity
     		// context is passed as first argument to ensure that the controller model result is mapped in the current
     		// conversational context
-            context[_entityName + 'Controller'].find(context, {id: event.id}, 
+            context[_qualifiedEntityName + 'Controller'].find(context, {id: event.id}, 
             	new TideResponder(findResult, null, event.id));
     	}
     	
@@ -169,9 +171,9 @@ package org.granite.tide.uibuilder {
             // Once again we pass the context as first argument to ensure that the result is merge 
             // in the current conversation context
             if (create)
-                context[_entityName + 'Controller'].persist(context, params, saveResult, saveFault);
+                context[_qualifiedEntityName + 'Controller'].persist(context, params, saveResult, saveFault);
             else
-                context[_entityName + 'Controller'].merge(context, params, saveResult, saveFault);
+                context[_qualifiedEntityName + 'Controller'].merge(context, params, saveResult, saveFault);
         }
        	
         private function saveResult(event:TideResultEvent):void {
@@ -237,7 +239,7 @@ package org.granite.tide.uibuilder {
        	
         private function removeConfirm(event:CloseEvent):void {
             if (event.detail == Alert.YES)
-                context[_entityName + 'Controller'].remove(context, {id: context[_entityName + 'Instance'].id}, removeResult);
+                context[_qualifiedEntityName + 'Controller'].remove(context, {id: context[_entityName + 'Instance'].id}, removeResult);
         }
        
         private function removeResult(event:TideResultEvent):void {

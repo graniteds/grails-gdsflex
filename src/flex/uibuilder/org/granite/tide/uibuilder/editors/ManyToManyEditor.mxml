@@ -6,18 +6,19 @@
 	
 	<mx:Script>
         <![CDATA[
-        	import org.granite.tide.uibuilder.IUIBuilder;
-        	import org.granite.tide.uibuilder.IEntityMetadataBuilder;
-        	import org.granite.tide.events.TideResultEvent;
-        	import org.granite.tide.Component;
         	import flash.utils.getQualifiedClassName;
         	import mx.collections.ArrayCollection;
         	import mx.core.IUIComponent;
         	import mx.managers.DragManager;
         	import mx.events.DragEvent;
-        	import org.granite.tide.BaseContext;
         	import mx.controls.dataGridClasses.DataGridColumn;
         	import mx.collections.ListCollectionView;
+        	import org.granite.tide.BaseContext;
+        	import org.granite.tide.Component;
+        	import org.granite.tide.events.TideResultEvent;
+        	import org.granite.tide.uibuilder.IUIBuilder;
+        	import org.granite.tide.uibuilder.IEntityMetadataBuilder;
+        	import org.granite.tide.uibuilder.util.ReflectionUtil;
         	
         	
             private function removeElement():void {
@@ -36,12 +37,15 @@
 			
 			public var _elementClass:Class;
 			private var _elementName:String;
+			private var _qualifiedElementName:String;
 			private var _elementLabel:String;
+			
 			
             public function set elementClass(elementClass:Class):void {
             	_elementClass = elementClass;
-            	var className:String = getQualifiedClassName(elementClass);
-            	_elementName = className.substring(className.lastIndexOf("::")+2).toLowerCase();
+				var elementClassName:String = getQualifiedClassName(_elementClass);
+            	_elementName = ReflectionUtil.getEntityName(elementClassName);
+            	_qualifiedElementName = ReflectionUtil.getQualifiedEntityName(elementClassName);
 			}
 			
 			private function elementLabel(element:Object):String {
@@ -52,7 +56,7 @@
 			public var editable:Boolean = true;
 			
 			private function get controller():Component {
-				return context[_elementName + 'Controller'];
+				return context[_qualifiedElementName + 'Controller'];
 			}
 			
 			
@@ -60,11 +64,13 @@
 			private var _columns:Array = null;
 			
 			private function buildColumns():void {
-				var metadata:Array = IEntityMetadataBuilder(context.tideEntityMetadataBuilder).buildMetadata(_elementClass);
-				_columns = IUIBuilder(context.tideUIBuilder).buildListColumns(getQualifiedClassName(_elementClass), metadata, true);
-				
 				var elementClassName:String = getQualifiedClassName(_elementClass);
-				_elementName = elementClassName.substring(elementClassName.lastIndexOf("::")+2).toLowerCase();
+				
+				var metadata:Array = IEntityMetadataBuilder(context.tideEntityMetadataBuilder).buildMetadata(_elementClass);
+				_columns = IUIBuilder(context.tideUIBuilder).buildListColumns(elementClassName, metadata, true);
+				
+				_elementName = ReflectionUtil.getEntityName(elementClassName);
+				_qualifiedElementName = ReflectionUtil.getQualifiedEntityName(elementClassName);
 				if (editable)
 					controller.list(context, {offset: 0, max: 100, order: _elementLabel, desc: false}, listResult);
 			}

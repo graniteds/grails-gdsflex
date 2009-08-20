@@ -21,6 +21,7 @@
         	import mx.controls.dataGridClasses.DataGridColumn;
         	import org.granite.tide.Tide;
         	import org.granite.tide.BaseContext;
+        	import org.granite.tide.Component;
             import org.granite.tide.events.TideResultEvent;
             import org.granite.tide.spring.Spring;
             import org.granite.tide.spring.PagedQuery;
@@ -67,15 +68,17 @@
             		// Stores current entity class and derives other necessary entity names 
 	            	_entityClass = entityClass;
 	            	var className:String = getQualifiedClassName(entityClass);
-	            	var entityName:String = className.indexOf("::") > 0 ? className.substring(className.lastIndexOf("::")+2).toLowerCase() : className.toLowerCase();
-	            	var qualifiedEntityName:String = className.replace("::", ".").toLowerCase();
+	            	var entityName:String = ReflectionUtil.getEntityName(className);
+	            	var qualifiedEntityName:String = ReflectionUtil.getQualifiedEntityName(className);
 	            	
 	            	// Registers the entity instance conversation component (used to exchange with Grails controller)
 	            	// Marked create=false because the value should be either retrieved from a grid or from the server
 	            	Spring.getInstance().addComponent(entityName + 'Instance', _entityClass, true, false);
+	            	// Registers controller client proxy (necessary when using controllers with package names)
+	            	Spring.getInstance().addComponent(qualifiedEntityName + "Controller", Component);
 	            	// Registers a PagedQuery component using the Grails controller list method with a page size of 36
 		            Spring.getInstance().addComponentWithFactory(entityName + "List", PagedQuery, 
-	    	            { useGrailsController: true, remoteComponentName: entityName + "Controller", maxResults: 36 }, 
+	    	            { useGrailsController: true, remoteComponentName: qualifiedEntityName + "Controller", maxResults: 36 }, 
 	    	            false, true, Tide.RESTRICT_UNKNOWN, null, false);
 	    	        // Registers a conversational editor UI component in the particular Tide subcontext of the current entity
 	    	        // so events dispatched from this EntityUI will be observed only by it and not by editors of other entities

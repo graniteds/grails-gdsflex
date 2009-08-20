@@ -13,6 +13,7 @@
         	import org.granite.tide.events.TideResultEvent;
         	import org.granite.tide.Component;
         	import org.granite.tide.BaseContext;
+        	import org.granite.tide.uibuilder.util.ReflectionUtil;
         	
         	
 			[Bindable]
@@ -40,11 +41,9 @@
             }
             
             private function selectImage(event:Event):void {
-            	var className:String = getQualifiedClassName(_entity);
-            	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
             	fileRef.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, uploadCompleteHandler);
             	fileRef.addEventListener(ProgressEvent.PROGRESS, uploadProgressHandler);
-            	fileRef.upload(new URLRequest("./" + entityName + "/upload?id=" + _entity.id + "&property=" + propertyName), propertyName);
+            	fileRef.upload(new URLRequest("./" + ReflectionUtil.getEntityName(_entity) + "/upload?id=" + _entity.id + "&property=" + propertyName), propertyName);
             }          
             
             private function uploadProgressHandler(event:ProgressEvent):void {
@@ -57,9 +56,7 @@
             }
                         
             private function deleteImage():void {
-            	var className:String = getQualifiedClassName(_entity);
-            	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
-            	var req:URLRequest = new URLRequest("./" + entityName + "/upload?id=" + _entity.id + "&property=" + propertyName);
+            	var req:URLRequest = new URLRequest("./" + ReflectionUtil.getEntityName(_entity) + "/upload?id=" + _entity.id + "&property=" + propertyName);
             	var loader:URLLoader = new URLLoader(req);
             	loader.addEventListener(Event.COMPLETE, deleteCompleteHandler);
             }
@@ -85,9 +82,7 @@
             private function getImageSource(entity:Object, propertyName:String):Object {
             	if (entity == null || entity[propertyName] == null)
             		return null;
-            	var className:String = getQualifiedClassName(entity);
-            	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
-            	return "./" + entityName + "/download?id=" + entity.id + "&property=" + propertyName;
+            	return "./" + ReflectionUtil.getEntityName(entity) + "/download?id=" + entity.id + "&property=" + propertyName;
             }
       	]]>
 	</mx:Script>

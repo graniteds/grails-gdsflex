@@ -4,15 +4,16 @@
 	
 	<mx:Script>
         <![CDATA[
+        	import flash.events.Event;
+        	import flash.utils.getQualifiedClassName;
+        	import flash.net.FileReference;
+        	import mx.events.FlexEvent;
         	import mx.utils.Base64Decoder;
         	import mx.controls.Alert;
         	import org.granite.tide.events.TideResultEvent;
         	import org.granite.tide.Component;
         	import org.granite.tide.BaseContext;
-        	import flash.events.Event;
-        	import flash.utils.getQualifiedClassName;
-        	import flash.net.FileReference;
-        	import mx.events.FlexEvent;
+        	import org.granite.tide.uibuilder.util.ReflectionUtil;
         	
         	
 			[Bindable]
@@ -33,11 +34,9 @@
             }
             
             private function selectFile(event:Event):void {
-            	var className:String = getQualifiedClassName(entity);
-            	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
             	fileRef.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, uploadCompleteHandler);
             	fileRef.addEventListener(ProgressEvent.PROGRESS, uploadProgressHandler);
-            	fileRef.upload(new URLRequest("./" + entityName + "/upload?id=" + entity.id), propertyName);
+            	fileRef.upload(new URLRequest("./" + ReflectionUtil.getEntityName(className) + "/upload?id=" + entity.id), propertyName);
             }          
             
             private function uploadProgressHandler(event:ProgressEvent):void {
@@ -45,9 +44,7 @@
             }
                         
             private function deleteFile():void {
-            	var className:String = getQualifiedClassName(entity);
-            	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
-            	var req:URLRequest = new URLRequest("./" + entityName + "/upload?id=" + entity.id + "&property=" + propertyName);
+            	var req:URLRequest = new URLRequest("./" + ReflectionUtil.getEntityName(entity) + "/upload?id=" + entity.id + "&property=" + propertyName);
             	var loader:URLLoader = new URLLoader(req);
             	loader.addEventListener(Event.COMPLETE, uploadCompleteHandler);
             }
@@ -63,12 +60,10 @@
             }
             
             private function downloadFile():void {
-            	var className:String = getQualifiedClassName(entity);
-            	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
             	fileRef = new FileReference();
             	fileRef.addEventListener(Event.COMPLETE, downloadCompleteHandler);
             	fileRef.addEventListener(ProgressEvent.PROGRESS, downloadProgressHandler);
-            	fileRef.download(new URLRequest("./" + entityName + "/download?id=" + entity.id + "&property=" + propertyName));
+            	fileRef.download(new URLRequest("./" + ReflectionUtil.getEntityName(entity) + "/download?id=" + entity.id + "&property=" + propertyName));
             }
             
             private function downloadProgressHandler(event:ProgressEvent):void {
@@ -83,9 +78,7 @@
           	private function getFileSource(entity:Object, propertyName:String):String {
             	if (entity[propertyName] == null)
             		return null;
-            	var className:String = getQualifiedClassName(entity);
-            	var entityName:String = className.substring(className.lastIndexOf("::")+2).toLowerCase();
-            	return "./" + entityName + "/download?id=" + entity.id + "&property=" + propertyName;
+            	return "./" + ReflectionUtil.getEntityName(entity) + "/download?id=" + entity.id + "&property=" + propertyName;
            	}
 		]]>
 	</mx:Script>
