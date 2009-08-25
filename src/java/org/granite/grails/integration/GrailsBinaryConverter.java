@@ -26,13 +26,13 @@ public class GrailsBinaryConverter extends Converter implements Reverter {
 		return null;
 	}
 
-	@Override
+	//@Override
 	public boolean canRevert(Object value) {
 		return value != null && 
 			(value instanceof Blob || value instanceof Clob);
 	}
 
-	@Override
+	//@Override
 	public Object revert(Object value) {
 		return value != null ? "" : null;
 	}
