@@ -21,7 +21,7 @@
         	import org.granite.tide.uibuilder.util.ReflectionUtil;
         	
         	
-            private function removeElement():void {
+            private function removeItem():void {
                 collection.removeItemAt(elementGrid.selectedIndex);
             }
 			
@@ -117,7 +117,7 @@
 
 	<mx:Button label="Remove" visible="{editable}"
 		enabled="{Boolean(elementGrid.selectedItem)}"
-		click="removeElement()"/>
+		click="removeItem()"/>
 	
 	<mx:List id="existingElements" dragEnabled="true" width="50%" visible="{editable}"/>
 </mx:HBox>

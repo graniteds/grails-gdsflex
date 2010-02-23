@@ -13,13 +13,13 @@
         	import mx.collections.ListCollectionView;
         	
         	
-            private function addElement():void {
+            private function addItem():void {
                 var element:Object = new _elementClass(entity);
                 collection.addItem(element);
                 elementGrid.editedItemPosition = {columnIndex: 0, rowIndex: collection.length-1 };
             }
            
-            private function removeElement():void {
+            private function removeItem():void {
                 collection.removeItemAt(elementGrid.selectedIndex);
             }
 			
@@ -57,10 +57,10 @@
 
 	<mx:VBox visible="{editable}">
 		<mx:Button label="Add"
-			click="addElement()"/>
+			click="addItem()"/>
 		<mx:Button label="Remove"
 			enabled="{Boolean(elementGrid.selectedItem)}"
-			click="removeElement()"/>
+			click="removeItem()"/>
 	</mx:VBox>
 	
 	<mx:Spacer width="50%"/>
