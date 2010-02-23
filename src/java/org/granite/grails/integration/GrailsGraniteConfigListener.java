@@ -25,6 +25,7 @@ import javax.servlet.ServletContextEvent;
 import org.apache.log4j.Logger;
 import org.granite.config.GraniteConfig;
 import org.granite.config.GraniteConfigListener;
+import org.granite.config.ServletGraniteConfig;
 import org.granite.util.ClassUtil;
 
 /**
@@ -41,7 +42,7 @@ public class GrailsGraniteConfigListener extends GraniteConfigListener {
 		try {
 			// Set proxy externalizer if Hibernate present
 			ClassUtil.forName("org.hibernate.proxy.HibernateProxy");
-			GraniteConfig graniteConfig = GraniteConfig.getConfig(sce.getServletContext());
+			GraniteConfig graniteConfig = ServletGraniteConfig.getConfig(sce.getServletContext());
 			graniteConfig.putExternalizersByInstanceOf("org.hibernate.proxy.HibernateProxy", "org.granite.grails.integration.GrailsExternalizer");
 			
 			log.info("Added externalizer for Hibernate proxies");
