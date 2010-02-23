@@ -20,17 +20,16 @@
 
 import java.util.concurrent.*
 import org.springframework.orm.hibernate3.AbstractSessionFactoryBean
-import org.granite.grails.integration.GrailsHibernateSessionManager
-import org.granite.tide.data.JDOPersistenceContextManager
+import org.granite.tide.data.JDOPersistenceManager
+import org.granite.tide.spring.SpringPersistenceManager
 import org.springframework.transaction.interceptor.TransactionProxyFactoryBean
 import org.granite.tide.spring.security.Identity
 import org.granite.config.GraniteConfigUtil
 import grails.util.Environment
-import org.granite.web.util.WebCompilerWrapper
 
 
 class GdsflexGrailsPlugin {
-    def version = "0.7.2"
+    def version = "0.8.0"
     def author = "William Drai, Ford Guo"
     def authorEmail = "william.drai@graniteds.org"
     def title = "Integration between Grails and GraniteDS/Flex"
@@ -52,12 +51,12 @@ class GdsflexGrailsPlugin {
 	def doWithSpring = {
         
         if (manager?.hasGrailsPlugin("app-engine")) {
-			tidePersistenceManager(JDOPersistenceContextManager, ref("persistenceManagerFactory")) {
+			tidePersistenceManager(JDOPersistenceManager, ref("persistenceManagerFactory")) {
 			}
         }
         
         if (manager?.hasGrailsPlugin("hibernate")) {
-			tidePersistenceManagerTarget(GrailsHibernateSessionManager, ref("sessionFactory")) {
+			tidePersistenceManagerTarget(SpringPersistenceManager, ref("transactionManager")) {
 			}
 			
 			tidePersistenceManager(TransactionProxyFactoryBean) {
@@ -186,12 +185,11 @@ class GdsflexGrailsPlugin {
         }
     }
     
-    
+/*    
     def onChange = { event ->
-		if(Environment.current==Environment.DEVELOPMENT) {
+		if(Environment.current == Environment.DEVELOPMENT) {
 	        if (event.source && config.as3Config.autoCompileFlex) {
-	        	if(isFirst) {
-	        		WebCompilerWrapper.init("")
+	        	if (isFirst) {
 	        		isFirst = false
 	        	}
 	    		compileMxml(event)
@@ -210,7 +208,7 @@ class GdsflexGrailsPlugin {
     		} as Runnable)
     	}
     }
-    
+*/    
     
     def addDataPublishListener(listeners, type) {
         def previousListeners = listeners."${type}EventListeners"
