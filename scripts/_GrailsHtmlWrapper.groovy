@@ -31,10 +31,11 @@ grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 tmpPath = System.properties."java.io.tmpdir"+"/gdsflex-tmp"
 
 includeTargets << grailsScript("_GrailsCompile")
+includeTargets << new File("${gdsflexPluginDir}/scripts/_FlexCommon.groovy")
 
 
 def configureHtmlWrapper() {	
-    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/compile/flexTasks.jar").toURI().toURL())
+    rootLoader?.addURL(new File("${flexSDK}/ant/lib/flexTasks.jar").toURI().toURL())
     
     Ant.taskdef(name: "html-wrapper", classname: "flex.ant.HtmlWrapperTask")
 }
