@@ -164,8 +164,8 @@
     	${propertyName}.save(flush:true)
     	
     	// Init GraniteDS thread context (we are not in a normal AMF request)
-    	def graniteConfig = org.granite.config.GraniteConfig.loadConfig(servletContext)
-    	def servicesConfig = org.granite.config.flex.ServicesConfig.loadConfig(servletContext)
+    	def graniteConfig = org.granite.config.ServletGraniteConfig.loadConfig(servletContext)
+    	def servicesConfig = org.granite.config.flex.ServletServicesConfig.loadConfig(servletContext)
         def context = org.granite.messaging.webapp.HttpGraniteContext.createThreadIntance(
             graniteConfig, servicesConfig, servletContext,
             request, response
