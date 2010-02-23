@@ -5,7 +5,6 @@
     xmlns:ui="org.granite.tide.uibuilder.*"
     xmlns="*"
     layout="vertical"
-    backgroundGradientColors="[#0e2e7d, #6479ab]"
     preinitialize="Spring.getInstance().initApplication()"
     initialize="init()">
    
@@ -40,7 +39,7 @@
 			private var _previousSelected:Container = null;
 			
             private function showEntityUI(event:Event):void {
-        		_previousSelected = mainStack.selectedChild;
+        		_previousSelected = mainStack.selectedChild as Container;
             	if (_previousSelected !== this)
             		mainStack.selectedChild = event.target as Container;
             }
