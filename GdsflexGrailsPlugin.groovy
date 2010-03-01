@@ -25,6 +25,7 @@ import org.granite.tide.spring.SpringPersistenceManager
 import org.springframework.transaction.interceptor.TransactionProxyFactoryBean
 import org.granite.tide.spring.security.Identity
 import org.granite.config.GraniteConfigUtil
+import org.granite.grails.compiler.MxmlcCompilerWrapper
 import grails.util.Environment
 
 
@@ -185,9 +186,9 @@ class GdsflexGrailsPlugin {
         }
     }
     
-/*    
+    
     def onChange = { event ->
-		if(Environment.current == Environment.DEVELOPMENT) {
+		if (Environment.current == Environment.DEVELOPMENT) {
 	        if (event.source && config.as3Config.autoCompileFlex) {
 	        	if (isFirst) {
 	        		isFirst = false
@@ -203,12 +204,15 @@ class GdsflexGrailsPlugin {
     		executor.execute({
     			if(lastModifiedQueue.size()>0) {
         			lastModifiedQueue.clear()
-        			WebCompilerWrapper.compile("grails-app/views/flex",event.application.metadata['app.name'])
+        			new MxmlcCompilerWrapper().compile("grails-app/views/flex", 
+        				event.application.metadata['app.name'], 
+        				this.getClass().getClassLoader()
+        			)
     			}
     		} as Runnable)
     	}
     }
-*/    
+
     
     def addDataPublishListener(listeners, type) {
         def previousListeners = listeners."${type}EventListeners"
