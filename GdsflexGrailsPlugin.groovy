@@ -21,7 +21,7 @@
 import java.util.concurrent.*
 import org.springframework.orm.hibernate3.AbstractSessionFactoryBean
 import org.granite.tide.data.JDOPersistenceManager
-import org.granite.tide.spring.SpringPersistenceManager
+import org.granite.grails.integration.GrailsPersistenceManager
 import org.springframework.transaction.interceptor.TransactionProxyFactoryBean
 import org.granite.tide.spring.security.Identity
 import org.granite.config.GraniteConfigUtil
@@ -57,13 +57,7 @@ class GdsflexGrailsPlugin {
         }
         
         if (manager?.hasGrailsPlugin("hibernate")) {
-			tidePersistenceManagerTarget(SpringPersistenceManager, ref("transactionManager")) {
-			}
-			
-			tidePersistenceManager(TransactionProxyFactoryBean) {
-				transactionManager = ref("transactionManager")
-				target = ref("tidePersistenceManagerTarget")
-				transactionAttributes = ["*" : "PROPAGATION_REQUIRED,readOnly"]
+			tidePersistenceManager(GrailsPersistenceManager, ref("transactionManager")) {
 			}
 		}
 		
