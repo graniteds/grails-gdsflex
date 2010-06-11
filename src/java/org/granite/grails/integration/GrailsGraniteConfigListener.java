@@ -29,7 +29,7 @@ import org.granite.config.ServletGraniteConfig;
 import org.granite.util.ClassUtil;
 
 /**
- * @author William Draï
+ * @author William DraÃ¯
  */
 public class GrailsGraniteConfigListener extends GraniteConfigListener {
 	

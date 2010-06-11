@@ -56,7 +56,8 @@
       	]]>
 	</mx:Script>
 
-	<mx:ComboBox id="propertyInput" dataProvider="{context[_elementName + 'InstanceList']}"
+	<mx:ComboBox id="propertyInput"
+		dataProvider="{context[_elementName + 'InstanceList']}"
 		selectedIndex="{context[_elementName + 'InstanceList'].getItemIndex(property)}"
 		change="valueChanged()"/>
 </mx:HBox>

@@ -7,7 +7,7 @@ import grails.util.GrailsUtil
  */
 public class GraniteConfigUtil{
     
-    public static ConfigObject getUserConfig(parentClassLoader=Thread.currentThread().contextClassLoader) {
+    public static ConfigObject getUserConfig(parentClassLoader = Thread.currentThread().contextClassLoader) {
         GroovyClassLoader classLoader = new GroovyClassLoader(parentClassLoader)
         
         def slurper = new ConfigSlurper(GrailsUtil.environment)
@@ -27,6 +27,20 @@ public class GraniteConfigUtil{
         }
         
         return config
+        
+    }
+    
+    public static ConfigObject getBuildConfig(parentClassLoader = Thread.currentThread().contextClassLoader) {
+        GroovyClassLoader classLoader = new GroovyClassLoader(parentClassLoader)
+        
+        def slurper = new ConfigSlurper(GrailsUtil.environment)
+        ConfigObject buildConfig
+        try {
+            buildConfig = slurper.parse(classLoader.loadClass('BuildConfig'))
+        }catch (e) {
+        }
+        
+        return buildConfig
         
     }
     

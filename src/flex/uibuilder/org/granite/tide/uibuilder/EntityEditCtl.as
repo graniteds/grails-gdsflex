@@ -147,8 +147,14 @@ package org.granite.tide.uibuilder {
 				: context[_entityName + 'Instance'][_entityLabel];
             _editForm.create = create;            
             _editForm.properties = _properties;
-           
-            // Add the form panel as a child tab in the main view
+           	
+           	// GDS-678: nav not yet initialized
+ 			if (nav == null) { 
+    			context.entityUI.show(context[_entityName + "Instance"].id); 
+      			return; 
+ 			}             
+ 			
+ 			// Add the form panel as a child tab in the main view
             if (!nav.getChildByName(_editForm.name))
                 nav.addChild(_editForm);           
             nav.selectedChild = _editForm;

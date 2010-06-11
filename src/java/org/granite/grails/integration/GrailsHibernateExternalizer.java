@@ -49,7 +49,7 @@ import org.granite.messaging.amf.io.util.externalizer.annotation.IgnoredProperty
 import org.granite.util.ClassUtil;
 
 /**
- * @author William Draï
+ * @author William DraÃ¯
  */
 public class GrailsHibernateExternalizer extends HibernateExternalizer {
 	

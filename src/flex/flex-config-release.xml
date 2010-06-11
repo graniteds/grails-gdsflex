@@ -78,6 +78,7 @@
           <name>Inject</name>
           <name>Out</name>
           <name>Observer</name>
+          <name>PostConstruct</name>
           <name>Destroy</name>
           <name>Path</name>
           <name>Id</name>
@@ -105,17 +106,14 @@
       <!-- references to dynamic properties) -->
       <es>false</es>
 
-      <!-- List of CSS or SWC files to apply as a theme. -->
-      <!-- not set -->
-      <!--
-      <theme>
-         <filename>string</filename>
-         <filename>string</filename>
-      </theme>
-      -->
-
       <!-- Turns on the display of stack traces for uncaught runtime errors. -->
       <verbose-stacktraces>false</verbose-stacktraces>
+
+      <!-- Missing constructor. -->
+      <warn-no-constructor>false</warn-no-constructor>
+
+      <!-- The super() statement was not called within the constructor. -->
+      <warn-no-explicit-super-call-in-constructor>false</warn-no-explicit-super-call-in-constructor>
 
    </compiler>
 

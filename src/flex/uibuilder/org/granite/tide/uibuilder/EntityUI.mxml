@@ -245,7 +245,7 @@
             <mx:ButtonBar id="bbMain" initialize="initButtonBar()" creationComplete="completeButtonBar()" itemClick="clickHandler(event);"
             	dataProvider="{_buttons}"/>
            
-            <mx:DataGrid id="dgList" dataProvider="{_entityName ? _context[_entityName + 'List'] : null}"
+            <mx:DataGrid id="dgList" dataProvider="{_context[_entityName + 'List']}"
             	columns="{_columns}" 
             	width="100%" height="100%">
             </mx:DataGrid>

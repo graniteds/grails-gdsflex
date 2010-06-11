@@ -46,7 +46,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 /**
- * @author William Dra�
+ * @author William Draï
  */
 public class GrailsExternalizer extends DefaultExternalizer {
 	
