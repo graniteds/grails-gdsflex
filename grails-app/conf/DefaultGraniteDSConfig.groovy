@@ -12,6 +12,7 @@ graniteConfig {
     dataDispatchEnabled = false
     
 }
+
 as3Config {
     domainJar = null
     extraClasses = []
