@@ -42,22 +42,33 @@ target ('default': "generate Flex app") {
 	def binding = [ domainClassList: domainClassList ]
 	Writable writable = template.make(binding)
 	
-	File outFile = new File("${basedir}/grails-app/views/flex/${grailsAppName}.mxml")
+    GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
+    loader.addURL(new File(classesDirPath).toURI().toURL())
+    Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
+    GroovyObject groovyObject = (GroovyObject)groovyClass.newInstance()
+    
+    def as3Config = groovyObject.getUserConfig()?.as3Config
+    
+	def targetDir = as3Config.flexSrcDir ?: "${basedir}/grails-app/views/flex/"
+	if (targetDir.endsWith("/"))
+		targetDir = targetDir.substring(0, targetDir.length()-1)
+    
+	File outFile = new File(targetDir + "/${grailsAppName}.mxml")
 	int i = 0;
 	File bakFile = outFile;
 	while (bakFile.exists()) {
 		i++;
-		bakFile = new File("${basedir}/grails-app/views/flex/${grailsAppName}.mxml.bak.${i}")
+		bakFile = new File(targetDir + "/${grailsAppName}.mxml.bak.${i}")
 	}
 	if (i > 0) {
 		println "Backup existing Flex app to ${bakFile}"
 		outFile.renameTo(bakFile)
 	}
 	
-	outFile = new File("${basedir}/grails-app/views/flex/${grailsAppName}.mxml")
+	outFile = new File(targetDir + "/${grailsAppName}.mxml")
 	writable.writeTo(new FileWriter(outFile))
 	
-	println "Generated Flex app in grails-app/views/flex/${grailsAppName}.mxml"
+	println "Generated Flex app in ${targetDir}/${grailsAppName}.mxml"
 }
 
 

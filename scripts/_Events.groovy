@@ -14,24 +14,31 @@
  along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
 import grails.util.Environment
+import grails.util.BuildSettings
+
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
+includeTargets << new File("${gdsflexPluginDir}/scripts/_FlexCommon.groovy")
 includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
 
+
 packageCompileFlag = false
+
 eventCompileEnd = {
     if (checkDir() && packageCompileFlag) {
         gas3()
+        initFlexProject()
     }
 }
+
 eventPackagingEnd = {
     if (checkDir()) {
-        if(!packageCompileFlag) {
+        if (!packageCompileFlag) {
             gas3()
             packageCompileFlag = true
         }
-        if(Environment.current==Environment.PRODUCTION) {
+        if (Environment.current == Environment.PRODUCTION) {
             includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
             println "Starting compile flex files"
             flexCompile()

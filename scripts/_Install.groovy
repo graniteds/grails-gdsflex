@@ -20,13 +20,3 @@
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
-Ant.copy(todir: "${basedir}/web-app/WEB-INF/flex", overwrite: false) {
-    fileset(dir: "${pluginBasedir}/src/flex") {
-    	include(name: "**/*")
-    }
-}
-Ant.copy(todir: "${basedir}/web-app/WEB-INF/granite", overwrite: false) {
-    fileset(dir: "${pluginBasedir}/src/granite")
-}
-Ant.mkdir(dir:"${basedir}/grails-app/views/flex")
-Ant.mkdir(dir:"${basedir}/grails-app/views/swf")

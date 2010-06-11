@@ -28,7 +28,7 @@ import javax.persistence.*
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
-tmpPath = System.properties."java.io.tmpdir"+"/gdsflex-tmp"
+tmpPath = System.properties."java.io.tmpdir" + "/gdsflex-tmp"
 
 
 def configureGas3() {	
@@ -39,7 +39,7 @@ def configureGas3() {
     
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator.jar").toURI().toURL())
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator-share.jar").toURI().toURL())
-    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/jdo2-api-2.2.jar").toURI().toURL())
+    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/jdo2-api-2.3-eb.jar").toURI().toURL())
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/appengine.jar").toURI().toURL())
     
     Ant.taskdef(name: "gas3", classname: "org.granite.generator.ant.AntJavaAs3Task")
@@ -74,7 +74,11 @@ target(gas3: "Gas3") {
 	list(domainDir, files)
 	
 	if (!files.isEmpty() || domainJar || (extraClasses && !extraClasses.isEmpty())) {
-        File outDir = new File("${basedir}/grails-app/views/flex")
+		def targetDir = as3Config.flexSrcDir ?: "${basedir}/grails-app/views/flex"
+		if (targetDir.endsWith("/"))
+			targetDir = targetDir.substring(0, targetDir.length()-1)
+	
+        File outDir = new File(targetDir)
         if (!outDir.exists())
             outDir.mkdirs()
         

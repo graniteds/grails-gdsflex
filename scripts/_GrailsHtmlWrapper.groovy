@@ -45,15 +45,30 @@ target(flexHtmlWrapper: "Flex html wrapper") {
     
     configureHtmlWrapper()
     
+    GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
+    loader.addURL(new File(classesDirPath).toURI().toURL())
+    Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
+    GroovyObject groovyObject = (GroovyObject)groovyClass.newInstance()
+    
+    def as3Config = groovyObject.getUserConfig()?.as3Config
+    
+    def targetPlayerVersionMajor = as3Config.versionMajor ?: "9"
+    def targetPlayerVersionMinor = as3Config.versionMinor ?: "0"
+    def targetPlayerVersionRevision = as3Config.versionRevision ?: "124"
+    
+	def targetDir = as3Config.flexSrcDir ?: "${basedir}/grails-app/views/flex/"
+	if (targetDir.endsWith("/"))
+		targetDir = targetDir.substring(0, targetDir.length()-1)
+    
 	Ant."html-wrapper"(title: "${grailsAppName}",
             file: "${grailsAppName}.html",
             application: "mainapp",
             swf: "${grailsAppName}",
             width: "100%",
             height: "100%",
-            "version-major": "9",
-            "version-minor": "0",
-            "version-revision": "124",
+            "version-major": targetPlayerVersionMajor,
+            "version-minor": targetPlayerVersionMinor,
+            "version-revision": targetPlayerVersionRevision,
             history: "true",
             template: "express-installation",
             output: "${basedir}/web-app/") {

@@ -6,3 +6,5 @@ if (!flexSDK) {
 	println "No Flex SDK specified. Either set FLEX_HOME in your environment or specify flex.sdk in your grails-app/conf/BuildConfig.groovy file"
 	System.exit(1)
 }
+		
+println "Using Flex SDK: ${flexSDK}"
