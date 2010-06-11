@@ -25,8 +25,8 @@ import org.granite.grails.integration.GrailsPersistenceManager
 import org.springframework.transaction.interceptor.TransactionProxyFactoryBean
 import org.granite.tide.spring.security.Identity
 import org.granite.config.GraniteConfigUtil
-import org.granite.grails.compiler.MxmlcCompilerWrapper
 import grails.util.Environment
+import grails.util.BuildSettings
 
 
 class GdsflexGrailsPlugin {
@@ -37,17 +37,18 @@ class GdsflexGrailsPlugin {
     def description = ""
     def documentation = "http://www.graniteds.org/"
 	
-	def watchedResources = ["file:./grails-app/views/flex/**/*.mxml",
-	                        "file:./grails-app/views/flex/**/*.css",
-	                        "file:./grails-app/views/flex/**/*.as"]
+    private static final def config = GraniteConfigUtil.getUserConfig()
+    private static final def buildConfig = GraniteConfigUtil.getBuildConfig()
+	private static final def sourceDir = config?.as3Config.flexSrcDir ?: "./grails-app/views/flex"
+	
+	private static GroovyClassLoader compilerLoader = null
     private static LinkedBlockingQueue lastModifiedQueue = new LinkedBlockingQueue()
     private static ExecutorService executor = Executors.newFixedThreadPool(1)
-    private static final def config = GraniteConfigUtil.getUserConfig()
-	private static boolean isFirst = true
     
-//    def artefacts = [ org.granite.grails.integration.GrailsDomainClassHandler ]
-    
-    
+	def watchedResources = ["file:${sourceDir}/**/*.mxml",
+	                        "file:${sourceDir}/**/*.css",
+	                        "file:${sourceDir}/**/*.as"]
+	                        
     
 	def doWithSpring = {
         
@@ -183,25 +184,57 @@ class GdsflexGrailsPlugin {
     
     def onChange = { event ->
 		if (Environment.current == Environment.DEVELOPMENT) {
-	        if (event.source && config.as3Config.autoCompileFlex) {
-	        	if (isFirst) {
-	        		isFirst = false
-	        	}
-	    		compileMxml(event)
+	        if (event.source && config?.as3Config.autoCompileFlex) {
+	        	flexCompile(event)
 	        }
 		}
     }
     
-    def compileMxml(event) {
+    def flexCompile(event) {
+		def flexSDK = System.getenv("FLEX_HOME")
+		if (buildConfig.flex.sdk)
+			flexSDK = buildConfig.flex.sdk
+		
+		if (!flexSDK) {
+			println "No Flex SDK specified. Either set FLEX_HOME in your environment or specify flex.sdk in your grails-app/conf/BuildConfig.groovy file"
+			System.exit(1)
+		}
+		
+		println "Using Flex SDK: ${flexSDK}"
+		
+		String grailsHome = System.getProperty("grails.home")
+		BuildSettings settings = new BuildSettings(new File(grailsHome))
+    	
+    	File pluginDir = lookupPluginDir(settings)
+    	// println "Plugin dir: ${pluginDir}"
+    	
+ 		if (compilerLoader == null) {
+ 			ClassLoader loader = configureFlexCompilerClassPath(flexSDK, pluginDir)
+ 			
+			File source = new File(sourceDir)
+			if (!source.exists())
+				source.mkdirs()
+				
+			// println "Source dir: ${source.canonicalPath}"
+			
+			Class wrapperClass = loader.parseClass(new File("${pluginDir}/scripts/flexcompiler/FlexCompilerWrapper.groovy"))
+			java.lang.reflect.Method wrapperInit = wrapperClass.getMethod("init", Object.class, Object.class, Object.class, Object.class, Object.class, Object.class)
+			wrapperInit.invoke(null, flexSDK, settings.baseDir, pluginDir, source.canonicalPath, event.application.metadata['app.name'], loader)
+			
+			compilerLoader = loader
+		}
+    	
     	if (!lastModifiedQueue.contains(event.source.lastModified())) {
     		lastModifiedQueue.offer(event.source.lastModified())
     		executor.execute({
-    			if(lastModifiedQueue.size()>0) {
+    			println "Flex incremental compilation for ${event.source.filename}"
+    			
+    			Thread.currentThread().setContextClassLoader(compilerLoader)
+    			if (lastModifiedQueue.size() > 0) {
         			lastModifiedQueue.clear()
-        			new MxmlcCompilerWrapper().compile("grails-app/views/flex", 
-        				event.application.metadata['app.name'], 
-        				this.getClass().getClassLoader()
-        			)
+    				Class wrapperClass = Thread.currentThread().getContextClassLoader().loadClass("FlexCompilerWrapper")
+					java.lang.reflect.Method wrapperCompile = wrapperClass.getMethod("incrementalCompile", Object.class)
+					wrapperCompile.invoke(null, event.source.file)
     			}
     		} as Runnable)
     	}
@@ -214,5 +247,82 @@ class GdsflexGrailsPlugin {
         System.arraycopy(previousListeners, 0, newListeners, 0, previousListeners.length)
         newListeners[-1] = Class.forName("org.granite.tide.hibernate.HibernateDataPublishListener").newInstance()
         listeners."${type}EventListeners" = newListeners
+    }
+    
+    
+    static def configureFlexCompilerClassPath(flexSDK, pluginDir) {
+		GroovyClassLoader loader = new GroovyClassLoader()
+		
+		loader.addURL(new File("${flexSDK}/lib/adt.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/afe.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/aglj32.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/asc.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/asdoc.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/batik_ja.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/batik-awt-util.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/batik-bridge.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/batik-css.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/batik-dom.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/batik-ext.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/batik-gvt.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/batik-parser.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/batik-script.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/batik-svg-dom.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/batik-svggen.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/batik-transcoder.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/batik-util.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/batik-xml.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/commons-discovery.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/compc.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/mxmlc.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/mxmlc_ja.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/copylocale.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/digest.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/flex-compiler-oem.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/flex-fontkit.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/flex-messaging-common.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/mm-velocity-1.4.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/optimizer.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/rideau.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/swfutils.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/xmlParserAPIs.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/xercesImpl.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/xercesPatch.jar").toURI().toURL())
+		loader.addURL(new File("${flexSDK}/lib/xalan.jar").toURI().toURL())
+		
+		GroovyResourceLoader defaultResourceLoader = loader.resourceLoader
+		GroovyResourceLoader resourceLoader = { filename ->
+			if (filename.startsWith("FlexCompiler")) {
+				File file = new File("${pluginDir}/scripts/flexcompiler/${filename}.groovy")
+				println "loading ${file.canonicalPath}"
+				if (file.exists())
+					return file.toURI().toURL()
+			}
+			return defaultResourceLoader.loadGroovySource(filename)
+		} as GroovyResourceLoader
+		loader.resourceLoader = resourceLoader
+		
+		return loader
+	}
+	
+    private static File lookupPluginDir(settings) {
+    	if (buildConfig?.grails?.plugin?.location?.gdsflex)
+    		return new File(buildConfig?.grails?.plugin?.location?.gdsflex.toString());
+
+        File[] dirs = listPluginDirs(settings.getProjectPluginsDir())
+        if (dirs.length > 0)
+        	return dirs[0]
+        
+        dirs = listPluginDirs(settings.getGlobalPluginsDir())
+        return dirs.length > 0 ? dirs[0] : null;
+    }
+    
+    private static File[] listPluginDirs(File dir) {
+        File[] dirs = dir.listFiles({ path -> 
+            return path.isDirectory() &&
+                    (!path.getName().startsWith(".") && path.getName().startsWith('gdsflex-'))
+        } as FileFilter)
+		
+        return dirs == null ? new File[0] : dirs;
     }
 }
