@@ -294,7 +294,7 @@ class GdsflexGrailsPlugin {
 		GroovyResourceLoader resourceLoader = { filename ->
 			if (filename.startsWith("FlexCompiler")) {
 				File file = new File("${pluginDir}/scripts/flexcompiler/${filename}.groovy")
-				println "loading ${file.canonicalPath}"
+				// println "loading ${file.canonicalPath}"
 				if (file.exists())
 					return file.toURI().toURL()
 			}
