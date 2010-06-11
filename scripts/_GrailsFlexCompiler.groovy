@@ -88,10 +88,6 @@ target(initFlexProject: "Init flex project") {
 	
 	Ant.mkdir(dir: sourceDir)
 	
-	println "Mxmlc loader: ${Thread.currentThread().getContextClassLoader()}"
-	for (url in Thread.currentThread().getContextClassLoader().getURLs())
-		println url
-	
 	Class wrapperClass = Thread.currentThread().getContextClassLoader().parseClass(new File("${gdsflexPluginDir}/scripts/flexcompiler/FlexCompilerWrapper.groovy"))
 	java.lang.reflect.Method wrapperInit = wrapperClass.getMethod("init", Object.class, Object.class, Object.class, Object.class, Object.class)
 	wrapperInit.invoke(null, flexSDK, basedir, gdsflexPluginDir, sourceDir, grailsAppName)	

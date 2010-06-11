@@ -21,6 +21,7 @@ grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
 includeTargets << new File("${gdsflexPluginDir}/scripts/_FlexCommon.groovy")
 includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
+includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
 
 
 packageCompileFlag = false
@@ -28,7 +29,6 @@ packageCompileFlag = false
 eventCompileEnd = {
     if (checkDir() && packageCompileFlag) {
         gas3()
-        initFlexProject()
     }
 }
 
