@@ -8,9 +8,9 @@ includeTargets << grailsScript("_GrailsCompile")
 includeTargets << new File("${gdsflexPluginDir}/scripts/_FlexCommon.groovy")
 
 
-private def getConfig() {
+private def getConfig(ClassLoader loader = Thread.currentThread().getContextClassLoader()) {
 
-    Class groovyClass = Thread.currentThread().getContextClassLoader().parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
+    Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
     GroovyObject groovyObject = (GroovyObject)groovyClass.newInstance()
     
     return groovyObject.getUserConfig()?.as3Config
@@ -81,9 +81,13 @@ def configureFlexCompilerClasspath() {
 target(initFlexProject: "Init flex project") {
     depends(compilePlugins)
     
-    configureFlexCompilerClasspath()
+    GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
+    loader.addURL(new File("${classesDir}").toURI().toURL())
     
-	def as3Config = getConfig()
+	def as3Config = getConfig(loader)	
+    
+    configureFlexCompilerClasspath()
+	
 	def sourceDir = as3Config.flexSrcDir ?: "${basedir}/grails-app/views/flex"
 	
 	Ant.mkdir(dir: sourceDir)
