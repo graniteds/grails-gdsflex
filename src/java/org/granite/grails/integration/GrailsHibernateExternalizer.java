@@ -122,10 +122,8 @@ public class GrailsHibernateExternalizer extends HibernateExternalizer {
                     		}
                     	}
                 		if (!found) {
-                			if ("id".equals(field.getName()) || "version".equals(field.getName())) { 
-                				if (c == clazz)
-                					idVersionFields.add(new FieldProperty(converters, field));
-                			}
+                			if ("id".equals(field.getName()) || "version".equals(field.getName())) 
+            					idVersionFields.add(new FieldProperty(converters, field));
                 			else
                 				newFields.add(new FieldProperty(converters, field));
                 		}
