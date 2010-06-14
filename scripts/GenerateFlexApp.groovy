@@ -49,7 +49,7 @@ target ('default': "generate Flex app") {
     
     def as3Config = groovyObject.getUserConfig()?.as3Config
     
-	def targetDir = as3Config.flexSrcDir ?: "${basedir}/grails-app/views/flex/"
+	def targetDir = as3Config.srcDir ?: "${basedir}/grails-app/views/flex/"
 	if (targetDir.endsWith("/"))
 		targetDir = targetDir.substring(0, targetDir.length()-1)
     

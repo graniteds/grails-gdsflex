@@ -74,7 +74,7 @@ target(gas3: "Gas3") {
 	list(domainDir, files)
 	
 	if (!files.isEmpty() || domainJar || (extraClasses && !extraClasses.isEmpty())) {
-		def targetDir = as3Config.flexSrcDir ?: "${basedir}/grails-app/views/flex"
+		def targetDir = as3Config.srcDir ?: "${basedir}/grails-app/views/flex"
 		if (targetDir.endsWith("/"))
 			targetDir = targetDir.substring(0, targetDir.length()-1)
 	

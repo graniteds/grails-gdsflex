@@ -56,7 +56,7 @@ target(flexHtmlWrapper: "Flex html wrapper") {
     def targetPlayerVersionMinor = as3Config.versionMinor ?: "0"
     def targetPlayerVersionRevision = as3Config.versionRevision ?: "124"
     
-	def targetDir = as3Config.flexSrcDir ?: "${basedir}/grails-app/views/flex/"
+	def targetDir = as3Config.srcDir ?: "${basedir}/grails-app/views/flex/"
 	if (targetDir.endsWith("/"))
 		targetDir = targetDir.substring(0, targetDir.length()-1)
     
