@@ -6,11 +6,11 @@ public class FlexCompilerWrapper {
     private static Object flexCompiler
        
        
-    static def init(flexSDK, basedir, pluginDir, sourceDir, appName, loader = Thread.currentThread().getContextClassLoader()) {
+    static def init(flexSDK, basedir, pluginDir, sourceDir, modules, appName, loader = Thread.currentThread().getContextClassLoader()) {
     	if (flexCompiler == null) {
 	 		Class compilerClass = loader.loadClass("FlexCompiler")
-	 		java.lang.reflect.Constructor compilerCons = compilerClass.getConstructor(Object.class, Object.class, Object.class, Object.class, Object.class)
-	 		flexCompiler = compilerCons.newInstance(flexSDK, basedir, pluginDir, sourceDir, appName)
+	 		java.lang.reflect.Constructor compilerCons = compilerClass.getConstructor(Object.class, Object.class, Object.class, Object.class, Object.class, Object.class)
+	 		flexCompiler = compilerCons.newInstance(flexSDK, basedir, pluginDir, sourceDir, modules, appName)
 	 	}
     }
     

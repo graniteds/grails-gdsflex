@@ -49,12 +49,13 @@ public class FlexCompiler {
     private String basedir
     private String pluginDir
     private String sourceDir
+    private String[] modules
     private String targetDir
     private String appName
 
     
-    public FlexCompiler(flexSDK, basedir, pluginDir, sourceDir, appName) {
-    	println "Initialize Flex project (source: ${sourceDir}, app: ${appName})"
+    public FlexCompiler(flexSDK, basedir, pluginDir, sourceDir, modules, appName) {
+    	println "Initialize Flex project (source: ${sourceDir}, app: ${appName}, modules: ${modules})"
     	
     	fs = new VirtualLocalFileSystem()
     	
@@ -64,6 +65,7 @@ public class FlexCompiler {
     	this.basedir = basedir
     	this.pluginDir = pluginDir
     	this.sourceDir = sourceDir
+    	this.modules = modules
     	this.targetDir = "${basedir}/grails-app/views/swf"
     	this.appName = appName
     	
@@ -93,8 +95,23 @@ public class FlexCompiler {
         	application.load(new FileInputStream(savedDataFile))
         }
         
-        println "Adding flex application to project: " + appFile.name
+        println "Adding Flex application to project: ${appFile.name} -> ${outputFile.name}" 
         project.addBuilder(application)
+        
+        for (module in modules) {
+        	File moduleFile = new File(source, module)
+        	VirtualLocalFile moduleVLF = fs.create(moduleFile.canonicalPath, moduleFile.text, source, moduleFile.lastModified())
+	        File outFile = new File(outputDir, module.substring(0, module.lastIndexOf(".")) + ".swf")
+	        	        
+        	Application moduleApp = new Application([ moduleVLF ] as VirtualLocalFile[])
+    		Configuration config = moduleApp.getDefaultConfiguration()
+    		configure(config)
+    		moduleApp.setConfiguration(config)
+        	moduleApp.setOutput(outFile)
+        	
+        	println "Adding Flex module/asset to project: ${moduleFile.name} -> ${outFile.name}"
+        	project.addBuilder(moduleApp)
+        }
     }
 
     
