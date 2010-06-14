@@ -39,7 +39,8 @@ class GdsflexGrailsPlugin {
 	
     private static final def config = GraniteConfigUtil.getUserConfig()
     private static final def buildConfig = GraniteConfigUtil.getBuildConfig()
-	private static final def sourceDir = config?.as3Config.flexSrcDir ?: "./grails-app/views/flex"
+	private static def sourceDir = config?.as3Config.srcDir ?: "./grails-app/views/flex"
+	private static def modules = config?.modules ?: []
 	
 	private static GroovyClassLoader compilerLoader = null
     private static LinkedBlockingQueue lastModifiedQueue = new LinkedBlockingQueue()
@@ -218,19 +219,20 @@ class GdsflexGrailsPlugin {
 			// println "Source dir: ${source.canonicalPath}"
 			
 			Class wrapperClass = loader.parseClass(new File("${pluginDir}/scripts/flexcompiler/FlexCompilerWrapper.groovy"))
-			java.lang.reflect.Method wrapperInit = wrapperClass.getMethod("init", Object.class, Object.class, Object.class, Object.class, Object.class, Object.class)
-			wrapperInit.invoke(null, flexSDK, settings.baseDir, pluginDir, source.canonicalPath, event.application.metadata['app.name'], loader)
+			java.lang.reflect.Method wrapperInit = wrapperClass.getMethod("init", Object.class, Object.class, Object.class, Object.class, Object.class, Object.class, Object.class)
+			wrapperInit.invoke(null, flexSDK, settings.baseDir, pluginDir, source.canonicalPath, modules, event.application.metadata['app.name'], loader)
 			
 			compilerLoader = loader
 		}
     	
-    	if (!lastModifiedQueue.contains(event.source.lastModified())) {
-    		lastModifiedQueue.offer(event.source.lastModified())
+    	long lastModified = event.source.lastModified() / 500L 
+    	if (!lastModifiedQueue.contains(lastModified)) {
+    		lastModifiedQueue.offer(lastModified)
     		executor.execute({
     			println "Flex incremental compilation for ${event.source.filename}"
     			
     			Thread.currentThread().setContextClassLoader(compilerLoader)
-    			if (lastModifiedQueue.size() > 0) {
+    			if (!lastModifiedQueue.isEmpty()) {
         			lastModifiedQueue.clear()
     				Class wrapperClass = Thread.currentThread().getContextClassLoader().loadClass("FlexCompilerWrapper")
 					java.lang.reflect.Method wrapperCompile = wrapperClass.getMethod("incrementalCompile", Object.class)
