@@ -7,7 +7,7 @@ graniteConfig {
     springSecurityIdentityClass = Identity.class
     
     gravityEnabled = false
-    gravityServletClassName = "org.granite.gravity.jetty.GravityJettyServlet"
+    gravityServletClassName = "org.granite.gravity.tomcat.GravityTomcatServlet"
     
     dataDispatchEnabled = false
     
