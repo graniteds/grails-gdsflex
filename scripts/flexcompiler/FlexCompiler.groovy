@@ -95,6 +95,8 @@ public class FlexCompiler {
         	application.load(new FileInputStream(savedDataFile))
         }
         
+        println "App config: ${application.configuration}"
+        
         println "Adding Flex application to project: ${appFile.name} -> ${outputFile.name}" 
         project.addBuilder(application)
         
@@ -122,11 +124,11 @@ public class FlexCompiler {
         
         configuration.addSourcePath([new File(sourceDir)] as File[])
         
-        configuration.addActionScriptMetadata(["Name", "In", "Inject", "Out", "Observer", "PostConstruct", "Destroy", "Path", "Id", "Version"] as String[])
+        configuration.addActionScriptMetadata(["Name", "In", "Inject", "Out", "Observer", "ManagedEvent", "PostConstruct", "Destroy", "Path", "Id", "Version"] as String[])
         
         configuration.setServiceConfiguration(new File("${basedir}/web-app/WEB-INF/flex/services-config.xml"))
         
-        configuration.setContextRoot(appName)
+        configuration.setContextRoot("/${appName}")
     }
     
     
