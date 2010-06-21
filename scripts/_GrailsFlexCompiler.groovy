@@ -82,12 +82,12 @@ target(initFlexProject: "Init flex project") {
     depends(compilePlugins)
     
     GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
-    loader.addURL(new File("${classesDir}").toURI().toURL())
     try {
-    	loader.addURL(new File(pluginClassesDirPath).toURI().toURL())
+    	loader.addURL(new File("${pluginClassesDirPath}").toURI().toURL())
     }
     catch (groovy.lang.MissingPropertyException e) {
     	// Before Grails 1.3
+    	loader.addURL(new File("${classesDir}").toURI().toURL())
     }
     
 	def as3Config = getConfig(loader)	

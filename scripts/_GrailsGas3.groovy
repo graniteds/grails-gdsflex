@@ -41,13 +41,15 @@ def configureGas3() {
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator-share.jar").toURI().toURL())
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/jdo2-api-2.3-eb.jar").toURI().toURL())
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/appengine.jar").toURI().toURL())
-    rootLoader?.addURL(new File(classesDirPath).toURI().toURL())
+    /*
     try {
-    	rootLoader?.addURL(new File(pluginClassesDirPath).toURI().toURL())
+    	rootLoader?.addURL(new File("${pluginClassesDirPath}").toURI().toURL())
     }
     catch (groovy.lang.MissingPropertyException e) {
     	// Before Grails 1.3
+    	rootLoader?.addURL(new File("${classesDirPath}").toURI().toURL())
     }
+    */
     
     Ant.taskdef(name: "gas3", classname: "org.granite.generator.ant.AntJavaAs3Task")
 	
