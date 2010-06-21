@@ -41,6 +41,9 @@ def configureGas3() {
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator-share.jar").toURI().toURL())
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/jdo2-api-2.3-eb.jar").toURI().toURL())
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/appengine.jar").toURI().toURL())
+    rootLoader?.addURL(new File(classesDirPath).toURI().toURL())
+    if (pluginClassesDirPath)
+    	rootLoader?.addURL(new File(pluginClassesDirPath).toURI().toURL())
     
     Ant.taskdef(name: "gas3", classname: "org.granite.generator.ant.AntJavaAs3Task")
 	
@@ -81,7 +84,7 @@ target(gas3: "Gas3") {
         File outDir = new File(targetDir)
         if (!outDir.exists())
             outDir.mkdirs()
-        
+            
 		Ant.gas3(outputdir: outDir, 
 			tide: "true", 
 			as3TypeFactory: "org.granite.grails.gas3.GrailsAs3TypeFactory",

@@ -83,6 +83,8 @@ target(initFlexProject: "Init flex project") {
     
     GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
     loader.addURL(new File("${classesDir}").toURI().toURL())
+    if (pluginClassesDirPath)
+    	loader.addURL(new File(pluginClassesDirPath).toURI().toURL())
     
 	def as3Config = getConfig(loader)	
     
