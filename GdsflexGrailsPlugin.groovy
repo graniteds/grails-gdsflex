@@ -22,7 +22,6 @@ import java.util.concurrent.*
 import org.springframework.orm.hibernate3.AbstractSessionFactoryBean
 import org.granite.tide.data.JDOPersistenceManager
 import org.granite.grails.integration.GrailsPersistenceManager
-import org.springframework.transaction.interceptor.TransactionProxyFactoryBean
 import org.granite.tide.spring.security.Identity
 import org.granite.config.GraniteConfigUtil
 import grails.util.Environment
@@ -52,7 +51,7 @@ class GdsflexGrailsPlugin {
 	                        
     
 	def doWithSpring = {
-        
+	
         if (manager?.hasGrailsPlugin("app-engine")) {
 			tidePersistenceManager(JDOPersistenceManager, ref("persistenceManagerFactory")) {
 			}
