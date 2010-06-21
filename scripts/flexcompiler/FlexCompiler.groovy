@@ -75,11 +75,13 @@ public class FlexCompiler {
     	
     	File source = new File(sourceDir)
     	def appFile = new File(source, "${appName}.mxml") 
-        def componentList = []
+        def componentList = [ fs.create(appFile.canonicalPath, appFile.text, source, appFile.lastModified()) ]
+        /*
         source.eachFileRecurse { file ->
-        	if (file.isFile() && (file.name.endsWith(".mxml") || file.name.endsWith(".as")))
+        	if (file.isFile() && file.canonicalPath != appFile.canonicalPath && (file.name.endsWith(".mxml") || file.name.endsWith(".as")))
         		componentList.add(fs.create(file.canonicalPath, file.text, source, file.lastModified()))
         }
+        */
         
         File outputFile = new File(outputDir, appFile.name.replaceAll("\\.mxml", ".swf"))
         
