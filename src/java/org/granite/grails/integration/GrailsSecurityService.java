@@ -58,19 +58,10 @@ public class GrailsSecurityService extends AbstractSecurityService {
         ApplicationContext springContext = WebApplicationContextUtils.getRequiredWebApplicationContext(sc);
         
         GrailsPluginManager manager = (GrailsPluginManager)springContext.getBean("pluginManager");
-        if (manager.hasGrailsPlugin("acegi")) {
+        if (manager.hasGrailsPlugin("acegi") || manager.hasGrailsPlugin("spring-security-core")) {
         	// Determine Spring Security version
-        	boolean spring3 = false;
         	try {
-        		getClass().getClassLoader().loadClass("org.springframework.security.access.AccessDeniedException");
-        		spring3 = true;
-        	}
-        	catch (ClassNotFoundException e) {
-        		// Assume Spring 2
-        	}
-        	
-        	try {
-        		delegate = (AbstractSecurityService)ClassUtil.newInstance(spring3
+        		delegate = (AbstractSecurityService)ClassUtil.newInstance(manager.hasGrailsPlugin("spring-security-core")
         				? "org.granite.spring.security.SpringSecurity3Service"
         				: "org.granite.messaging.service.security.SpringSecurityService"
         		);
