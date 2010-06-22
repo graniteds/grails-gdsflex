@@ -124,6 +124,9 @@
 			 * 	Build columns of the DataGrid
 			 */
 			protected function buildColumns():void {
+            	if (_context == null)
+            		_context = Spring.getInstance().getContext();	// Get the context from Tide singleton if not defined
+				
 				// Build metadata for the entity class
 				var metadata:Array = IEntityMetadataBuilder(_context.tideEntityMetadataBuilder).buildMetadata(_entityClass);
 				
