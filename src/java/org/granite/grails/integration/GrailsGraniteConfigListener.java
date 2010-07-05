@@ -22,7 +22,7 @@ package org.granite.grails.integration;
 
 import javax.servlet.ServletContextEvent;
 
-import org.apache.log4j.Logger;
+import org.granite.logging.Logger;
 import org.granite.config.GraniteConfig;
 import org.granite.config.GraniteConfigListener;
 import org.granite.config.ServletGraniteConfig;
