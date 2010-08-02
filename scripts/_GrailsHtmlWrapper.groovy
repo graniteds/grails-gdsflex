@@ -34,22 +34,31 @@ includeTargets << grailsScript("_GrailsCompile")
 includeTargets << new File("${gdsflexPluginDir}/scripts/_FlexCommon.groovy")
 
 
-def configureHtmlWrapper() {	
-    rootLoader?.addURL(new File("${flexSDK}/ant/lib/flexTasks.jar").toURI().toURL())
-    
+def configureHtmlWrapper() {	    
+    GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
+    loader.addURL(new File(classesDirPath).toURI().toURL())
+    Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
+    GroovyObject groovyObject = (GroovyObject)groovyClass.newInstance()
+	
+    rootLoader?.addURL(new File("${flexSDK}/ant/lib/flexTasks.jar").toURI().toURL())	
+	try {
+		rootLoader?.addURL(new File("${pluginClassesDirPath}").toURI().toURL())
+	}
+	catch (groovy.lang.MissingPropertyException e) {
+		// Before Grails 1.3
+		// rootLoader?.addURL(new File("${classesDirPath}").toURI().toURL())
+	}
+
     Ant.taskdef(name: "html-wrapper", classname: "flex.ant.HtmlWrapperTask")
+	
+	return groovyObject
 }
 
 
 target(flexHtmlWrapper: "Flex html wrapper") {
     
-    configureHtmlWrapper()
-    
-    GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
-    loader.addURL(new File(classesDirPath).toURI().toURL())
-    Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
-    GroovyObject groovyObject = (GroovyObject)groovyClass.newInstance()
-    
+    GroovyObject groovyObject = configureHtmlWrapper()
+	
     def as3Config = groovyObject.getUserConfig()?.as3Config
     
     def targetPlayerVersionMajor = as3Config.versionMajor ?: "9"
@@ -70,7 +79,6 @@ target(flexHtmlWrapper: "Flex html wrapper") {
             "version-minor": targetPlayerVersionMinor,
             "version-revision": targetPlayerVersionRevision,
             history: "true",
-            template: "express-installation",
             output: "${basedir}/web-app/") {
 	}
 	

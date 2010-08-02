@@ -123,10 +123,16 @@ public class FlexCompiler {
     
         configuration.includeLibraries([new File("${pluginDir}/src/flex/libs/granite-essentials.swc")] as File[])
         configuration.addLibraryPath([new File("${pluginDir}/src/flex/libs/granite.swc")] as File[])
+        File file = new File("${basedir}/web-app/WEB-INF/flex/libs")
+        if (file.exists())
+        	configuration.addLibraryPath([file] as File[])
+        file = new File("${basedir}/flex_libs")
+        if (file.exists())
+        	configuration.addLibraryPath([file] as File[])
         
         configuration.addSourcePath([new File(sourceDir)] as File[])
         
-        configuration.addActionScriptMetadata(["Name", "In", "Inject", "Out", "Observer", "ManagedEvent", "PostConstruct", "Destroy", "Path", "Id", "Version"] as String[])
+        configuration.addActionScriptMetadata(["Name", "In", "Inject", "Out", "Produces", "Observer", "ManagedEvent", "PostConstruct", "Destroy", "Path", "Id", "Version"] as String[])
         
         configuration.setServiceConfiguration(new File("${basedir}/web-app/WEB-INF/flex/services-config.xml"))
         

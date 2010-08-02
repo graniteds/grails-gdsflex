@@ -62,6 +62,9 @@ public class GrailsAs3GroovyTransformer extends JavaAs3GroovyTransformer {
 			case ENTITY:
 	            javaType = new GrailsDomainClass(this, clazz, url);
 	            break;
+			case REMOTE_DESTINATION:
+				javaType = new GrailsServiceClass(this, clazz, url);
+				break;
 	        default:
 	        	javaType = super.getJavaType(clazz);
 			}
@@ -76,6 +79,8 @@ public class GrailsAs3GroovyTransformer extends JavaAs3GroovyTransformer {
             return Kind.ENUM;
         if (clazz.isInterface())
             return Kind.INTERFACE;
+        if (clazz.getName().endsWith("Service"))
+        	return Kind.REMOTE_DESTINATION;
         boolean hasId = false;
         boolean hasVersion = false;
         for (Method m : clazz.getMethods()) {

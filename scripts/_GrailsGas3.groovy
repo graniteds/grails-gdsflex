@@ -35,7 +35,7 @@ def configureGas3() {
     GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
     loader.addURL(new File(classesDirPath).toURI().toURL())
     Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
-    GroovyObject groovyObject = (GroovyObject) groovyClass.newInstance()
+    GroovyObject groovyObject = (GroovyObject)groovyClass.newInstance()
     
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator.jar").toURI().toURL())
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator-share.jar").toURI().toURL())
@@ -76,11 +76,14 @@ target(gas3: "Gas3") {
 	}
 	
 	def domainDir = new File("${basedir}/grails-app/domain")
-
-	files = []
-	list(domainDir, files)
+	def servicesDir = new File("${basedir}/grails-app/services")
 	
-	if (!files.isEmpty() || domainJar || (extraClasses && !extraClasses.isEmpty())) {
+	domainFiles = []
+	list(domainDir, domainFiles)
+	servicesFiles = []
+	list(servicesDir, servicesFiles)
+	
+	if (!domainFiles.isEmpty() || !servicesFiles.isEmpty() || domainJar || (extraClasses && !extraClasses.isEmpty())) {
 		def targetDir = as3Config.srcDir ?: "${basedir}/grails-app/views/flex"
 		if (targetDir.endsWith("/"))
 			targetDir = targetDir.substring(0, targetDir.length()-1)
@@ -94,10 +97,13 @@ target(gas3: "Gas3") {
 			as3TypeFactory: "org.granite.grails.gas3.GrailsAs3TypeFactory",
         	transformer: "org.granite.grails.gas3.GrailsAs3GroovyTransformer",
         	entitybasetemplate: "class:org/granite/grails/template/tideDomainClassBase.gsp",
+			
 			classpathref: "gas3.generate.classpath") {
 			fileset(dir: "${classesDirPath}") {
-				for (currentFile in files)
+				for (currentFile in domainFiles)
 					include(name: currentFile.getPath().substring(domainDir.getPath().length()+1).replace(".groovy", ".class"))
+				for (currentFile in servicesFiles)
+					include(name: currentFile.getPath().substring(servicesDir.getPath().length()+1).replace(".groovy", ".class"))
 				for (currentClass in extraClasses)
 					include(name: currentClass.replace('.', '/') + ".class")
 			}
