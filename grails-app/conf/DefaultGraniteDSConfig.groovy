@@ -16,5 +16,6 @@ graniteConfig {
 as3Config {
     domainJar = null
     extraClasses = []
+    generateServices = true
     autoCompileFlex = true
 }

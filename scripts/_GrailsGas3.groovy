@@ -57,6 +57,7 @@ target(gas3: "Gas3") {
     GroovyObject groovyObject = configureGas3()
     
     def as3Config = groovyObject.getUserConfig()?.as3Config
+    def generateServices = as3Config.generateServices
     def domainJar = as3Config.domainJar
     def extraClasses = as3Config.extraClasses
     def entityBaseTemplate = as3Config.entityBaseTemplate
@@ -75,7 +76,8 @@ target(gas3: "Gas3") {
 	domainFiles = []
 	list(domainDir, domainFiles)
 	servicesFiles = []
-	list(servicesDir, servicesFiles)
+	if (generateServices)
+		list(servicesDir, servicesFiles)
 	
 	if (!domainFiles.isEmpty() || !servicesFiles.isEmpty() || domainJar || (extraClasses && !extraClasses.isEmpty())) {
 		def targetDir = as3Config.srcDir ?: "${basedir}/grails-app/views/flex"
