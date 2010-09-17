@@ -79,16 +79,16 @@
 	            	// Registers a PagedQuery component using the Grails controller list method with a page size of 36
 		            Spring.getInstance().addComponentWithFactory(entityName + "List", PagedQuery, 
 	    	            { useGrailsController: true, remoteComponentName: qualifiedEntityName + "Controller", maxResults: 36 }, 
-	    	            false, true, Tide.RESTRICT_UNKNOWN, null, false);
+	    	            false, true, Tide.RESTRICT_UNKNOWN, false);
 	    	        // Registers a conversational editor UI component in the particular Tide subcontext of the current entity
 	    	        // so events dispatched from this EntityUI will be observed only by it and not by editors of other entities
 	    	        // Transmits the current entity class with the factory properties map
 	    	        // overrideIfPresent is marked false to avoid overriding an existing user-defined editor  
 	        	    Spring.getInstance().addComponentWithFactory(qualifiedEntityName + ".entityEdit", EntityEdit, 
-	        	    	{ entityClass: _entityClass }, true, true, Tide.RESTRICT_UNKNOWN, null, false);
+	        	    	{ entityClass: _entityClass }, true, true, Tide.RESTRICT_UNKNOWN, false);
 	    	        // Registers a conversational editor controller component in the particular Tide subcontext of the current entity
 	        	    Spring.getInstance().addComponentWithFactory(qualifiedEntityName + ".entityEditCtl", EntityEditCtl, 
-	        	    	{ entityClass: _entityClass }, true, true, Tide.RESTRICT_UNKNOWN, null, false);
+	        	    	{ entityClass: _entityClass }, true, true, Tide.RESTRICT_UNKNOWN, false);
 	        	    
 	        	    _entityName = entityName;
 	        	    _qualifiedEntityName = qualifiedEntityName;
