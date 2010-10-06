@@ -38,7 +38,7 @@ eventPackagingEnd = {
             gas3()
             packageCompileFlag = true
         }
-        if (Environment.current == Environment.PRODUCTION) {
+		if (Environment.current == Environment.PRODUCTION && config?.as3Config.autoCompileFlex) {
             includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
             println "Starting compile flex files"
             flexCompile()
