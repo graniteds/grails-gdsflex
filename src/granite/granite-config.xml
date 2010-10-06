@@ -53,8 +53,6 @@
 	<exception-converters>
 		<exception-converter type="org.granite.tide.spring.SpringValidationExceptionConverter"/>
 	</exception-converters>
-
-	<security type="org.granite.grails.integration.GrailsSecurityService"/>
 	
     <!--
      ! Enable Grails components for Tide by annotation
