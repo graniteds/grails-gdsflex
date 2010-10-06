@@ -1,3 +1,5 @@
+import org.codehaus.groovy.grails.web.context.ServletContextHolder;
+
 /*
   GRANITE DATA SERVICES
   Copyright (C) 2009 ADEQUATE SYSTEMS SARL
@@ -23,13 +25,15 @@ import org.springframework.orm.hibernate3.AbstractSessionFactoryBean
 import org.granite.tide.data.JDOPersistenceManager
 import org.granite.grails.integration.GrailsPersistenceManager
 import org.granite.tide.spring.security.Identity
+import org.granite.config.ServletGraniteConfig
+import org.granite.config.GraniteConfig
 import org.granite.config.GraniteConfigUtil
 import grails.util.Environment
 import grails.util.BuildSettings
 
 
 class GdsflexGrailsPlugin {
-    def version = "0.8.2"
+    def version = "0.8.3"
     def author = "William Drai, Ford Guo"
     def authorEmail = "william.drai@graniteds.org"
     def title = "Integration between Grails and GraniteDS/Flex"
@@ -62,17 +66,57 @@ class GdsflexGrailsPlugin {
 			}
 		}
 		
-        if (config) {
-        	def conf = config.graniteConfig
-        	
-        	if (conf.springSecurityAuthorizationEnabled) {
-        		identity(conf.springSecurityIdentityClass)
-        	}
-        }
+		def identityClass = null
+		
+		if (manager?.hasGrailsPlugin("acegi")) {			
+			graniteSecurityInterceptor(org.granite.grails.security.GrailsAcegiInterceptor) {
+				authenticationManager = ref('authenticationManager')
+				accessDecisionManager = ref('accessDecisionManager')
+				objectDefinitionSource = ref('objectDefinitionSource')
+			}
+			
+			graniteSecurityService(org.granite.messaging.service.security.SpringSecurityService) {
+				securityInterceptor = ref('graniteSecurityInterceptor')
+			}
+			
+        	identityClass = org.granite.tide.spring.security.Identity
+		}
+		
+		if (manager?.hasGrailsPlugin("spring-security-core")) {
+			graniteSecurityInterceptor(org.granite.grails.security.GrailsSpringSecurity3Interceptor) {
+				authenticationManager = ref('authenticationManager')
+				accessDecisionManager = ref('accessDecisionManager')
+				securityMetadataSource = ref('objectDefinitionSource')
+				runAsManager = ref('runAsManager')
+			}
+			
+			graniteSecurityService(org.granite.spring.security.SpringSecurity3Service) {
+				authenticationManager = ref('authenticationManager')
+				securityInterceptor = ref('graniteSecurityInterceptor')
+			}
+			
+			identityClass = org.granite.tide.spring.security.Identity3
+		}
+		
+		if (config) {
+			def conf = config.graniteConfig
+			
+			if (conf.springSecurityIdentityClass)
+				identityClass = conf.springSecurityIdentityClass
+		}
+
+		identity(identityClass)
 	}
 	
 	
 	def doWithApplicationContext = { applicationContext ->
+		
+		GraniteConfig graniteConfig = ServletGraniteConfig.loadConfig(applicationContext.servletContext)
+		
+		if (manager?.hasGrailsPlugin("acegi") || manager?.hasGrailsPlugin("spring-security-core")) {
+			graniteConfig.securityService = applicationContext.getBean("graniteSecurityService")
+		}
+		
         if (config) {
         	def conf = config.graniteConfig
         	if (conf.dataDispatchEnabled && manager?.hasGrailsPlugin("hibernate")) {        	
@@ -152,7 +196,7 @@ class GdsflexGrailsPlugin {
         if (config) {
         	def conf = config.graniteConfig
         	if (conf.gravityEnabled) {
-	        	def listeners = xml.listener
+				def listeners = xml.'listener'
 	        	listeners[listeners.size() - 1] + {
 	        		listener {
 	        			'listener-class'("org.granite.grails.integration.GrailsGraniteConfigListener")
