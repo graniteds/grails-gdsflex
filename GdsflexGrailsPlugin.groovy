@@ -105,7 +105,8 @@ class GdsflexGrailsPlugin {
 				identityClass = conf.springSecurityIdentityClass
 		}
 
-		identity(identityClass)
+		if (identityClass != null)
+			identity(identityClass)
 	}
 	
 	
