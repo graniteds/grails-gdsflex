@@ -1,5 +1,3 @@
-import org.granite.tide.spring.security.Identity
-
 
 graniteConfig {
     
@@ -13,6 +11,7 @@ graniteConfig {
 as3Config {
     domainJar = null
     extraClasses = []
+	excludeClasses = []
     generateServices = true
     autoCompileFlex = true
 }

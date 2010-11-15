@@ -33,7 +33,7 @@ import grails.util.BuildSettings
 
 
 class GdsflexGrailsPlugin {
-    def version = "0.8.3"
+    def version = "0.8.4"
     def author = "William Drai, Ford Guo"
     def authorEmail = "william.drai@graniteds.org"
     def title = "Integration between Grails and GraniteDS/Flex"

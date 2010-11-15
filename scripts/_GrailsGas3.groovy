@@ -60,6 +60,7 @@ target(gas3: "Gas3") {
     def generateServices = as3Config.generateServices
     def domainJar = as3Config.domainJar
     def extraClasses = as3Config.extraClasses
+	def excludeClasses = as3Config.excludeClasses
     def entityBaseTemplate = as3Config.entityBaseTemplate
     if (entityBaseTemplate == null || "".equals(entityBaseTemplate))
     	entityBaseTemplate = org.granite.generator.template.StandardTemplateUris.TIDE_ENTITY_BASE
@@ -102,6 +103,8 @@ target(gas3: "Gas3") {
 					include(name: currentFile.getPath().substring(servicesDir.getPath().length()+1).replace(".groovy", ".class"))
 				for (currentClass in extraClasses)
 					include(name: currentClass.replace('.', '/') + ".class")
+				for (currentClass in excludeClasses)
+					exclude(name: currentClass.replace('.', '/') + ".class")
 			}
 			if (domainJar)
 				fileset(file: domainJar)
