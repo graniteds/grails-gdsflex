@@ -22,11 +22,15 @@ package org.granite.grails.integration;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.List;
 
 import org.codehaus.groovy.grails.commons.DefaultGrailsDomainClass;
 import org.codehaus.groovy.grails.commons.GrailsDomainClass;
+import org.granite.logging.Logger;
 import org.granite.tide.TideTransactionManager;
 import org.granite.tide.data.AbstractTidePersistenceManager;
+import org.granite.tide.hibernate.HibernatePersistenceManager;
+import org.granite.util.Entity;
 import org.granite.util.Reflections;
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
@@ -37,6 +41,8 @@ import org.hibernate.SessionFactory;
  *
  */
 public class GrailsHibernatePersistenceManager extends AbstractTidePersistenceManager {
+	
+	private static final Logger log = Logger.getLogger(HibernatePersistenceManager.class);
 	
 	private SessionFactory sessionFactory;
 	
@@ -55,7 +61,7 @@ public class GrailsHibernatePersistenceManager extends AbstractTidePersistenceMa
 	 * @return the attached entity
 	 */
 	@Override
-	public Object findEntity(Object entity, String[] fetch) {
+	public Object fetchEntity(Object entity, String[] fetch) {
 		GrailsDomainClass domainClass = new DefaultGrailsDomainClass(entity.getClass());
 		Method idGetter = Reflections.getGetterMethod(entity.getClass(), domainClass.getIdentifier().getName());
 		Serializable id = null;
@@ -74,7 +80,11 @@ public class GrailsHibernatePersistenceManager extends AbstractTidePersistenceMa
         for (String f : fetch) {
 	        Query q = sessionFactory.getCurrentSession().createQuery("select e from " + entity.getClass().getName() + " e left join fetch e." + f + " where e = :entity");
 	        q.setParameter("entity", entity);
-	        entity = q.uniqueResult();
+	        List<?> results = q.list();
+	        if (!results.isEmpty())
+	        	entity = results.get(0);
+	        else
+	        	log.warn("Could not find entity %s to initialize, id: %s", entity.getClass().getName(), id);  
         }
         return entity;
 	}
