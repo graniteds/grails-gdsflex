@@ -37,12 +37,14 @@ private def getConfig(ClassLoader loader = Thread.currentThread().getContextClas
 }
 
 
+flexLoaderSet = false
+
 def configureFlexCompilerClasspath() {
-	if (Arrays.asList(Thread.currentThread().getContextClassLoader().getURLs()).indexOf(new File("${flexSDK}/lib/flex-compiler-oem.jar").toURI().toURL()) >= 0) {
+	if (flexLoaderSet) {
 		println "Flex compiler classpath already set" 
 		return
 	}
-
+	
 	GroovyClassLoader loader = new GroovyClassLoader()
 	
 	loader.addURL(new File("${flexSDK}/lib/adt.jar").toURI().toURL())
@@ -81,17 +83,13 @@ def configureFlexCompilerClasspath() {
 	loader.addURL(new File("${flexSDK}/lib/xercesImpl.jar").toURI().toURL())
 	loader.addURL(new File("${flexSDK}/lib/xercesPatch.jar").toURI().toURL())
 	loader.addURL(new File("${flexSDK}/lib/xalan.jar").toURI().toURL())
-		
-	GroovyResourceLoader defaultResourceLoader = loader.resourceLoader
-	GroovyResourceLoader resourceLoader = { filename ->
-		if (filename.startsWith("FlexCompiler")) {
-			File file = new File("${gdsflexPluginDir}/scripts/flexcompiler/${filename}.groovy")
-			if (file.exists())
-				return file.toURI().toURL()
-		}
-		return defaultResourceLoader.loadGroovySource(filename)
-	} as GroovyResourceLoader
-	loader.resourceLoader = resourceLoader
+	
+	loader.parseClass(new File("${gdsflexPluginDir}/scripts/flexcompiler/FlexCompilerException.groovy"))
+	loader.parseClass(new File("${gdsflexPluginDir}/scripts/flexcompiler/FlexCompilerType.groovy"))
+	loader.parseClass(new File("${gdsflexPluginDir}/scripts/flexcompiler/FlexCompiler.groovy"))
+	loader.parseClass(new File("${gdsflexPluginDir}/scripts/flexcompiler/FlexCompilerWrapper.groovy"))
+			
+	flexLoaderSet = true
 	
 	println "Flex compiler classloader created"
 	
@@ -112,16 +110,16 @@ target(initFlexProject: "Init flex project") {
     
 	def as3Config = getConfig(loader)	
     
-    configureFlexCompilerClasspath()
-	
 	def sourceDir = as3Config.srcDir ?: "${basedir}/grails-app/views/flex"
 	def modules = as3Config.modules ?: []
 	
 	Ant.mkdir(dir: sourceDir)
 	
-	Class wrapperClass = Thread.currentThread().getContextClassLoader().parseClass(new File("${gdsflexPluginDir}/scripts/flexcompiler/FlexCompilerWrapper.groovy"))
+    configureFlexCompilerClasspath()
+	
+    Class wrapperClass = Thread.currentThread().getContextClassLoader().loadClass("FlexCompilerWrapper")
 	java.lang.reflect.Method wrapperInit = wrapperClass.getMethod("init", Object.class, Object.class, Object.class, Object.class, Object.class, Object.class)
-	wrapperInit.invoke(null, flexSDK, basedir, gdsflexPluginDir, sourceDir, modules, grailsAppName)	
+	wrapperInit.invoke(null, flexSDK, basedir, gdsflexPluginDir, sourceDir, modules, grailsAppName)
 }
 
 
