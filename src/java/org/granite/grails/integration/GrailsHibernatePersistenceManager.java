@@ -30,7 +30,6 @@ import org.granite.logging.Logger;
 import org.granite.tide.TideTransactionManager;
 import org.granite.tide.data.AbstractTidePersistenceManager;
 import org.granite.tide.hibernate.HibernatePersistenceManager;
-import org.granite.util.Entity;
 import org.granite.util.Reflections;
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
