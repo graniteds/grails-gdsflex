@@ -266,7 +266,7 @@ class GdsflexGrailsPlugin {
 				
 			// println "Source dir: ${source.canonicalPath}"
 			
-			Class wrapperClass = loader.parseClass(new File("${pluginDir}/scripts/flexcompiler/FlexCompilerWrapper.groovy"))
+			Class wrapperClass = loader.loadClass("FlexCompilerWrapper")
 			java.lang.reflect.Method wrapperInit = wrapperClass.getMethod("init", Object.class, Object.class, Object.class, Object.class, Object.class, Object.class, Object.class)
 			wrapperInit.invoke(null, flexSDK, settings.baseDir, pluginDir, source.canonicalPath, modules, event.application.metadata['app.name'], loader)
 			
@@ -339,19 +339,12 @@ class GdsflexGrailsPlugin {
 		loader.addURL(new File("${flexSDK}/lib/xercesImpl.jar").toURI().toURL())
 		loader.addURL(new File("${flexSDK}/lib/xercesPatch.jar").toURI().toURL())
 		loader.addURL(new File("${flexSDK}/lib/xalan.jar").toURI().toURL())
-		
-		GroovyResourceLoader defaultResourceLoader = loader.resourceLoader
-		GroovyResourceLoader resourceLoader = { filename ->
-			if (filename.startsWith("FlexCompiler")) {
-				File file = new File("${pluginDir}/scripts/flexcompiler/${filename}.groovy")
-				// println "loading ${file.canonicalPath}"
-				if (file.exists())
-					return file.toURI().toURL()
-			}
-			return defaultResourceLoader.loadGroovySource(filename)
-		} as GroovyResourceLoader
-		loader.resourceLoader = resourceLoader
-		
+	
+		loader.parseClass(new File("${pluginDir}/scripts/flexcompiler/FlexCompilerException.groovy"))
+		loader.parseClass(new File("${pluginDir}/scripts/flexcompiler/FlexCompilerType.groovy"))
+		loader.parseClass(new File("${pluginDir}/scripts/flexcompiler/FlexCompiler.groovy"))
+		loader.parseClass(new File("${pluginDir}/scripts/flexcompiler/FlexCompilerWrapper.groovy"))
+
 		return loader
 	}
 	
