@@ -1,6 +1,6 @@
 
 graniteConfig {
-    
+
     gravityEnabled = false
     gravityServletClassName = "org.granite.gravity.tomcat.GravityTomcatServlet"
     
