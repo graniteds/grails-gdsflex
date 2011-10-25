@@ -33,7 +33,7 @@ import grails.util.BuildSettings
 
 
 class GdsflexGrailsPlugin {
-    def version = "0.8.5"
+    def version = "0.9.0"
     def author = "William Drai, Ford Guo"
     def authorEmail = "william.drai@graniteds.org"
     def title = "Integration between Grails and GraniteDS/Flex"
@@ -83,10 +83,14 @@ class GdsflexGrailsPlugin {
 		}
 		
 		if (manager?.hasGrailsPlugin("spring-security-core")) {
+			graniteObjectDefinitionSource(org.granite.grails.security.GrailsSpringSecurity3MetadataSourceWrapper) {
+				wrappedMetadataSource = ref('objectDefinitionSource')
+			}
+		
 			graniteSecurityInterceptor(org.granite.grails.security.GrailsSpringSecurity3Interceptor) {
 				authenticationManager = ref('authenticationManager')
 				accessDecisionManager = ref('accessDecisionManager')
-				securityMetadataSource = ref('objectDefinitionSource')
+				securityMetadataSource = ref('graniteObjectDefinitionSource')
 				runAsManager = ref('runAsManager')
 			}
 			
