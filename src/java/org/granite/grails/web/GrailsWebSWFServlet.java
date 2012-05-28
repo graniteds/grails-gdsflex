@@ -20,6 +20,8 @@
 
 package org.granite.grails.web;
 
+import grails.util.GrailsUtil;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -33,6 +35,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.codehaus.groovy.grails.commons.GrailsApplication;
 import org.codehaus.groovy.grails.commons.GrailsResourceUtils;
 import org.codehaus.groovy.grails.web.pages.GroovyPageResourceLoader;
 import org.codehaus.groovy.grails.web.servlet.DefaultGrailsApplicationAttributes;
@@ -144,8 +147,9 @@ public class GrailsWebSWFServlet extends HttpServlet {
      * @param relativeUri The relative URI
      * @return The path of the URI within the Grails view directory
      */
-    protected String getUriWithinGrailsViews(String relativeUri) {
-        StringBuffer buf = new StringBuffer();
+    @SuppressWarnings("deprecation")
+	protected String getUriWithinGrailsViews(String relativeUri) {
+        StringBuilder buf = new StringBuilder();
         String[] tokens;
         if (relativeUri.startsWith("/"))
             relativeUri = relativeUri.substring(1);
@@ -154,8 +158,17 @@ public class GrailsWebSWFServlet extends HttpServlet {
             tokens = relativeUri.split("/");
         else
             tokens = new String[] { relativeUri };
-
-        buf.append(GrailsApplicationAttributes.PATH_TO_VIEWS);
+        
+        String pathToViews = GrailsApplicationAttributes.PATH_TO_VIEWS;
+        
+        int idx = GrailsUtil.getGrailsVersion().indexOf(".");
+        int majorGrailsVersion = Integer.parseInt(GrailsUtil.getGrailsVersion().substring(0, idx));
+        
+        if (GrailsUtil.getEnvironment().equals(GrailsApplication.ENV_DEVELOPMENT) 
+        		&& majorGrailsVersion >= 2 && pathToViews.startsWith("/WEB-INF"))
+        	pathToViews = pathToViews.substring("/WEB-INF".length());
+        
+        buf.append(pathToViews);
         for (int i = 0; i < tokens.length; i++) {
             String token = tokens[i];
             buf.append('/').append(token);
