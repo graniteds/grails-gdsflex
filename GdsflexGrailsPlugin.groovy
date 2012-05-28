@@ -33,7 +33,7 @@ import grails.util.BuildSettings
 
 
 class GdsflexGrailsPlugin {
-    def version = "0.9.0"
+    def version = "0.9.1"
     def author = "William Drai, Ford Guo"
     def authorEmail = "william.drai@graniteds.org"
     def title = "Integration between Grails and GraniteDS/Flex"
@@ -41,7 +41,6 @@ class GdsflexGrailsPlugin {
     def documentation = "http://www.graniteds.org/"
 	
     private static final def config = GraniteConfigUtil.getUserConfig()
-    private static final def buildConfig = GraniteConfigUtil.getBuildConfig()
 	private static def sourceDir = config?.as3Config.srcDir ?: "./grails-app/views/flex"
 	private static def modules = config?.modules ?: []
 	
@@ -96,7 +95,10 @@ class GdsflexGrailsPlugin {
 			
 			graniteSecurityService(org.granite.spring.security.SpringSecurity3Service) {
 				authenticationManager = ref('authenticationManager')
+				authenticationTrustResolver = ref('authenticationTrustResolver')
 				securityInterceptor = ref('graniteSecurityInterceptor')
+				passwordEncoder = ref('passwordEncoder')
+				sessionAuthenticationStrategy = ref('sessionAuthenticationStrategy')
 			}
 			
 			identityClass = org.granite.tide.spring.security.Identity3
@@ -197,24 +199,48 @@ class GdsflexGrailsPlugin {
 				'url-pattern'("*.swf")
 			}
         }
-        
+		
+		def listeners = xml.'listener'
+		listeners[listeners.size() - 1] + {
+			listener {
+				'listener-class'("org.granite.grails.integration.GrailsGraniteConfigListener")
+			}
+		}		
+
         if (config) {
         	def conf = config.graniteConfig
+			
         	if (conf.gravityEnabled) {
-				def listeners = xml.'listener'
-	        	listeners[listeners.size() - 1] + {
-	        		listener {
-	        			'listener-class'("org.granite.grails.integration.GrailsGraniteConfigListener")
-	        		}
-	        	}
-	        	
-		        servlets = xml.servlet
+				String gravityServletClassName = conf.gravityServletClassName ?: null
+				
+				// Defaults to servlet 3.0 when available
+				ConfigObject buildConfig = GraniteConfigUtil.getBuildConfig()
+				
+				// Support for Tomcat 6 (Grails 1.3.x) and Tomcat 7 (Grails 2.x)
+				if (!gravityServletClassName && buildConfig?.grails?.servlet?.version == "3.0")
+					gravityServletClassName = "org.granite.gravity.servlet3.GravityAsyncServlet"
+				
+				if (!gravityServletClassName && Environment.current == Environment.DEVELOPMENT) {
+					try {
+						getClass().loadClass("org.granite.gravity.tomcat.GravityTomcatServlet")
+						gravityServletClassName = "org.granite.gravity.tomcat.GravityTomcatServlet"
+					}
+					catch (Exception e) {
+					}
+				}
+			
+				if (!gravityServletClassName)
+					throw new RuntimeException("Gravity enabled but no suitable servlet class defined in GraniteDSConfig.groovy")
+				
+				servlets = xml.servlet
 		        servlets[servlets.size() - 1] + {
 		            servlet {
 		                'servlet-name'("GravityServlet")
 		                'display-name'("GravityServlet")
-		                'servlet-class'(conf.gravityServletClassName)
+		                'servlet-class'(gravityServletClassName)
 		                'load-on-startup'("1")
+						if (org.granite.gravity.servlet3.GravityAsyncServlet == "org.granite.gravity.servlet3.GravityAsyncServlet")
+							'async-supported'("true")
 		            }
 		        }
 		    
@@ -240,6 +266,8 @@ class GdsflexGrailsPlugin {
     }
     
     def flexCompile(event) {
+		def buildConfig = GraniteConfigUtil.getBuildConfig()
+		
 		def flexSDK = System.getenv("FLEX_HOME")
 		if (buildConfig.flex.sdk)
 			flexSDK = buildConfig.flex.sdk
@@ -254,7 +282,7 @@ class GdsflexGrailsPlugin {
 		String grailsHome = System.getProperty("grails.home")
 		BuildSettings settings = new BuildSettings(new File(grailsHome))
     	
-    	File pluginDir = lookupPluginDir(settings)
+    	File pluginDir = lookupPluginDir(buildConfig, settings)
     	// println "Plugin dir: ${pluginDir}"
     	
  		if (compilerLoader == null) {
@@ -348,7 +376,7 @@ class GdsflexGrailsPlugin {
 		return loader
 	}
 	
-    private static File lookupPluginDir(settings) {
+    private static File lookupPluginDir(buildConfig, settings) {
     	if (buildConfig?.grails?.plugin?.location?.gdsflex)
     		return new File(buildConfig?.grails?.plugin?.location?.gdsflex.toString());
 

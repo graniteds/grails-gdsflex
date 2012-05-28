@@ -21,23 +21,25 @@
 package org.granite.grails.integration;
 
 import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 
-import org.granite.logging.Logger;
 import org.granite.config.GraniteConfig;
-import org.granite.config.GraniteConfigListener;
 import org.granite.config.ServletGraniteConfig;
+import org.granite.logging.Logger;
 import org.granite.util.ClassUtil;
 
 /**
- * @author William Draï
+ * @author William Drai
  */
-public class GrailsGraniteConfigListener extends GraniteConfigListener {
+public class GrailsGraniteConfigListener implements ServletContextListener {
 	
 	private static final Logger log = Logger.getLogger(GrailsGraniteConfigListener.class);
 	
+	private ServletContextListener graniteConfigListener = new GrailsGraniteConfigListener();
+	
 	@Override
     public void contextInitialized(ServletContextEvent sce) {
-		super.contextInitialized(sce);
+		graniteConfigListener.contextInitialized(sce);
 		
 		try {
 			// Set proxy externalizer if Hibernate present
@@ -49,5 +51,10 @@ public class GrailsGraniteConfigListener extends GraniteConfigListener {
 		}
 		catch (Exception e) {
 		}
+	}
+	
+	@Override
+    public void contextDestroyed(ServletContextEvent sce) {
+		graniteConfigListener.contextDestroyed(sce);
 	}
 }
