@@ -1,0 +1,6 @@
+.settings/
+.svn
+grails-gdsflex-*.zip
+bin/
+target/
+target-eclipse/
