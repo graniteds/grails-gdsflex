@@ -22,9 +22,11 @@ package org.granite.grails.integration;
 
 import groovy.lang.Closure;
 
+import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
@@ -67,6 +69,8 @@ public class GrailsExternalizer extends DefaultExternalizer {
 		EVENTS.add("afterDelete");
 		EVENTS.add("afterLoad");
 	};
+	
+	public static final ERRORS = "org.springframework.validation.Errors";
     
 
     private Externalizer getDelegate() {
@@ -132,5 +136,22 @@ public class GrailsExternalizer extends DefaultExternalizer {
     	if (grailsApplication.isArtefactOfType("Domain", clazz))
     		return 100;
         return -1;
+    }
+    
+    public static boolean isIgnored(Field field) {
+    	if (EVENTS.contains(field.getName()))
+    		return true;
+    	if (field.getName().equals("errors") && field.getType().getName().equals(ERRORS))
+    		return true;
+    	return false;
+    }
+    
+    public static boolean isIgnored(PropertyDescriptor property) {
+    	if (EVENTS.contains(property.getName()))
+    		return true;
+    	if (property.getName().equals("errors") && property.getPropertyType() != null && 
+    			property.getPropertyType().getName().equals(ERRORS))
+    		return true;
+    	return false;
     }
 }

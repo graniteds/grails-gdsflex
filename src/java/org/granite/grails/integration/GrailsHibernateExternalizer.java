@@ -104,7 +104,7 @@ public class GrailsHibernateExternalizer extends HibernateExternalizer {
                         !Modifier.isTransient(field.getModifiers()) &&
                         !Modifier.isStatic(field.getModifiers()) &&
                         !field.isAnnotationPresent(IgnoredProperty.class) &&
-                        !GrailsExternalizer.EVENTS.contains(field.getName())) {
+                        !GrailsExternalizer.isIgnored(field)) {
 
                     	boolean found = false;
                     	if (returnSettersWhenAvailable && propertyDescriptors != null) {
@@ -139,7 +139,7 @@ public class GrailsHibernateExternalizer extends HibernateExternalizer {
                             getter.isAnnotationPresent(ExternalizedProperty.class) &&
                             getter.getDeclaringClass().equals(c) &&
                             !allFieldNames.contains(property.getName()) &&
-                            !GrailsExternalizer.EVENTS.contains(property.getName())) {
+                            !GrailsExternalizer.isIgnored(property)) {
 
                             newFields.add(new MethodProperty(
                                 converters,
