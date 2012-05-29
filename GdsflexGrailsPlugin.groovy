@@ -43,6 +43,8 @@ class GdsflexGrailsPlugin {
     private static final def config = GraniteConfigUtil.getUserConfig()
 	private static def sourceDir = config?.as3Config.srcDir ?: "./grails-app/views/flex"
 	private static def modules = config?.modules ?: []
+	private static final String GRAVITY_TOMCAT_SERVLET_NAME = "org.granite.gravity.tomcat.GravityTomcatServlet"
+	private static final String GRAVITY_ASYNC_SERVLET_NAME = "org.granite.gravity.servlet3.GravityAsyncServlet"
 	
 	private static GroovyClassLoader compilerLoader = null
     private static LinkedBlockingQueue lastModifiedQueue = new LinkedBlockingQueue()
@@ -218,12 +220,12 @@ class GdsflexGrailsPlugin {
 				
 				// Support for Tomcat 6 (Grails 1.3.x) and Tomcat 7 (Grails 2.x)
 				if (!gravityServletClassName && buildConfig?.grails?.servlet?.version == "3.0")
-					gravityServletClassName = "org.granite.gravity.servlet3.GravityAsyncServlet"
+					gravityServletClassName = GRAVITY_ASYNC_SERVLET_NAME
 				
 				if (!gravityServletClassName && Environment.current == Environment.DEVELOPMENT) {
 					try {
-						getClass().loadClass("org.granite.gravity.tomcat.GravityTomcatServlet")
-						gravityServletClassName = "org.granite.gravity.tomcat.GravityTomcatServlet"
+						getClass().loadClass(GRAVITY_TOMCAT_SERVLET_NAME)
+						gravityServletClassName = GRAVITY_TOMCAT_SERVLET_NAME
 					}
 					catch (Exception e) {
 					}
@@ -239,7 +241,7 @@ class GdsflexGrailsPlugin {
 		                'display-name'("GravityServlet")
 		                'servlet-class'(gravityServletClassName)
 		                'load-on-startup'("1")
-						if (org.granite.gravity.servlet3.GravityAsyncServlet == "org.granite.gravity.servlet3.GravityAsyncServlet")
+						if (GRAVITY_ASYNC_SERVLET_NAME.equals(gravityServletClassName))
 							'async-supported'("true")
 		            }
 		        }
