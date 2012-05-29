@@ -24,6 +24,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import org.granite.config.GraniteConfig;
+import org.granite.config.GraniteConfigListener;
 import org.granite.config.ServletGraniteConfig;
 import org.granite.logging.Logger;
 import org.granite.util.ClassUtil;
@@ -35,7 +36,7 @@ public class GrailsGraniteConfigListener implements ServletContextListener {
 	
 	private static final Logger log = Logger.getLogger(GrailsGraniteConfigListener.class);
 	
-	private ServletContextListener graniteConfigListener = new GrailsGraniteConfigListener();
+	private ServletContextListener graniteConfigListener = new GraniteConfigListener();
 	
 	@Override
     public void contextInitialized(ServletContextEvent sce) {
