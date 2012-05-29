@@ -70,7 +70,7 @@ public class GrailsExternalizer extends DefaultExternalizer {
 		EVENTS.add("afterLoad");
 	};
 	
-	public static final ERRORS = "org.springframework.validation.Errors";
+	public static final String ERRORS = "org.springframework.validation.Errors";
     
 
     private Externalizer getDelegate() {
