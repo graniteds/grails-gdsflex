@@ -1,11 +1,6 @@
-
 graniteConfig {
-
     gravityEnabled = false
-    gravityServletClassName = "org.granite.gravity.tomcat.GravityTomcatServlet"
-    
-    dataDispatchEnabled = false
-    
+    dataDispatchEnabled = false   
 }
 
 as3Config {
