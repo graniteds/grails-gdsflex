@@ -29,7 +29,7 @@ import org.codehaus.groovy.grails.commons.GrailsDomainClass;
 import org.granite.logging.Logger;
 import org.granite.tide.TideTransactionManager;
 import org.granite.tide.data.AbstractTidePersistenceManager;
-import org.granite.tide.hibernate.HibernatePersistenceManager;
+import org.granite.tide.hibernate4.HibernatePersistenceManager;
 import org.granite.util.Reflections;
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
@@ -86,5 +86,10 @@ public class GrailsHibernatePersistenceManager extends AbstractTidePersistenceMa
 	        	log.warn("Could not find entity %s to initialize, id: %s", entity.getClass().getName(), id);  
         }
         return entity;
+	}
+	
+	@Override
+	protected void close() {
+		// TODO: Should probably try to close the delegate ???
 	}
 }

@@ -21,6 +21,7 @@
 package org.granite.grails.integration;
 
 
+import java.security.Principal;
 import java.util.Map;
 
 import org.granite.messaging.service.security.AbstractSecurityContext;
@@ -39,11 +40,13 @@ public class GrailsSecurityService extends AbstractSecurityService {
 	}
 
 	@Override
-	public void login(Object credentials) throws SecurityServiceException {
+	public Principal login(Object credentials) throws SecurityServiceException {
+		return null;
 	}
 
 	@Override
-	public void login(Object credentials, String charset) throws SecurityServiceException {
+	public Principal login(Object credentials, String charset) throws SecurityServiceException {
+		return null;
 	}
 
 	@Override

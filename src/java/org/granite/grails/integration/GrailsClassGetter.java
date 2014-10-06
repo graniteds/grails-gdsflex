@@ -28,7 +28,7 @@ import org.codehaus.groovy.grails.commons.GrailsApplication;
 import org.codehaus.groovy.grails.plugins.GrailsPluginManager;
 import org.granite.context.GraniteContext;
 import org.granite.datanucleus.DataNucleusClassGetter;
-import org.granite.hibernate.HibernateClassGetter;
+import org.granite.hibernate4.HibernateClassGetter;
 import org.granite.messaging.amf.io.util.ClassGetter;
 import org.granite.messaging.amf.io.util.DefaultClassGetter;
 import org.granite.messaging.webapp.HttpGraniteContext;

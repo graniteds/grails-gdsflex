@@ -50,7 +50,6 @@ public class FlexCompiler {
     private Application application
     
     private String flexSDK
-	private boolean isFlexSDK45
     private String basedir
     private String pluginDir
     private String sourceDir
@@ -82,10 +81,6 @@ public class FlexCompiler {
 		def major = Integer.parseInt(flexVersion.substring(0, idx))
 		def minor = Integer.parseInt(flexVersion.substring(idx+1, idx2))
 		
-		isFlexSDK45 = major > 4 || (major == 4 && minor >= 5)
-		if (isFlexSDK45)
-			println "Flex SDK version ${flexVersion}, using libraries for SDK 4.5+"
-    	
     	File outputDir = new File(targetDir)
     	if (!outputDir.exists())
     		outputDir.mkdirs()
@@ -137,12 +132,11 @@ public class FlexCompiler {
 
     
     protected void configure(Configuration configuration) throws FlexCompilerException {
+		
+		println "Plugin dir: ${pluginDir}"
     
-        configuration.includeLibraries([new File("${pluginDir}/src/flex/libs/granite-essentials.swc")] as File[])
-		if (isFlexSDK45)
-        	configuration.addLibraryPath([new File("${pluginDir}/src/flex/libs/granite-flex45.swc")] as File[])
-		else
-        	configuration.addLibraryPath([new File("${pluginDir}/src/flex/libs/granite.swc")] as File[])
+        configuration.includeLibraries([new File("${pluginDir}/src/flex/libs/granite-client-flex.swc")] as File[])
+    	configuration.addLibraryPath([new File("${pluginDir}/src/flex/libs/granite-client-flex45-advanced.swc")] as File[])
         File file = new File("${basedir}/web-app/WEB-INF/flex/libs")
         if (file.exists())
         	configuration.addLibraryPath([file] as File[])
@@ -154,7 +148,7 @@ public class FlexCompiler {
         
         configuration.addActionScriptMetadata(["Name", "In", "Inject", "Out", "Produces", "Observer", "ManagedEvent", "PostConstruct", "Destroy", "Path", "Id", "Version", "Lazy"] as String[])
         
-        configuration.setServiceConfiguration(new File("${basedir}/web-app/WEB-INF/flex/services-config.xml"))
+        // configuration.setServiceConfiguration(new File("${basedir}/web-app/WEB-INF/flex/services-config.xml"))
         
         configuration.setContextRoot("/${appName}")
     }

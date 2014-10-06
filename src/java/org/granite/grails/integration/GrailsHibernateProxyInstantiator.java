@@ -22,8 +22,8 @@ package org.granite.grails.integration;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.granite.hibernate.HibernateProxyInstantiator;
-import org.granite.hibernate.ProxyFactory;
+import org.granite.hibernate4.HibernateProxyInstantiator;
+import org.granite.hibernate4.ProxyFactory;
 
 
 /**

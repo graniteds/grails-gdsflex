@@ -21,25 +21,22 @@
 import grails.util.Environment
 import grails.util.BuildSettings
 
-Ant.property(environment:"env")
-grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
-
-includeTargets << new File("${gdsflexPluginDir}/scripts/_FlexCommon.groovy")
-includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
-includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
-
 
 packageCompileFlag = false
 
 eventCompileEnd = {
     if (checkDir() && packageCompileFlag) {
+		includeTargets << new File("${gdsflexPluginDir}/scripts/_FlexCommon.groovy")
+		includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
         gas3()
     }
 }
 
 eventPackagingEnd = {
     if (checkDir()) {
+		includeTargets << new File("${gdsflexPluginDir}/scripts/_FlexCommon.groovy")
         if (!packageCompileFlag) {
+			includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
             gas3()
             packageCompileFlag = true
         }

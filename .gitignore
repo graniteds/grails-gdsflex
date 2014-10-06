@@ -1,6 +1,9 @@
 .settings/
+.groovy/
 .svn
 grails-gdsflex-*.zip
 bin/
 target/
 target-eclipse/
+*.sha1
+

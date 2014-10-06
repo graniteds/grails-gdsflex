@@ -39,10 +39,10 @@
       <keep-generated-actionscript>false</keep-generated-actionscript>
 
       <include-libraries>
-         <library>libs/granite-essentials.swc</library>
+         <library>libs/granite-client-flex.swc</library>
       </include-libraries>
       <library-path append="true">
-      	 <path-element>libs/granite.swc</path-element>
+      	 <path-element>libs/granite-client-flex45-advanced.swc</path-element>
       </library-path>
 
       <!-- Enable post-link SWF optimization. -->

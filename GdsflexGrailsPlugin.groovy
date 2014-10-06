@@ -21,19 +21,27 @@
 import org.codehaus.groovy.grails.web.context.ServletContextHolder;
 
 import java.util.concurrent.*
+
 import org.springframework.orm.hibernate3.AbstractSessionFactoryBean
+import org.springframework.transaction.interceptor.TransactionInterceptor;
 import org.granite.tide.data.JDOPersistenceManager
+import org.granite.grails.integration.GrailsExternalizer;
 import org.granite.grails.integration.GrailsPersistenceManager
+import org.granite.messaging.amf.io.util.externalizer.EnumExternalizer;
+import org.granite.tide.spring.TideDataPublishingAdvisor;
 import org.granite.tide.spring.security.Identity
+import org.granite.tide.spring.security.AclIdentity
 import org.granite.config.ServletGraniteConfig
 import org.granite.config.GraniteConfig
 import org.granite.config.GraniteConfigUtil
+
 import grails.util.Environment
 import grails.util.BuildSettings
 
 
 class GdsflexGrailsPlugin {
-    def version = "0.9.1"
+	def groupId = 'org.graniteds.grails'
+    def version = "2.0.0-SNAPSHOT"
     def author = "William Drai, Ford Guo"
     def authorEmail = "william.drai@graniteds.org"
     def title = "Integration between Grails and GraniteDS/Flex"
@@ -43,7 +51,6 @@ class GdsflexGrailsPlugin {
     private static final def config = GraniteConfigUtil.getUserConfig()
 	private static def sourceDir = config?.as3Config.srcDir ?: "./grails-app/views/flex"
 	private static def modules = config?.modules ?: []
-	private static final String GRAVITY_TOMCAT_SERVLET_NAME = "org.granite.gravity.tomcat.GravityTomcatServlet"
 	private static final String GRAVITY_ASYNC_SERVLET_NAME = "org.granite.gravity.servlet3.GravityAsyncServlet"
 	
 	private static GroovyClassLoader compilerLoader = null
@@ -56,7 +63,16 @@ class GdsflexGrailsPlugin {
 	                        
     
 	def doWithSpring = {
-	
+		
+		xmlns graniteds:"http://www.graniteds.org/config"
+		graniteds."server-filter"('url-pattern': '/*', "tide": "true")
+		
+		graniteds.'tide-data-publishing-advice'('mode': 'proxy', order: Integer.MAX_VALUE)
+		
+		grailsExternalizer(GrailsExternalizer)
+		
+		enumExternalizer(EnumExternalizer)
+		
         if (manager?.hasGrailsPlugin("app-engine")) {
 			tidePersistenceManager(JDOPersistenceManager, ref("persistenceManagerFactory")) {
 			}
@@ -69,26 +85,16 @@ class GdsflexGrailsPlugin {
 		
 		def identityClass = null
 		
-		if (manager?.hasGrailsPlugin("acegi")) {			
-			graniteSecurityInterceptor(org.granite.grails.security.GrailsAcegiInterceptor) {
-				authenticationManager = ref('authenticationManager')
-				accessDecisionManager = ref('accessDecisionManager')
-				objectDefinitionSource = ref('objectDefinitionSource')
-			}
-			
-			graniteSecurityService(org.granite.messaging.service.security.SpringSecurityService) {
-				securityInterceptor = ref('graniteSecurityInterceptor')
-			}
-			
-        	identityClass = org.granite.tide.spring.security.Identity
-		}
-		
 		if (manager?.hasGrailsPlugin("spring-security-core")) {
-			graniteObjectDefinitionSource(org.granite.grails.security.GrailsSpringSecurity3MetadataSourceWrapper) {
+			// Load classes dynamically in case plugin not present
+			Class gssmswClass = Thread.currentThread().getContextClassLoader().loadClass("org.granite.grails.security.GrailsSpringSecurity3MetadataSourceWrapper")
+			Class gssiClass = Thread.currentThread().getContextClassLoader().loadClass("org.granite.grails.security.GrailsSpringSecurity3Interceptor")
+			
+			graniteObjectDefinitionSource(gssmswClass) {
 				wrappedMetadataSource = ref('objectDefinitionSource')
 			}
 		
-			graniteSecurityInterceptor(org.granite.grails.security.GrailsSpringSecurity3Interceptor) {
+			graniteSecurityInterceptor(gssiClass) {
 				authenticationManager = ref('authenticationManager')
 				accessDecisionManager = ref('accessDecisionManager')
 				securityMetadataSource = ref('graniteObjectDefinitionSource')
@@ -99,11 +105,15 @@ class GdsflexGrailsPlugin {
 				authenticationManager = ref('authenticationManager')
 				authenticationTrustResolver = ref('authenticationTrustResolver')
 				securityInterceptor = ref('graniteSecurityInterceptor')
-				passwordEncoder = ref('passwordEncoder')
+				// passwordEncoder = ref('passwordEncoder') // Don't use passwordEncoder, Grails plugin encodes the incoming password itself
 				sessionAuthenticationStrategy = ref('sessionAuthenticationStrategy')
 			}
 			
-			identityClass = org.granite.tide.spring.security.Identity3
+			identityClass = Identity
+		}
+		
+		if (manager?.hasGrailsPlugin("spring-security-acl")) {
+			identityClass = AclIdentity;
 		}
 		
 		if (config) {
@@ -122,49 +132,37 @@ class GdsflexGrailsPlugin {
 		
 		GraniteConfig graniteConfig = ServletGraniteConfig.loadConfig(applicationContext.servletContext)
 		
-		if (manager?.hasGrailsPlugin("acegi") || manager?.hasGrailsPlugin("spring-security-core")) {
+		if (manager?.hasGrailsPlugin("spring-security-core")) {
 			graniteConfig.securityService = applicationContext.getBean("graniteSecurityService")
 		}
 		
-        if (config) {
-        	def conf = config.graniteConfig
-        	if (conf.dataDispatchEnabled && manager?.hasGrailsPlugin("hibernate")) {        	
-        		applicationContext.getBeansOfType(AbstractSessionFactoryBean.class).values().each { sf ->
-		        	def listeners = sf.sessionFactory.eventListeners
-		        	[ "postInsert", "postUpdate", "postDelete"].each {
-		            	addDataPublishListener(listeners, it)
-		            }
-		      	}
-	        }	
-	  	}
+		// Force order of transaction and data publish interceptors
+		def advisors = applicationContext.getBeansOfType(org.springframework.aop.Advisor.class).values()
+		
+		def txAdvisor = null
+		def tideDataAdvisor = null
+		for (Object advisor in advisors) {
+			if (advisor instanceof TideDataPublishingAdvisor)
+				tideDataAdvisor = advisor
+			else if (advisor.advice instanceof TransactionInterceptor)
+				txAdvisor = advisor
+		}
+		
+		if (txAdvisor.order >= tideDataAdvisor.order) {
+			if (txAdvisor.order == Integer.MAX_VALUE)
+				txAdvisor.order = Integer.MAX_VALUE-1
+			tideDataAdvisor.order = txAdvisor.order+1
+		}
 	}
     
     def doWithWebDescriptor = { xml ->
-        // filters
-        def filters = xml.filter
-        filters[filters.size() - 1] + {
-            filter {
-                'filter-name'("AMFMessageFilter")
-                'filter-class'("org.granite.messaging.webapp.AMFMessageFilter")
-            }
-        }
-    
-        // filter mappings
-        def filterMappings = xml.'filter-mapping'
-        filterMappings[filterMappings.size() - 1] + {
-            'filter-mapping' {
-                'filter-name'("AMFMessageFilter")
-                'url-pattern'("/graniteamf/*")
-            }
-        }
-
         // servlets
         def servlets = xml.servlet
         servlets[servlets.size() - 1] + {
             servlet {
-                'servlet-name'("AMFMessageServlet")
-                'display-name'("AMFMessageServlet")
-                'servlet-class'("org.granite.messaging.webapp.AMFMessageServlet")
+                'servlet-name'("GraniteServlet")
+                'display-name'("GraniteServlet")
+                'servlet-class'("org.codehaus.groovy.grails.web.servlet.GrailsDispatcherServlet")
                 'load-on-startup'("1")
             }
 			
@@ -192,7 +190,7 @@ class GdsflexGrailsPlugin {
         def servletMappings = xml.'servlet-mapping'
         servletMappings[servletMappings.size() - 1] + {
             'servlet-mapping' {
-                'servlet-name'("AMFMessageServlet")
+                'servlet-name'("GraniteServlet")
                 'url-pattern'("/graniteamf/*")
             }
 			
@@ -205,56 +203,54 @@ class GdsflexGrailsPlugin {
 		def listeners = xml.'listener'
 		listeners[listeners.size() - 1] + {
 			listener {
-				'listener-class'("org.granite.grails.integration.GrailsGraniteConfigListener")
+				'listener-class'("org.granite.config.GraniteConfigListener")
 			}
 		}		
 
         if (config) {
         	def conf = config.graniteConfig
 			
-        	if (conf.gravityEnabled) {
-				String gravityServletClassName = conf.gravityServletClassName ?: null
-				
-				// Defaults to servlet 3.0 when available
-				ConfigObject buildConfig = GraniteConfigUtil.getBuildConfig()
-				
-				// Support for Tomcat 6 (Grails 1.3.x) and Tomcat 7 (Grails 2.x)
-				if (!gravityServletClassName && buildConfig?.grails?.servlet?.version == "3.0")
-					gravityServletClassName = GRAVITY_ASYNC_SERVLET_NAME
-				
-				if (!gravityServletClassName && Environment.current == Environment.DEVELOPMENT) {
-					try {
-						getClass().loadClass(GRAVITY_TOMCAT_SERVLET_NAME)
-						gravityServletClassName = GRAVITY_TOMCAT_SERVLET_NAME
-					}
-					catch (Exception e) {
-					}
-				}
+			String gravityServletClassName = conf.gravityServletClassName ?: null
 			
-				if (!gravityServletClassName)
-					throw new RuntimeException("Gravity enabled but no suitable servlet class defined in GraniteDSConfig.groovy")
-				
-				servlets = xml.servlet
-		        servlets[servlets.size() - 1] + {
-		            servlet {
-		                'servlet-name'("GravityServlet")
-		                'display-name'("GravityServlet")
-		                'servlet-class'(gravityServletClassName)
-		                'load-on-startup'("1")
-						if (GRAVITY_ASYNC_SERVLET_NAME.equals(gravityServletClassName))
-							'async-supported'("true")
-		            }
-		        }
-		    
-		        // servlet mappings
-		        servletMappings = xml.'servlet-mapping'
-		        servletMappings[servletMappings.size() - 1] + {
-		            'servlet-mapping' {
-		                'servlet-name'("GravityServlet")
-		                'url-pattern'("/gravityamf/*")
-		            }
-		        }
-		   	}
+			// Defaults to servlet 3.0 when available
+			ConfigObject buildConfig = GraniteConfigUtil.getBuildConfig()
+			
+			// Support for Tomcat 6 (Grails 1.3.x) and Tomcat 7 (Grails 2.x)
+			if (!gravityServletClassName && buildConfig?.grails?.servlet?.version == "3.0")
+				gravityServletClassName = GRAVITY_ASYNC_SERVLET_NAME
+			
+			if (!gravityServletClassName && Environment.current == Environment.DEVELOPMENT) {
+				try {
+					getClass().loadClass(GRAVITY_TOMCAT_SERVLET_NAME)
+					gravityServletClassName = GRAVITY_TOMCAT_SERVLET_NAME
+				}
+				catch (Exception e) {
+				}
+			}
+		
+			if (!gravityServletClassName)
+				throw new RuntimeException("Gravity enabled but no suitable servlet class defined in GraniteDSConfig.groovy")
+			
+			servlets = xml.servlet
+	        servlets[servlets.size() - 1] + {
+	            servlet {
+	                'servlet-name'("GravityServlet")
+	                'display-name'("GravityServlet")
+	                'servlet-class'(gravityServletClassName)
+	                'load-on-startup'("1")
+					if (GRAVITY_ASYNC_SERVLET_NAME.equals(gravityServletClassName))
+						'async-supported'("true")
+	            }
+	        }
+	    
+	        // servlet mappings
+	        servletMappings = xml.'servlet-mapping'
+	        servletMappings[servletMappings.size() - 1] + {
+	            'servlet-mapping' {
+	                'servlet-name'("GravityServlet")
+	                'url-pattern'("/gravityamf/*")
+	            }
+	        }
         }
     }
     
@@ -321,13 +317,13 @@ class GdsflexGrailsPlugin {
     }
 
     
-    def addDataPublishListener(listeners, type) {
+/*    def addDataPublishListener(listeners, type) {
         def previousListeners = listeners."${type}EventListeners"
         def newListeners = new Object[previousListeners.length + 1]
         System.arraycopy(previousListeners, 0, newListeners, 0, previousListeners.length)
         newListeners[-1] = Class.forName("org.granite.tide.hibernate.HibernateDataPublishListener").newInstance()
         listeners."${type}EventListeners" = newListeners
-    }
+    }*/
     
     
     static def configureFlexCompilerClassPath(flexSDK, pluginDir) {

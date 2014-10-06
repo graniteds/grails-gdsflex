@@ -18,25 +18,14 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-import grails.spring.WebBeanBuilder
-import org.codehaus.groovy.grails.plugins.GrailsPluginUtils
-import org.codehaus.groovy.grails.plugins.DefaultPluginMetaManager
-import org.codehaus.groovy.grails.plugins.PluginManagerHolder
-import org.springframework.core.io.FileSystemResourceLoader
-import org.springframework.mock.web.MockServletContext
-import org.springframework.util.ClassUtils
-import groovyjarjarasm.asm.*
-import java.lang.reflect.*
-import javax.persistence.*
-
-
 Ant.property(environment:"env")
 grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
 
 tmpPath = System.properties."java.io.tmpdir" + "/gdsflex-tmp"
 
 
-def configureGas3() {	
+def configureGas3() {
+		
     GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
     loader.addURL(new File(classesDirPath).toURI().toURL())
     Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
@@ -44,7 +33,7 @@ def configureGas3() {
     
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator.jar").toURI().toURL())
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator-share.jar").toURI().toURL())
-    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator-grails.jar").toURI().toURL())
+    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-grails-generator.jar").toURI().toURL())
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/jdo2-api-2.3-eb.jar").toURI().toURL())
     rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/appengine.jar").toURI().toURL())
     

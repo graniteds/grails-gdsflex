@@ -23,8 +23,6 @@ package org.granite.grails.integration;
 import groovy.lang.Closure;
 import groovy.lang.GroovyObject;
 
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -36,15 +34,18 @@ import java.util.List;
 import java.util.Set;
 
 import org.codehaus.groovy.grails.commons.GrailsApplication;
+import org.granite.config.ConvertersConfig;
 import org.granite.context.GraniteContext;
 import org.granite.datanucleus.DataNucleusExternalizer;
 import org.granite.messaging.amf.io.convert.Converters;
 import org.granite.messaging.amf.io.util.FieldProperty;
 import org.granite.messaging.amf.io.util.MethodProperty;
 import org.granite.messaging.amf.io.util.Property;
-import org.granite.messaging.amf.io.util.externalizer.annotation.ExternalizedProperty;
-import org.granite.messaging.amf.io.util.externalizer.annotation.IgnoredProperty;
-import org.granite.util.ClassUtil;
+import org.granite.messaging.annotations.Include;
+import org.granite.messaging.annotations.Exclude;
+import org.granite.util.Introspector;
+import org.granite.util.PropertyDescriptor;
+import org.granite.util.TypeUtil;
 
 /**
  * @author William Draï
@@ -84,8 +85,8 @@ public class GrailsDataNucleusExternalizer extends DataNucleusExternalizer {
         if (fields == null) {
         	if (dynamicClass)
         		Introspector.flushFromCaches(clazz);
-            PropertyDescriptor[] propertyDescriptors = ClassUtil.getProperties(clazz);
-            Converters converters = GraniteContext.getCurrentInstance().getGraniteConfig().getConverters();
+            PropertyDescriptor[] propertyDescriptors = TypeUtil.getProperties(clazz);
+            Converters converters = ((ConvertersConfig)GraniteContext.getCurrentInstance().getGraniteConfig()).getConverters();
 
             fields = new ArrayList<Property>();
             
@@ -101,7 +102,7 @@ public class GrailsDataNucleusExternalizer extends DataNucleusExternalizer {
                     if (!allFieldNames.contains(field.getName()) &&
                         !Modifier.isTransient(field.getModifiers()) &&
                         !Modifier.isStatic(field.getModifiers()) &&
-                        !field.isAnnotationPresent(IgnoredProperty.class) &&
+                        !field.isAnnotationPresent(Exclude.class) &&
                         !GrailsExternalizer.isIgnored(field)) {
 
                     	boolean found = false;
@@ -136,7 +137,7 @@ public class GrailsDataNucleusExternalizer extends DataNucleusExternalizer {
                     for (PropertyDescriptor property : propertyDescriptors) {
                         Method getter = property.getReadMethod();
                         if (getter != null &&
-                            getter.isAnnotationPresent(ExternalizedProperty.class) &&
+                            getter.isAnnotationPresent(Include.class) &&
                             getter.getDeclaringClass().equals(c) &&
                             !allFieldNames.contains(property.getName()) &&
                             !GrailsExternalizer.isIgnored(property)) {

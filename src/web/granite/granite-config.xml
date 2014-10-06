@@ -37,12 +37,6 @@
     	<configuration>
     		<dynamic-class>true</dynamic-class>
     	</configuration>
-        <externalizer type="org.granite.grails.integration.GrailsExternalizer">
-            <include instance-of="groovy.lang.GroovyObject"/>
-        </externalizer>
-        <externalizer type="org.granite.messaging.amf.io.util.externalizer.EnumExternalizer">
-        	<include instance-of="java.lang.Enum"/>
-        </externalizer>
     </externalizers>
     
     <descriptors>

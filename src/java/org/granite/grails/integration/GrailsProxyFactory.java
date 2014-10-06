@@ -23,11 +23,10 @@ package org.granite.grails.integration;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
-import org.granite.hibernate.ProxyFactory;
+import org.granite.hibernate4.ProxyFactory;
 
 
 /**
@@ -40,49 +39,37 @@ public class GrailsProxyFactory extends ProxyFactory {
     }
 
     @Override
-    protected Type getIdentifierType(Class<?> persistentClass) {
+    protected Object[] getIdentifierInfo(Class<?> persistentClass) {
 
-        Type type = identifierTypes.get(persistentClass);
-        if (type != null)
-            return type;
-
-        for (Class<?> clazz = persistentClass; clazz != Object.class && clazz != null; clazz = clazz.getSuperclass()) {
-            for (Field field : clazz.getDeclaredFields()) {
-            	if ("id".equals(field.getName())) {
-                    type = field.getGenericType();
-                    break;
-                }
-            }
+        Object[] infos = identifierInfos.get(persistentClass);
+        if (infos != null)
+            return infos;
+        
+        Type type = null;
+        Method getter = null;
+        
+        PropertyDescriptor[] propertyDescriptors = null;
+        try {
+            BeanInfo info = Introspector.getBeanInfo(persistentClass);
+            propertyDescriptors = info.getPropertyDescriptors();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Could not find id in: " + persistentClass, e);
         }
 
-        if (type == null) {
-            PropertyDescriptor[] propertyDescriptors = null;
-            try {
-                BeanInfo info = Introspector.getBeanInfo(persistentClass);
-                propertyDescriptors = info.getPropertyDescriptors();
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Could not find id in: " + persistentClass, e);
-            }
-
-            for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
-                Method method = propertyDescriptor.getReadMethod();
-                if (method != null && "id".equals(method.getName())) {
-                    type = method.getGenericReturnType();
-                    break;
-                }
-                method = propertyDescriptor.getWriteMethod();
-                if (method != null && "id".equals(method.getName())) {
-                    type = method.getGenericParameterTypes()[0];
-                    break;
-                }
+        for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+            Method method = propertyDescriptor.getReadMethod();
+            if (method != null && "id".equals(method.getName())) {
+            	getter = method;
+                type = method.getGenericReturnType();
+                break;
             }
         }
 
         if (type != null) {
-            Type previousType = identifierTypes.putIfAbsent(persistentClass, type);
-            if (previousType != null)
-                type = previousType; // should be the same...
-            return type;
+            Object[] previousInfos = identifierInfos.putIfAbsent(persistentClass, new Object[] { type, getter });
+            if (previousInfos != null)
+                infos = previousInfos; // should be the same...
+            return infos;
         }
 
         throw new IllegalArgumentException("Could not find id in: " + persistentClass);

@@ -26,9 +26,9 @@ import org.granite.tide.TideTransactionManager;
 import org.granite.tide.data.AbstractTidePersistenceManager;
 import org.granite.tide.data.NoPersistenceManager;
 import org.granite.tide.spring.SpringTransactionManager;
-import org.granite.util.ClassUtil;
+import org.granite.util.TypeUtil;
 import org.hibernate.SessionFactory;
-import org.springframework.orm.hibernate3.HibernateTransactionManager;
+import org.springframework.orm.hibernate4.HibernateTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
@@ -48,7 +48,7 @@ public class GrailsPersistenceManager implements TidePersistenceManager {
 		if (transactionManager instanceof HibernateTransactionManager) {
 			try {
 				Object sf = transactionManager.getClass().getMethod("getSessionFactory").invoke(transactionManager);
-				pm = (TidePersistenceManager)ClassUtil.newInstance("org.granite.grails.integration.GrailsHibernatePersistenceManager", 
+				pm = (TidePersistenceManager)TypeUtil.newInstance("org.granite.grails.integration.GrailsHibernatePersistenceManager", 
 						new Class<?>[] { SessionFactory.class, TideTransactionManager.class }, new Object[] { sf, tm });
 			}
 			catch (Exception e) {

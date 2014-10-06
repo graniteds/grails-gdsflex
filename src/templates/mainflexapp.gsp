@@ -22,14 +22,14 @@
             import ${domainClass};<% } %>
             
             [Bindable]
-            private var context:Context = Spring.getInstance().getSpringContext();
-            
-            Spring.getInstance().addPlugin(TideUrlMapping.getInstance());
-            Spring.getInstance().addComponents([GrailsEntityMetadataBuilder, DefaultUIBuilder, DefaultUIFormLayout]);
-            Spring.getInstance().addExceptionHandler(ValidatorExceptionHandler);
-            
+            private var context:Context;
             
             private function init():void {
+	            Spring.getInstance().addPlugin(TideUrlMapping.getInstance());
+	            Spring.getInstance().addComponents([GrailsEntityMetadataBuilder, DefaultUIBuilder, DefaultUIFormLayout]);
+	            Spring.getInstance().addExceptionHandler(ValidatorExceptionHandler);
+				
+            	context = Spring.getInstance().getSpringContext();
  				context.urlMapping.init("", "GraniteDS / Grails generated application");        
  				
  				addEventListener("showEntityUI", showEntityUI);
