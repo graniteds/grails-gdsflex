@@ -7,4 +7,9 @@ class @artifact.name@ implements java.io.Serializable {
 	}
 	
 	String uid
+	
+	def beforeValidate() {
+		if (uid == null)
+			uid = java.util.UUID.randomUUID().toString();
+	}
 }
