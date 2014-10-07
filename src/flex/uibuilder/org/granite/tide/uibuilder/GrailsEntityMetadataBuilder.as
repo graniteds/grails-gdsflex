@@ -115,7 +115,7 @@ package org.granite.tide.uibuilder {
 			
             for each (var g:XML in getters) {
             	var name:String = g.@name.toXMLString();
-            	if (name == 'id' || name == 'version' || name == 'uid')
+            	if (name == 'id' || name == 'version' || name == 'uid' || name == 'meta_dirty')
             		continue;
             	
         		if (constraints[name] && constraints[name].display == 'false')
