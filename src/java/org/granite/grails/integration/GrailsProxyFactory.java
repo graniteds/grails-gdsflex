@@ -58,7 +58,7 @@ public class GrailsProxyFactory extends ProxyFactory {
 
         for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
             Method method = propertyDescriptor.getReadMethod();
-            if (method != null && "id".equals(method.getName())) {
+            if (method != null && "getId".equals(method.getName())) {
             	getter = method;
                 type = method.getGenericReturnType();
                 break;
@@ -66,12 +66,13 @@ public class GrailsProxyFactory extends ProxyFactory {
         }
 
         if (type != null) {
-            Object[] previousInfos = identifierInfos.putIfAbsent(persistentClass, new Object[] { type, getter });
+        	infos = new Object[] { type, getter };
+            Object[] previousInfos = identifierInfos.putIfAbsent(persistentClass, infos);
             if (previousInfos != null)
                 infos = previousInfos; // should be the same...
             return infos;
         }
-
+        
         throw new IllegalArgumentException("Could not find id in: " + persistentClass);
     }
 }
