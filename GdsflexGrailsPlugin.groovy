@@ -23,7 +23,9 @@ import org.codehaus.groovy.grails.web.context.ServletContextHolder;
 import java.util.concurrent.*
 
 import org.springframework.orm.hibernate3.AbstractSessionFactoryBean
+import org.springframework.security.access.intercept.aopalliance.MethodSecurityInterceptor;
 import org.springframework.transaction.interceptor.TransactionInterceptor;
+import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import org.granite.tide.data.JDOPersistenceManager
 import org.granite.grails.integration.GrailsExternalizer;
 import org.granite.grails.integration.GrailsPersistenceManager
@@ -65,7 +67,12 @@ class GdsflexGrailsPlugin {
 	def doWithSpring = {
 		
 		xmlns graniteds:"http://www.graniteds.org/config"
-		graniteds."server-filter"('url-pattern': '/*', "tide": "true")
+		graniteds."server-filter"("tide": "true")
+		
+		graniteUrlMapping(SimpleUrlHandlerMapping) {
+			alwaysUseFullPath = true
+			urlMap = [ '/graniteamf/*': 'org.granite.spring.ServerFilter' ]
+		}
 		
 		graniteds.'tide-data-publishing-advice'('mode': 'proxy', order: Integer.MAX_VALUE)
 		
@@ -93,19 +100,19 @@ class GdsflexGrailsPlugin {
 			graniteObjectDefinitionSource(gssmswClass) {
 				wrappedMetadataSource = ref('objectDefinitionSource')
 			}
-		
+			
 			graniteSecurityInterceptor(gssiClass) {
 				authenticationManager = ref('authenticationManager')
 				accessDecisionManager = ref('accessDecisionManager')
 				securityMetadataSource = ref('graniteObjectDefinitionSource')
 				runAsManager = ref('runAsManager')
 			}
-			
+
 			graniteSecurityService(org.granite.spring.security.SpringSecurity3Service) {
 				authenticationManager = ref('authenticationManager')
 				authenticationTrustResolver = ref('authenticationTrustResolver')
 				securityInterceptor = ref('graniteSecurityInterceptor')
-				// passwordEncoder = ref('passwordEncoder') // Don't use passwordEncoder, Grails plugin encodes the incoming password itself
+				// passwordEncoder = ref('passwordEncoder') // Don't use passwordEncoder any more, Grails plugin encodes the incoming password itself
 				sessionAuthenticationStrategy = ref('sessionAuthenticationStrategy')
 			}
 			
@@ -136,7 +143,8 @@ class GdsflexGrailsPlugin {
 			graniteConfig.securityService = applicationContext.getBean("graniteSecurityService")
 		}
 		
-		// Force order of transaction and data publish interceptors
+		// Ensure order of transaction and data publish interceptors
+		// Data publish interceptor must be called inside transaction interceptor
 		def advisors = applicationContext.getBeansOfType(org.springframework.aop.Advisor.class).values()
 		
 		def txAdvisor = null
@@ -215,7 +223,7 @@ class GdsflexGrailsPlugin {
 			// Defaults to servlet 3.0 when available
 			ConfigObject buildConfig = GraniteConfigUtil.getBuildConfig()
 			
-			// Support for Tomcat 6 (Grails 1.3.x) and Tomcat 7 (Grails 2.x)
+			// Support for Tomcat 7 (Grails 2.x)
 			if (!gravityServletClassName && buildConfig?.grails?.servlet?.version == "3.0")
 				gravityServletClassName = GRAVITY_ASYNC_SERVLET_NAME
 			
@@ -281,7 +289,6 @@ class GdsflexGrailsPlugin {
 		BuildSettings settings = new BuildSettings(new File(grailsHome))
     	
     	File pluginDir = lookupPluginDir(buildConfig, settings)
-    	// println "Plugin dir: ${pluginDir}"
     	
  		if (compilerLoader == null) {
  			ClassLoader loader = configureFlexCompilerClassPath(flexSDK, pluginDir)
@@ -289,8 +296,6 @@ class GdsflexGrailsPlugin {
 			File source = new File(sourceDir)
 			if (!source.exists())
 				source.mkdirs()
-				
-			// println "Source dir: ${source.canonicalPath}"
 			
 			Class wrapperClass = loader.loadClass("FlexCompilerWrapper")
 			java.lang.reflect.Method wrapperInit = wrapperClass.getMethod("init", Object.class, Object.class, Object.class, Object.class, Object.class, Object.class, Object.class)
@@ -315,15 +320,6 @@ class GdsflexGrailsPlugin {
     		} as Runnable)
     	}
     }
-
-    
-/*    def addDataPublishListener(listeners, type) {
-        def previousListeners = listeners."${type}EventListeners"
-        def newListeners = new Object[previousListeners.length + 1]
-        System.arraycopy(previousListeners, 0, newListeners, 0, previousListeners.length)
-        newListeners[-1] = Class.forName("org.granite.tide.hibernate.HibernateDataPublishListener").newInstance()
-        listeners."${type}EventListeners" = newListeners
-    }*/
     
     
     static def configureFlexCompilerClassPath(flexSDK, pluginDir) {
