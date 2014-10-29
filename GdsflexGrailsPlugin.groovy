@@ -23,7 +23,6 @@ import org.codehaus.groovy.grails.web.context.ServletContextHolder;
 import java.util.concurrent.*
 
 import org.springframework.orm.hibernate3.AbstractSessionFactoryBean
-import org.springframework.security.access.intercept.aopalliance.MethodSecurityInterceptor;
 import org.springframework.transaction.interceptor.TransactionInterceptor;
 import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import org.granite.tide.data.JDOPersistenceManager
