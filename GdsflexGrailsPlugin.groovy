@@ -42,7 +42,7 @@ import grails.util.BuildSettings
 
 class GdsflexGrailsPlugin {
 	def groupId = 'org.graniteds.grails'
-    def version = "2.0.0-SNAPSHOT"
+    def version = "2.0.0.GA"
     def author = "William Drai, Ford Guo"
     def authorEmail = "william.drai@graniteds.org"
     def title = "Integration between Grails and GraniteDS/Flex"
