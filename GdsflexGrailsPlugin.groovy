@@ -46,11 +46,18 @@ import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping
 class GdsflexGrailsPlugin {
 	def groupId = 'org.graniteds.grails'
 	def version = "2.0.0.GA"
-	def author = "William Drai, Ford Guo"
-	def authorEmail = "william.drai@graniteds.org"
+	def grailsVersion = '2.0 > *'
 	def title = "GraniteDS Plugin"
 	def description = "Integration between Grails and GraniteDS/Flex"
-	def documentation = "http://www.graniteds.org/"
+	def documentation = "http://www.granitedataservices.com/"
+	def license = 'LGPL2.1'
+	def organization = [name: 'GraniteDS', url: 'http://www.granitedataservices.com/']
+	def developers = [
+		[name: 'William Drai', email: 'william.drai@graniteds.org']
+		[name: 'Ford Guo']
+	]
+	def issueManagement = [system: 'GITHUB', url: 'https://github.com/graniteds/grails-gdsflex/issues']
+	def scm = [url: 'https://github.com/graniteds/grails-gdsflex']
 
 	private static final config = GraniteConfigUtil.userConfig
 	private static String sourceDir = config.as3Config.srcDir ?: "./grails-app/views/flex"
