@@ -1,12 +1,12 @@
 graniteConfig {
-    gravityEnabled = false
-    dataDispatchEnabled = false   
+	gravityEnabled = false
+	dataDispatchEnabled = false
 }
 
 as3Config {
-    domainJar = null
-    extraClasses = []
+	domainJar = null
+	extraClasses = []
 	excludeClasses = []
-    generateServices = true
-    autoCompileFlex = true
+	generateServices = true
+	autoCompileFlex = true
 }

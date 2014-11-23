@@ -18,11 +18,11 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-public class FlexCompilerException extends Exception {
+class FlexCompilerException extends RuntimeException {
 
-	private static final long serialVersionUID = 1L;
-	
-	public FlexCompilerException(String message) {
-		super(message);
+	private static final long serialVersionUID = 1
+
+	FlexCompilerException(String message) {
+		super(message)
 	}
 }

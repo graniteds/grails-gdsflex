@@ -20,38 +20,36 @@
 
 package org.granite.tide.uibuilder.events
 {
-    import flash.events.Event;
-    
-    import org.granite.tide.events.AbstractTideEvent;
-    import org.granite.tide.events.IConversationEvent;
-    import org.granite.tide.uibuilder.util.ReflectionUtil;
-    
-    
-    public class EditEntityEvent extends AbstractTideEvent implements IConversationEvent {
-        
-        private var _conversationId:String;
-        public var entityInstance:Object;
-        
-        
-        public function EditEntityEvent(entityInstance:Object):void {
-        	super();
-        	
-        	this.entityInstance = entityInstance;
-        	
-        	if (entityInstance is Class)
-        		_conversationId = "New " + ReflectionUtil.getUpperCaseEntityName(entityInstance);
-        	else if (entityInstance is String)
-        		_conversationId = "New " + entityInstance.substring(0, 1).toUpperCase() + entityInstance.substring(1);
-        	else
-        		_conversationId = ReflectionUtil.getUpperCaseEntityName(entityInstance) + "#" + entityInstance.id;
-        }
-        
-        public function get conversationId():String {
-        	return _conversationId;
-        }
-        
-        public override function clone():Event {
-        	return new EditEntityEvent(entityInstance);
-        }
-    }
+	import flash.events.Event;
+
+	import org.granite.tide.events.AbstractTideEvent;
+	import org.granite.tide.events.IConversationEvent;
+	import org.granite.tide.uibuilder.util.ReflectionUtil;
+
+	public class EditEntityEvent extends AbstractTideEvent implements IConversationEvent {
+
+		private var _conversationId:String;
+		public var entityInstance:Object;
+
+		public function EditEntityEvent(entityInstance:Object):void {
+			super();
+
+			this.entityInstance = entityInstance;
+
+			if (entityInstance is Class)
+				_conversationId = "New " + ReflectionUtil.getUpperCaseEntityName(entityInstance);
+			else if (entityInstance is String)
+				_conversationId = "New " + entityInstance.substring(0, 1).toUpperCase() + entityInstance.substring(1);
+			else
+				_conversationId = ReflectionUtil.getUpperCaseEntityName(entityInstance) + "#" + entityInstance.id;
+		}
+
+		public function get conversationId():String {
+			return _conversationId;
+		}
+
+		public override function clone():Event {
+			return new EditEntityEvent(entityInstance);
+		}
+	}
 }

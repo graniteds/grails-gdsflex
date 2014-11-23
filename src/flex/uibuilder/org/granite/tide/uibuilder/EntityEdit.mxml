@@ -21,112 +21,108 @@
 -->
 
 <mx:VBox
-    xmlns:mx="http://www.adobe.com/2006/mxml"
-    xmlns="*"
-    width="100%" paddingLeft="4" paddingRight="4" paddingTop="4" paddingBottom="4"
-    creationComplete="layoutForm()">
-   
-    <mx:Script>
-        <![CDATA[
-        	import mx.containers.Form;
-        	import mx.formatters.DateFormatter;
-        	import mx.formatters.Formatter;
-        	import mx.validators.Validator;
-        	import mx.core.IUIComponent;
-        	import mx.binding.utils.BindingUtils;
-            import mx.collections.ArrayCollection;
-            import org.granite.tide.spring.Context;
-        	import org.granite.tide.validators.TideEntityValidator;
-        	import org.granite.tide.uibuilder.events.RemoveEntityEvent;
-        	import org.granite.tide.uibuilder.events.SaveEntityEvent;
-        	import org.granite.tide.uibuilder.events.CancelEntityEvent;
-        	import org.granite.tide.uibuilder.util.ReflectionUtil;
-           
-           
-           	[Bindable] [In]
-           	public var context:Context;
-           
-            
-            protected var _entityName:String;
-            protected var _qualifiedEntityName:String;
-            
-	        /**
-	         * 	Set the current entity class
-	         *  By default will be set by injection from EntityUI
-	         *  
-	         *  @param entityClass entity class
-	         */
-            public function set entityClass(entityClass:Class):void {
-            	var className:String = getQualifiedClassName(entityClass);
-            	_entityName = ReflectionUtil.getEntityName(className);
-            	_qualifiedEntityName = ReflectionUtil.getQualifiedEntityName(className);
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns="*"
+	width="100%" paddingLeft="4" paddingRight="4" paddingTop="4" paddingBottom="4"
+	creationComplete="layoutForm()">
+
+	<mx:Script>
+		<![CDATA[
+			import mx.containers.Form;
+			import mx.formatters.DateFormatter;
+			import mx.formatters.Formatter;
+			import mx.validators.Validator;
+			import mx.core.IUIComponent;
+			import mx.binding.utils.BindingUtils;
+			import mx.collections.ArrayCollection;
+			import org.granite.tide.spring.Context;
+			import org.granite.tide.validators.TideEntityValidator;
+			import org.granite.tide.uibuilder.events.RemoveEntityEvent;
+			import org.granite.tide.uibuilder.events.SaveEntityEvent;
+			import org.granite.tide.uibuilder.events.CancelEntityEvent;
+			import org.granite.tide.uibuilder.util.ReflectionUtil;
+
+			[Bindable] [In]
+			public var context:Context;
+
+			protected var _entityName:String;
+			protected var _qualifiedEntityName:String;
+
+			/**
+			 * Set the current entity class
+			 * By default will be set by injection from EntityUI
+			 *
+			 * @param entityClass entity class
+			 */
+			public function set entityClass(entityClass:Class):void {
+				var className:String = getQualifiedClassName(entityClass);
+				_entityName = ReflectionUtil.getEntityName(className);
+				_qualifiedEntityName = ReflectionUtil.getQualifiedEntityName(className);
 			}
-           	
-           	public function get entityInstance():Object {
-           		if (context == null || _entityName == null) {
-           			// Can be null during initialization phases
-           			return null;
-           		}
-           		return context[_entityName + 'Instance'];
-           	}
-           	
-           	
-           	[Bindable]
-           	protected var _create:Boolean;
-           	
-           	public function set create(create:Boolean):void {
-           		_create = create;
-           	}
-			
-			
+
+			public function get entityInstance():Object {
+				if (context == null || _entityName == null) {
+					// Can be null during initialization phases
+					return null;
+				}
+				return context[_entityName + 'Instance'];
+			}
+
+			[Bindable]
+			protected var _create:Boolean;
+
+			public function set create(create:Boolean):void {
+				_create = create;
+			}
+
 			protected var _properties:Array = null;
-			
+
 			public function set properties(properties:Array):void {
 				_properties = properties;
 			}
-			
+
 			protected function layoutForm():void {
 				if (entityForm == null)
 					entityForm = new Form();
-				
+
 				var formLayout:IUIFormLayout = context.meta_getInstance(_qualifiedEntityName + '.tideUIFormLayout') as IUIFormLayout;
 				if (formLayout == null)
 					formLayout = IUIFormLayout(context.tideUIFormLayout);
 				formLayout.layoutEditForm(entityForm, _properties);
-				
+
 				for each (var property:EntityProperty in _properties) {
 					if (!property.bound) {
-		        		BindingUtils.bindProperty(property.component, property.editorDataField, 
-		        			entityInstance, property.property);
-		        		if (property.entityField) {
-		            		BindingUtils.bindProperty(property.component, property.entityField, 
-		            			context, _entityName + 'Instance');
-		        		}
-		        		
-		        		if (property.validator) {
-		        			Validator(property.validator).source = property.component;
-		        			Validator(property.validator).property = property.editorDataField;
-		        		}
-		   			}
-            		
-	            	var tv:TideEntityValidator = new TideEntityValidator()
-            		BindingUtils.bindProperty(tv, "entity", context, _entityName + 'Instance');
-            		tv.property = property.property;
-            		tv.listener = property.component;
+						BindingUtils.bindProperty(property.component, property.editorDataField,
+							entityInstance, property.property);
+						if (property.entityField) {
+							BindingUtils.bindProperty(property.component, property.entityField,
+								context, _entityName + 'Instance');
+						}
+
+						if (property.validator) {
+							Validator(property.validator).source = property.component;
+							Validator(property.validator).property = property.editorDataField;
+						}
+					}
+
+					var tv:TideEntityValidator = new TideEntityValidator()
+					BindingUtils.bindProperty(tv, "entity", context, _entityName + 'Instance');
+					tv.property = property.property;
+					tv.listener = property.component;
 				}
 			}
-      	]]>
-    </mx:Script>
-    
-    <mx:Form id="entityForm" width="100%"/>
-   	
-    <mx:HBox id="buttonBar">
-        <mx:Button label="Save" 
-        	click="dispatchEvent(new SaveEntityEvent())"/>
-        <mx:Button label="Delete" enabled="{!_create}" 
-        	click="dispatchEvent(new RemoveEntityEvent())"/>
-        <mx:Button label="Cancel"
-        	click="dispatchEvent(new CancelEntityEvent())"/>
-    </mx:HBox>
+		]]>
+	</mx:Script>
+
+	<mx:Form id="entityForm" width="100%"/>
+
+	<mx:HBox id="buttonBar">
+		<mx:Button label="Save"
+			click="dispatchEvent(new SaveEntityEvent())"/>
+		<mx:Button label="Delete" enabled="{!_create}"
+			click="dispatchEvent(new RemoveEntityEvent())"/>
+		<mx:Button label="Cancel"
+			click="dispatchEvent(new CancelEntityEvent())"/>
+	</mx:HBox>
 
 </mx:VBox>

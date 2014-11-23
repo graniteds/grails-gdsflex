@@ -21,260 +21,263 @@
 -->
 
 <mx:VBox
-    xmlns:mx="http://www.adobe.com/2006/mxml"
-    xmlns="*"
-    width="100%"
-    creationPolicy="none"
-    show="updateURL()"
-    creationComplete="buildColumns(); list()">
-   
-    <mx:Script>
-        <![CDATA[
-        	import flash.utils.describeType;
-        	import flash.utils.getQualifiedClassName;
-        	import mx.utils.ObjectUtil;
-        	import mx.events.PropertyChangeEvent;
-            import mx.binding.utils.BindingUtils;
-            import mx.events.ItemClickEvent;
-            import mx.collections.ArrayCollection;
-            import mx.controls.Alert;
-        	import mx.controls.dataGridClasses.DataGridColumn;
-        	import org.granite.tide.Tide;
-        	import org.granite.tide.BaseContext;
-        	import org.granite.tide.Component;
-            import org.granite.tide.events.TideResultEvent;
-            import org.granite.tide.spring.Spring;
-            import org.granite.tide.spring.PagedQuery;
-        	import org.granite.tide.uibuilder.events.ListEntityEvent;
-        	import org.granite.tide.uibuilder.events.ShowEntityEvent;
-        	import org.granite.tide.uibuilder.events.EndEditEntityEvent;
-            import org.granite.tide.uibuilder.events.EditEntityEvent;
-            import org.granite.tide.uibuilder.util.ReflectionUtil;
-            
-            
-            private var _entityClass:Class;
-            private var _entitySubclasses:Array;
-            [Bindable]
-            private var _entityName:String;
-            private var _qualifiedEntityName:String;
-            
-            /**
-             *	List of additional 'New' buttons when subclasses are defined
-             */ 
-            [Bindable]
-            private var _buttons:Array = new Array();
-            
-            
-            /**
-             * 	Label used for display (simply upper case initial for now)
-             * 
-             *  @return label
-             */
-            private function upperCaseEntityName():String {
-            	return _entityName.substring(0, 1).toUpperCase() + _entityName.substring(1);
-            }
-            
-            /**
-             *	Optional setter for Tide context (otherwise get it from Tide singleton)
-             * 
-             *  @param context Tide context
-             */ 
-            public function set context(context:BaseContext):void {
-            	_context = context;
-            }
-            
-            public function set entityClass(entityClass:Class):void {
-            	if (entityClass != _entityClass) {
-            		// Stores current entity class and derives other necessary entity names 
-	            	_entityClass = entityClass;
-	            	var className:String = getQualifiedClassName(entityClass);
-	            	var entityName:String = ReflectionUtil.getEntityName(className);
-	            	var qualifiedEntityName:String = ReflectionUtil.getQualifiedEntityName(className);
-	            	
-	            	// Registers the entity instance conversation component (used to exchange with Grails controller)
-	            	// Marked create=false because the value should be either retrieved from a grid or from the server
-	            	Spring.getInstance().addComponent(entityName + 'Instance', _entityClass, true, false);
-	            	// Registers controller client proxy (necessary when using controllers with package names)
-	            	Spring.getInstance().addComponent(qualifiedEntityName + "Controller", Component);
-	            	// Registers a PagedQuery component using the Grails controller list method with a page size of 36
-		            Spring.getInstance().addComponentWithFactory(entityName + "List", PagedQuery, 
-	    	            { useGrailsController: true, remoteComponentName: qualifiedEntityName + "Controller", elementClass: _entityClass, maxResults: 36 }, 
-	    	            false, true, Tide.RESTRICT_UNKNOWN, false);
-	    	        // Registers a conversational editor UI component in the particular Tide subcontext of the current entity
-	    	        // so events dispatched from this EntityUI will be observed only by it and not by editors of other entities
-	    	        // Transmits the current entity class with the factory properties map
-	    	        // overrideIfPresent is marked false to avoid overriding an existing user-defined editor  
-	        	    Spring.getInstance().addComponentWithFactory(qualifiedEntityName + ".entityEdit", EntityEdit, 
-	        	    	{ entityClass: _entityClass }, true, true, Tide.RESTRICT_UNKNOWN, false);
-	    	        // Registers a conversational editor controller component in the particular Tide subcontext of the current entity
-	        	    Spring.getInstance().addComponentWithFactory(qualifiedEntityName + ".entityEditCtl", EntityEditCtl, 
-	        	    	{ entityClass: _entityClass }, true, true, Tide.RESTRICT_UNKNOWN, false);
-	        	    
-	        	    _entityName = entityName;
-	        	    _qualifiedEntityName = qualifiedEntityName;
-	        	    
-	        	    // init should be called in the next frame to let Flex initialize other properties	
-    	    		callLater(init);
-            	}
-            }
-            
-            private function init():void {            	
-            	if (_context == null)
-            		_context = Spring.getInstance().getContext();	// Get the context from Tide singleton if not defined
-            	// Registers itself in the current entity subcontext (qualified entity name, such as my.company.book.entityUI)
-    	    	_context[_qualifiedEntityName + ".entityUI"] = this;
-            	// Registers itself as a deep linking handler for the path "/entityName", such as "/book"
-	    		_context.urlMapping.addMapping(_entityName, _qualifiedEntityName + ".entityUI");
-			}
-			
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns="*"
+	width="100%"
+	creationPolicy="none"
+	show="updateURL()"
+	creationComplete="buildColumns(); list()">
+
+	<mx:Script>
+		<![CDATA[
+			import flash.utils.describeType;
+			import flash.utils.getQualifiedClassName;
+			import mx.utils.ObjectUtil;
+			import mx.events.PropertyChangeEvent;
+			import mx.binding.utils.BindingUtils;
+			import mx.events.ItemClickEvent;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import org.granite.tide.Tide;
+			import org.granite.tide.BaseContext;
+			import org.granite.tide.Component;
+			import org.granite.tide.events.TideResultEvent;
+			import org.granite.tide.spring.Spring;
+			import org.granite.tide.spring.PagedQuery;
+			import org.granite.tide.uibuilder.events.ListEntityEvent;
+			import org.granite.tide.uibuilder.events.ShowEntityEvent;
+			import org.granite.tide.uibuilder.events.EndEditEntityEvent;
+			import org.granite.tide.uibuilder.events.EditEntityEvent;
+			import org.granite.tide.uibuilder.util.ReflectionUtil;
+
+			private var _entityClass:Class;
+			private var _entitySubclasses:Array;
+			[Bindable]
+			private var _entityName:String;
+			private var _qualifiedEntityName:String;
+
 			/**
-			 * 	Defines subclasses of the current entity that should be handled in this UI
-			 * 	
-			 * 	@param entitySubclasses	array of Class
-			 */ 
+			 *	List of additional 'New' buttons when subclasses are defined
+			 */
+			[Bindable]
+			private var _buttons:Array = new Array();
+
+			/**
+			 * Label used for display (simply upper case initial for now)
+			 *
+			 * @return label
+			 */
+			private function upperCaseEntityName():String {
+				return _entityName.substring(0, 1).toUpperCase() + _entityName.substring(1);
+			}
+
+			/**
+			 *	Optional setter for Tide context (otherwise get it from Tide singleton)
+			 *
+			 * @param context Tide context
+			 */
+			public function set context(context:BaseContext):void {
+				_context = context;
+			}
+
+			public function set entityClass(entityClass:Class):void {
+				if (entityClass != _entityClass) {
+					// Stores current entity class and derives other necessary entity names
+					_entityClass = entityClass;
+					var className:String = getQualifiedClassName(entityClass);
+					var entityName:String = ReflectionUtil.getEntityName(className);
+					var qualifiedEntityName:String = ReflectionUtil.getQualifiedEntityName(className);
+
+					// Registers the entity instance conversation component (used to exchange with Grails controller)
+					// Marked create=false because the value should be either retrieved from a grid or from the server
+					Spring.getInstance().addComponent(entityName + 'Instance', _entityClass, true, false);
+					// Registers controller client proxy (necessary when using controllers with package names)
+					Spring.getInstance().addComponent(qualifiedEntityName + "Controller", Component);
+					// Registers a PagedQuery component using the Grails controller list method with a page size of 36
+					Spring.getInstance().addComponentWithFactory(entityName + "List", PagedQuery,
+						{ useGrailsController: true, remoteComponentName: qualifiedEntityName + "Controller", elementClass: _entityClass, maxResults: 36 },
+						false, true, Tide.RESTRICT_UNKNOWN, false);
+					// Registers a conversational editor UI component in the particular Tide subcontext of the current entity
+					// so events dispatched from this EntityUI will be observed only by it and not by editors of other entities
+					// Transmits the current entity class with the factory properties map
+					// overrideIfPresent is marked false to avoid overriding an existing user-defined editor
+					Spring.getInstance().addComponentWithFactory(qualifiedEntityName + ".entityEdit", EntityEdit,
+						{ entityClass: _entityClass }, true, true, Tide.RESTRICT_UNKNOWN, false);
+					// Registers a conversational editor controller component in the particular Tide subcontext of the current entity
+					Spring.getInstance().addComponentWithFactory(qualifiedEntityName + ".entityEditCtl", EntityEditCtl,
+						{ entityClass: _entityClass }, true, true, Tide.RESTRICT_UNKNOWN, false);
+
+					_entityName = entityName;
+					_qualifiedEntityName = qualifiedEntityName;
+
+					// init should be called in the next frame to let Flex initialize other properties
+					callLater(init);
+				}
+			}
+
+			private function init():void {
+				if (_context == null) {
+					_context = Spring.getInstance().getContext();	// Get the context from Tide singleton if not defined
+				}
+				// Registers itself in the current entity subcontext (qualified entity name, such as my.company.book.entityUI)
+				_context[_qualifiedEntityName + ".entityUI"] = this;
+				// Registers itself as a deep linking handler for the path "/entityName", such as "/book"
+				_context.urlMapping.addMapping(_entityName, _qualifiedEntityName + ".entityUI");
+			}
+
+			/**
+			 * Defines subclasses of the current entity that should be handled in this UI
+			 *
+			 * @param entitySubclasses  array of Class
+			 */
 			public function set entitySubclasses(entitySubclasses:Array):void {
 				_entitySubclasses = entitySubclasses;
 			}
-			
-			
+
+
 			[Bindable]
 			protected var _columns:Array = null;
-			
+
 			/**
-			 * 	Build columns of the DataGrid
+			 * Build columns of the DataGrid
 			 */
 			protected function buildColumns():void {
-            	if (_context == null)
-            		_context = Spring.getInstance().getContext();	// Get the context from Tide singleton if not defined
-				
+				if (_context == null) {
+					_context = Spring.getInstance().getContext();	// Get the context from Tide singleton if not defined
+				}
 				// Build metadata for the entity class
 				var metadata:Array = IEntityMetadataBuilder(_context.tideEntityMetadataBuilder).buildMetadata(_entityClass);
-				
-				// Find a UI builder for the class (either an entity specific one or by default the global one) 
+
+				// Find a UI builder for the class (either an entity specific one or by default the global one)
 				var builder:IUIBuilder = _context.meta_getInstance(_qualifiedEntityName + '.tideUIBuilder') as IUIBuilder;
-				if (builder == null)
+				if (builder == null) {
 					builder = IUIBuilder(_context.tideUIBuilder);
+				}
 				_columns = builder.buildListColumns(getQualifiedClassName(_entityClass), metadata);
 			}
-            
 
-            [Bindable]
-            protected var _context:BaseContext;
-           	
-           	
-           	/**
-           	 * 	Observer method to refresh the paged list (after a creation or delete)
-           	 * 
-           	 * 	@param	event Tide typed event marker class
-           	 */
-            [Observer]
-            public function refreshList(event:ListEntityEvent = null):void {
-                _context[_entityName + 'List'].fullRefresh();
-            }
-            
-            /**
-             *	Handling of top button bar
-             */ 
-            private function initButtonBar():void {
-        	    var buttons:Array = new Array();
-        	    buttons.push("New " + upperCaseEntityName());
-        	    buttons.push("Edit " + upperCaseEntityName());
-				for each (var entityClass:Class in _entitySubclasses)
+			[Bindable]
+			protected var _context:BaseContext;
+
+			/**
+			 * Observer method to refresh the paged list (after a creation or delete)
+			 *
+			 * @param  event Tide typed event marker class
+			 */
+			[Observer]
+			public function refreshList(event:ListEntityEvent = null):void {
+				_context[_entityName + 'List'].fullRefresh();
+			}
+
+			/**
+			 *	Handling of top button bar
+			 */
+			private function initButtonBar():void {
+				var buttons:Array = new Array();
+				buttons.push("New " + upperCaseEntityName());
+				buttons.push("Edit " + upperCaseEntityName());
+				for each (var entityClass:Class in _entitySubclasses) {
 					buttons.splice(_buttons.length-1, 0, "New " + ReflectionUtil.getUpperCaseEntityName(entityClass));
+				}
 				_buttons = buttons;
-            }
-            
-            private function completeButtonBar():void {
-                BindingUtils.bindProperty(bbMain.getChildAt(_buttons.length-1), "enabled", dgList, "selectedItem");
-            }
-           
-            private function clickHandler(event:ItemClickEvent):void {
-            	// Dispatch event to start a conversation to create or edit an entity
-                if (event.index == 0)
-                    dispatchEvent(new EditEntityEvent(_entityClass));
-                else if (event.index > 0 && event.index < _buttons.length-1)
-                    dispatchEvent(new EditEntityEvent(_entitySubclasses[event.index-1]));
-                else if (event.index == _buttons.length-1 && dgList.selectedItem)
-                    dispatchEvent(new EditEntityEvent(dgList.selectedItem));
-            }
-			
-            [Observer]
-        	public function edit(event:EditEntityEvent):void {
-        		// Notify parent UI when an edit is required on this UI tab
-        		// The parent UI is expected to select this panel in its main ViewStack or TabNavigator
-        		dispatchEvent(new Event("showEntityUI", true));
-        	}
-			
-            [Observer]
-        	public function endEdit(event:EndEditEntityEvent):void {
-        		// Notify parent UI when an edit is ended on this UI tab
-        		// The parent UI is expected to restore the previously selected panel in its main ViewStack or TabNavigator
-        		dispatchEvent(new Event("endEntityUI", true));
-        	}
-        	
-        	
-        	// Handling of deep linking
-        	
-        	private function setURL(url:String):void {
-        		_context.urlMapping.updateURL(_entityName + "/" + url);
-        	}
-			
+			}
+
+			private function completeButtonBar():void {
+				BindingUtils.bindProperty(bbMain.getChildAt(_buttons.length-1), "enabled", dgList, "selectedItem");
+			}
+
+			private function clickHandler(event:ItemClickEvent):void {
+				// Dispatch event to start a conversation to create or edit an entity
+				if (event.index == 0) {
+					dispatchEvent(new EditEntityEvent(_entityClass));
+				}
+				else if (event.index > 0 && event.index < _buttons.length-1) {
+					dispatchEvent(new EditEntityEvent(_entitySubclasses[event.index-1]));
+				}
+				else if (event.index == _buttons.length-1 && dgList.selectedItem) {
+					dispatchEvent(new EditEntityEvent(dgList.selectedItem));
+				}
+			}
+
+			[Observer]
+			public function edit(event:EditEntityEvent):void {
+				// Notify parent UI when an edit is required on this UI tab
+				// The parent UI is expected to select this panel in its main ViewStack or TabNavigator
+				dispatchEvent(new Event("showEntityUI", true));
+			}
+
+			[Observer]
+			public function endEdit(event:EndEditEntityEvent):void {
+				// Notify parent UI when an edit is ended on this UI tab
+				// The parent UI is expected to restore the previously selected panel in its main ViewStack or TabNavigator
+				dispatchEvent(new Event("endEntityUI", true));
+			}
+
+			// Handling of deep linking
+
+			private function setURL(url:String):void {
+				_context.urlMapping.updateURL(_entityName + "/" + url);
+			}
+
 			private function updateURL():void {
 				// Called when this panel is shown or when a tab is selected by the user
 				// to update the current browser url
-				if (nav.selectedIndex == 0)
+				if (nav.selectedIndex == 0) {
 					callLater(setURL, [ "list" ]);
+				}
 				else {
 					var entityInstance:Object = Object(nav.selectedChild).entityInstance;
 					callLater(setURL, [ entityInstance.id ? "show/" + entityInstance.id : "create" ]);
 				}
 			}
-        	
-        	// Methods annotated with [Path] are called by the Tide deep linking plugin 
-        	// when the browser url changes
-        	[Path("list")]
-        	public function list():void {
-        		dispatchEvent(new Event("showEntityUI", true));
-        		if (nav != null)
-        			nav.selectedIndex = 0;
-        	}
-        	
-        	[Path("create")]
-        	public function create():void {
-        		dispatchEvent(new Event("showEntityUI", true));
-        		_context.application.callLater(doCreate);
-        	}
-        	
-        	private function doCreate():void {
-                dispatchEvent(new EditEntityEvent(_entityClass));
-        	}
-        	
-        	[Path("show/{id}")]
-        	public function show(id:Number):void {
-        		dispatchEvent(new Event("showEntityUI", true));
-        		_context.application.callLater(doShow, [id]);
-        	}
-        	
-        	private function doShow(id:Number):void {
-                dispatchEvent(new ShowEntityEvent(_entityClass, id));
-        	}
-        ]]>
-    </mx:Script>
-   
-    <mx:TabNavigator id="nav" width="100%" height="100%" change="updateURL()">
-        <mx:VBox label="{upperCaseEntityName() + ' List'}"
-        	width="100%" height="100%" paddingLeft="4" paddingRight="4" paddingTop="4" paddingBottom="4">
-        	
-            <mx:ButtonBar id="bbMain" initialize="initButtonBar()" creationComplete="completeButtonBar()" itemClick="clickHandler(event);"
-            	dataProvider="{_buttons}"/>
-           
-            <mx:DataGrid id="dgList" dataProvider="{_context[_entityName + 'List']}"
-            	columns="{_columns}" 
-            	width="100%" height="100%">
-            </mx:DataGrid>
-            
-            <mx:Button label="Refresh" click="refreshList()"/>
-        </mx:VBox>
-    </mx:TabNavigator>
-   
+
+			// Methods annotated with [Path] are called by the Tide deep linking plugin
+			// when the browser url changes
+			[Path("list")]
+			public function list():void {
+				dispatchEvent(new Event("showEntityUI", true));
+				if (nav != null) {
+					nav.selectedIndex = 0;
+				}
+			}
+
+			[Path("create")]
+			public function create():void {
+				dispatchEvent(new Event("showEntityUI", true));
+				_context.application.callLater(doCreate);
+			}
+
+			private function doCreate():void {
+				dispatchEvent(new EditEntityEvent(_entityClass));
+			}
+
+			[Path("show/{id}")]
+			public function show(id:Number):void {
+				dispatchEvent(new Event("showEntityUI", true));
+				_context.application.callLater(doShow, [id]);
+			}
+
+			private function doShow(id:Number):void {
+				dispatchEvent(new ShowEntityEvent(_entityClass, id));
+			}
+		]]>
+	</mx:Script>
+
+	<mx:TabNavigator id="nav" width="100%" height="100%" change="updateURL()">
+		<mx:VBox label="{upperCaseEntityName() + ' List'}"
+			width="100%" height="100%" paddingLeft="4" paddingRight="4" paddingTop="4" paddingBottom="4">
+
+			<mx:ButtonBar id="bbMain" initialize="initButtonBar()" creationComplete="completeButtonBar()" itemClick="clickHandler(event);"
+				dataProvider="{_buttons}"/>
+
+			<mx:DataGrid id="dgList" dataProvider="{_context[_entityName + 'List']}"
+				columns="{_columns}"
+				width="100%" height="100%">
+			</mx:DataGrid>
+
+			<mx:Button label="Refresh" click="refreshList()"/>
+		</mx:VBox>
+	</mx:TabNavigator>
+
 </mx:VBox>

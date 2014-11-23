@@ -21,30 +21,28 @@
 -->
 
 <mx:LinkButton
-    xmlns:mx="http://www.adobe.com/2006/mxml"
-    xmlns="*"
-    label="{DataGridListData(listData).label}" 
-    click="handleClick()">
-	
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns="*"
+	label="{DataGridListData(listData).label}"
+	click="handleClick()">
+
 	<mx:Script>
-        <![CDATA[
-        	import flash.utils.getQualifiedClassName;
-        	import org.granite.tide.spring.Context;
-        	import mx.controls.DataGrid;
-            import mx.controls.dataGridClasses.DataGridListData;
-        	import org.granite.tide.uibuilder.events.EditEntityEvent;
-        	import org.granite.tide.uibuilder.util.ReflectionUtil;
-        	
-        	
-        	public var context:Context;
-        	
-        	
-        	private function handleClick():void {
-        		var targetEntity:Object =  data[DataGridListData(listData).dataField];
-            	// Dispatch the EditEntityEvent in the subcontext of the clicked entity
-				context[ReflectionUtil.getQualifiedEntityName(targetEntity)].dispatchEvent(new EditEntityEvent(targetEntity));        	
+		<![CDATA[
+			import flash.utils.getQualifiedClassName;
+			import org.granite.tide.spring.Context;
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridListData;
+			import org.granite.tide.uibuilder.events.EditEntityEvent;
+			import org.granite.tide.uibuilder.util.ReflectionUtil;
+
+			public var context:Context;
+
+			private function handleClick():void {
+				var targetEntity:Object =  data[DataGridListData(listData).dataField];
+				// Dispatch the EditEntityEvent in the subcontext of the clicked entity
+				context[ReflectionUtil.getQualifiedEntityName(targetEntity)].dispatchEvent(new EditEntityEvent(targetEntity));
 			}
-      	]]>
+		]]>
 	</mx:Script>
 
 </mx:LinkButton>

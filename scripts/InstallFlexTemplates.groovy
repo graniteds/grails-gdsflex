@@ -18,9 +18,6 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-Ant.property(environment:"env")
-grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
-
-includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsInstallFlexTemplates.groovy")
+includeTargets << new File(gdsflexPluginDir, "scripts/_GrailsInstallFlexTemplates.groovy")
 
 target ('default': "Install Flex templates") { depends(installFlexTemplates) }

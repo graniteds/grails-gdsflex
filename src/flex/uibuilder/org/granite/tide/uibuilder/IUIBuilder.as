@@ -19,29 +19,29 @@
 */
 
 package org.granite.tide.uibuilder {
-	
+
 	/**
-	 * 	Implementations build UI elements from the metadata of an entity
+	 * Implementations build UI elements from the metadata of an entity
 	 */
-    public interface IUIBuilder {
-    	
-    	/**
-    	 * 	Build an array of data grid columns
-    	 * 
-    	 * 	@param className		entity qualified class name
-    	 *  @param metadata			metadata array (from IUIEntityMetataBuilder)
-    	 * 	@param simpleOnly		don't return columns for complex properties (used for xToMany subtables)
-    	 */
-    	function buildListColumns(className:String, metadata:Array, simpleOnly:Boolean = false):Array;
-    	
-    	/**
-    	 * 	Build an array of form item descriptors
-    	 * 
-    	 * 	@param className		entity qualified class name
-    	 *  @param metadata			metadata array (from IUIEntityMetataBuilder)
-    	 * 	@param form				existing Flex form object (used for item overrides)
-    	 *  @param create			is this for an entity creation form
-    	 */
-    	function buildEditForm(className:String, metadata:Array, form:Object, create:Boolean):Array;
-    }
+	public interface IUIBuilder {
+
+		/**
+		 * Build an array of data grid columns
+		 *
+		 * @param className   entity qualified class name
+		 * @param metadata    metadata array (from IUIEntityMetataBuilder)
+		 * @param simpleOnly  don't return columns for complex properties (used for xToMany subtables)
+		 */
+		function buildListColumns(className:String, metadata:Array, simpleOnly:Boolean = false):Array;
+
+		/**
+		 * Build an array of form item descriptors
+		 *
+		 * @param className  entity qualified class name
+		 * @param metadata   metadata array (from IUIEntityMetataBuilder)
+		 * @param form       existing Flex form object (used for item overrides)
+		 * @param create     is this for an entity creation form
+		 */
+		function buildEditForm(className:String, metadata:Array, form:Object, create:Boolean):Array;
+	}
 }

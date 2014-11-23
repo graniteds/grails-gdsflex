@@ -20,15 +20,13 @@
 
 package org.granite.tide.uibuilder.events
 {
-    import flash.events.Event;
-    
-    import org.granite.tide.events.AbstractTideEvent;
-    
-    
-    public class CancelEntityEvent extends AbstractTideEvent {
-        
-        public function CancelEntityEvent():void {
-        	super();
-        }
-    }
+	import flash.events.Event;
+	import org.granite.tide.events.AbstractTideEvent;
+
+	public class CancelEntityEvent extends AbstractTideEvent {
+
+		public function CancelEntityEvent():void {
+			super();
+		}
+	}
 }

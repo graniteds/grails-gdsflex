@@ -28,51 +28,51 @@ import java.lang.reflect.Type;
 
 import org.granite.hibernate4.ProxyFactory;
 
-
 /**
  * @author Franck WOLFF
  */
 public class GrailsProxyFactory extends ProxyFactory {
 
-    public GrailsProxyFactory(String initializerClassName) {
-    	super(initializerClassName);
-    }
+	public GrailsProxyFactory(String initializerClassName) {
+		super(initializerClassName);
+	}
 
-    @Override
-    protected Object[] getIdentifierInfo(Class<?> persistentClass) {
+	@Override
+	protected Object[] getIdentifierInfo(Class<?> persistentClass) {
 
-        Object[] infos = identifierInfos.get(persistentClass);
-        if (infos != null)
-            return infos;
-        
-        Type type = null;
-        Method getter = null;
-        
-        PropertyDescriptor[] propertyDescriptors = null;
-        try {
-            BeanInfo info = Introspector.getBeanInfo(persistentClass);
-            propertyDescriptors = info.getPropertyDescriptors();
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Could not find id in: " + persistentClass, e);
-        }
+		Object[] infos = identifierInfos.get(persistentClass);
+		if (infos != null) {
+			return infos;
+		}
 
-        for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
-            Method method = propertyDescriptor.getReadMethod();
-            if (method != null && "getId".equals(method.getName())) {
-            	getter = method;
-                type = method.getGenericReturnType();
-                break;
-            }
-        }
+		PropertyDescriptor[] propertyDescriptors = null;
+		try {
+			BeanInfo info = Introspector.getBeanInfo(persistentClass);
+			propertyDescriptors = info.getPropertyDescriptors();
+		} catch (Exception e) {
+			throw new IllegalArgumentException("Could not find id in: " + persistentClass, e);
+		}
 
-        if (type != null) {
-        	infos = new Object[] { type, getter };
-            Object[] previousInfos = identifierInfos.putIfAbsent(persistentClass, infos);
-            if (previousInfos != null)
-                infos = previousInfos; // should be the same...
-            return infos;
-        }
-        
-        throw new IllegalArgumentException("Could not find id in: " + persistentClass);
-    }
+		Type type = null;
+		Method getter = null;
+		for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+			Method method = propertyDescriptor.getReadMethod();
+			if (method != null && "getId".equals(method.getName())) {
+				getter = method;
+				type = method.getGenericReturnType();
+				break;
+			}
+		}
+
+		if (type != null) {
+			infos = new Object[] { type, getter };
+			Object[] previousInfos = identifierInfos.putIfAbsent(persistentClass, infos);
+			if (previousInfos != null) {
+				infos = previousInfos; // should be the same...
+			}
+			return infos;
+		}
+
+		throw new IllegalArgumentException("Could not find id in: " + persistentClass);
+	}
 }

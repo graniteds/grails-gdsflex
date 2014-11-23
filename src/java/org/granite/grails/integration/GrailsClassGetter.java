@@ -39,28 +39,28 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
  * @author William Draï
  */
 public class GrailsClassGetter extends DefaultClassGetter {
-	
+
 	private GrailsApplication grailsApplication;
 	private ClassGetter delegate;
-    
 
 	private ClassGetter getDelegate() {
 		if (delegate == null) {
-	        GraniteContext context = GraniteContext.getCurrentInstance();
-	        ServletContext sc = ((HttpGraniteContext)context).getServletContext();
-	        ApplicationContext springContext = WebApplicationContextUtils.getRequiredWebApplicationContext(sc);
-	        
-	        grailsApplication = (GrailsApplication)springContext.getBean("grailsApplication");
-	        GrailsPluginManager manager = (GrailsPluginManager)springContext.getBean("pluginManager");
-	        
-	        if (manager.hasGrailsPlugin("app-engine"))
-	        	delegate = new DataNucleusClassGetter();
-	        else
-	        	delegate = new HibernateClassGetter();
+			GraniteContext context = GraniteContext.getCurrentInstance();
+			ServletContext sc = ((HttpGraniteContext)context).getServletContext();
+			ApplicationContext springContext = WebApplicationContextUtils.getRequiredWebApplicationContext(sc);
+
+			grailsApplication = (GrailsApplication)springContext.getBean("grailsApplication");
+			GrailsPluginManager manager = (GrailsPluginManager)springContext.getBean("pluginManager");
+
+			if (manager.hasGrailsPlugin("app-engine")) {
+				delegate = new DataNucleusClassGetter();
+			}
+			else {
+				delegate = new HibernateClassGetter();
+			}
 		}
 		return delegate;
 	}
-
 
 	@Override
 	public List<Object[]> getFieldValues(Object obj, Object dest) {
@@ -68,13 +68,12 @@ public class GrailsClassGetter extends DefaultClassGetter {
 	}
 
 	@Override
-	public void initialize(Object owner, String propertyName,
-			Object propertyValue) {
+	public void initialize(Object owner, String propertyName, Object propertyValue) {
 		getDelegate().initialize(owner, propertyName, propertyValue);
 	}
 
 	@Override
-    public Class<?> getClass(Object o) {
+	public Class<?> getClass(Object o) {
 		return getDelegate().getClass(o);
 	}
 
@@ -82,9 +81,9 @@ public class GrailsClassGetter extends DefaultClassGetter {
 	public boolean isEntity(Object o) {
 		return grailsApplication.isArtefactOfType("Domain", o.getClass());
 	}
-    
+
 	@Override
-    public boolean isInitialized(Object owner, String propertyName, Object propertyValue) {
+	public boolean isInitialized(Object owner, String propertyName, Object propertyValue) {
 		return getDelegate().isInitialized(owner, propertyName, propertyValue);
 	}
 }

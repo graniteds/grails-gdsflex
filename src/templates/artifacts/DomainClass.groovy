@@ -1,15 +1,15 @@
 @artifact.package@
 
+class @artifact.name@ implements Serializable {
 
-class @artifact.name@ implements java.io.Serializable {
-
-    static constraints = {
-	}
-	
 	String uid
-	
+
+	static constraints = {
+	}
+
 	def beforeValidate() {
-		if (uid == null)
-			uid = java.util.UUID.randomUUID().toString();
+		if (!uid) {
+			uid = UUID.randomUUID()
+		}
 	}
 }

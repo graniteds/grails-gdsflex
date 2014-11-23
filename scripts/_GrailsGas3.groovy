@@ -18,99 +18,94 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-Ant.property(environment:"env")
-grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
-
 tmpPath = System.properties."java.io.tmpdir" + "/gdsflex-tmp"
 
-
 def configureGas3() {
-		
-    GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
-    loader.addURL(new File(classesDirPath).toURI().toURL())
-    Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
-    GroovyObject groovyObject = (GroovyObject)groovyClass.newInstance()
-    
-    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator.jar").toURI().toURL())
-    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-generator-share.jar").toURI().toURL())
-    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/granite-grails-generator.jar").toURI().toURL())
-    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/jdo2-api-2.3-eb.jar").toURI().toURL())
-    rootLoader?.addURL(new File("${gdsflexPluginDir}/scripts/lib/gas3/appengine.jar").toURI().toURL())
-    
-    Ant.taskdef(name: "gas3", classname: "org.granite.generator.ant.AntJavaAs3Task")
-	
-    return groovyObject
-}
 
+	GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
+	loader.addURL(new File(classesDirPath).toURI().toURL())
+	for (name in ['granite-generator', 'granite-generator-share', 'granite-grails-generator', 'jdo2-api-2.3-eb', 'appengine']) {
+		rootLoader?.addURL(new File(gdsflexPluginDir, "scripts/lib/gas3/${name}.jar").toURI().toURL())
+	}
+
+	ant.taskdef(name: "gas3", classname: "org.granite.generator.ant.AntJavaAs3Task")
+	def GraniteConfigUtil = loader.parseClass(new File(gdsflexPluginDir, "src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
+	GraniteConfigUtil
+}
 
 target(gas3: "Gas3") {
-    depends(classpath)
-    
-    Ant.path(id: "gas3.generate.classpath", compileClasspath)
+	depends(classpath)
 
-    GroovyObject groovyObject = configureGas3()
-    
-    def as3Config = groovyObject.getUserConfig()?.as3Config
-    def generateServices = as3Config.generateServices
-    def domainJar = as3Config.domainJar
-    def extraClasses = as3Config.extraClasses
+	ant.path(id: "gas3.generate.classpath", compileClasspath)
+
+	def GraniteConfigUtil = configureGas3()
+
+	def as3Config = GraniteConfigUtil.getUserConfig()?.as3Config
+	def generateServices = as3Config.generateServices
+	def domainJar = as3Config.domainJar
+	def extraClasses = as3Config.extraClasses
 	def excludeClasses = as3Config.excludeClasses
-    def entityBaseTemplate = as3Config.entityBaseTemplate
-    if (entityBaseTemplate == null || "".equals(entityBaseTemplate))
-    	entityBaseTemplate = org.granite.generator.template.StandardTemplateUris.TIDE_ENTITY_BASE
-    
-	Ant.path(id: "gas3.generate.classpath") {
-		path(location: "${classesDirPath}")
-		if (domainJar)
-			pathelement(location: domainJar)
+	def entityBaseTemplate = as3Config.entityBaseTemplate
+	if (!entityBaseTemplate) {
+		entityBaseTemplate = StandardTemplateUris.TIDE_ENTITY_BASE
 	}
-	
-	def domainDir = new File("${basedir}/grails-app/domain")
-	def servicesDir = new File("${basedir}/grails-app/services")
-	
-	domainFiles = []
-	list(domainDir, domainFiles)
-	servicesFiles = []
-	if (generateServices)
-		list(servicesDir, servicesFiles)
-	
-	if (!domainFiles.isEmpty() || !servicesFiles.isEmpty() || domainJar || (extraClasses && !extraClasses.isEmpty())) {
-		def targetDir = as3Config.srcDir ?: "${basedir}/grails-app/views/flex"
-		if (targetDir.endsWith("/"))
-			targetDir = targetDir.substring(0, targetDir.length()-1)
-	
-        File outDir = new File(targetDir)
-        if (!outDir.exists())
-            outDir.mkdirs()
-            
-		Ant.gas3(outputdir: outDir, 
-			tide: "true", 
-			as3TypeFactory: "org.granite.grails.gas3.GrailsAs3TypeFactory",
-        	transformer: "org.granite.grails.gas3.GrailsAs3GroovyTransformer",
-        	entitybasetemplate: "class:org/granite/grails/template/tideDomainClassBase.gsp",
-			
-			classpathref: "gas3.generate.classpath") {
-			fileset(dir: "${classesDirPath}") {
-				for (currentFile in domainFiles)
-					include(name: currentFile.getPath().substring(domainDir.getPath().length()+1).replace(".groovy", ".class"))
-				for (currentFile in servicesFiles)
-					include(name: currentFile.getPath().substring(servicesDir.getPath().length()+1).replace(".groovy", ".class"))
-				for (currentClass in extraClasses)
-					include(name: currentClass.replace('.', '/') + ".class")
-				for (currentClass in excludeClasses)
-					exclude(name: currentClass.replace('.', '/') + ".class")
+
+	ant.path(id: "gas3.generate.classpath") {
+		path(location: "${classesDirPath}")
+		if (domainJar) {
+			pathelement(location: domainJar)
+		}
+	}
+
+	def domainDir = new File(basedir, "grails-app/domain")
+	def servicesDir = new File(basedir, "grails-app/services")
+
+	def domainFiles = list(domainDir)
+	def servicesFiles
+	if (generateServices) {
+		servicesFiles = list(servicesDir)
+	}
+
+	if (domainFiles || servicesFiles || domainJar || extraClasses) {
+		String targetDir = as3Config.srcDir ?: "${basedir}/grails-app/views/flex"
+		if (targetDir.endsWith("/")) {
+			targetDir = targetDir[0..-2]
+		}
+
+		File outDir = new File(targetDir)
+		if (!outDir.exists()) {
+			outDir.mkdirs()
+		}
+
+		ant.gas3(
+			outputdir:           outDir,
+			tide:               "true",
+			as3TypeFactory:     "org.granite.grails.gas3.GrailsAs3TypeFactory",
+			transformer:        "org.granite.grails.gas3.GrailsAs3GroovyTransformer",
+			entitybasetemplate: "class:org/granite/grails/template/tideDomainClassBase.gsp",
+			cla11sspathref:     "gas3.generate.classpath") {
+
+			def toClass = { file, artifactDir -> file.path.substring(artifactDir.path.length() + 1).replace(".groovy", ".class") }
+			def dotsToSlashes = { clazz -> clazz.replace('.', '/') + ".class" }
+			fileset(dir: classesDirPath) {
+				domainFiles.each { currentFile -> include(name: toClass(currentFile, domainDir)) }
+				servicesFiles.each { currentFile -> include(name: toClass(currentFile, servicesDir)) }
+				extraClasses.each { currentClass -> include(name: dotsToSlashes(currentClass)) }
+				excludeClasses.each { currentClass -> exclude(name: dotsToSlashes(currentClass)) }
 			}
-			if (domainJar)
+			if (domainJar) {
 				fileset(file: domainJar)
+			}
 		}
 	}
 }
 
-def list(File dir, List files) {
-	dir.eachFileRecurse {
-		if(it.getPath().endsWith(".groovy")) {
-			files<<it
+private List list(File dir) {
+	def files = []
+	dir.eachFileRecurse { File f ->
+		if (f.name.endsWith(".groovy")) {
+			files << f
 		}
 	}
-	
+	files
 }

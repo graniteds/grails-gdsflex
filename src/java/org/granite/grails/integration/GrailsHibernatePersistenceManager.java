@@ -17,7 +17,6 @@
   You should have received a copy of the GNU Library General Public License
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
-
 package org.granite.grails.integration;
 
 import java.io.Serializable;
@@ -35,28 +34,27 @@ import org.hibernate.Query;
 import org.hibernate.SessionFactory;
 
 /**
- * Responsible for attaching a session with the persistence mangager
- * @author cingram
+ * Attaches a session with the persistence mangager.
  *
+ * @author cingram
  */
 public class GrailsHibernatePersistenceManager extends AbstractTidePersistenceManager {
-	
+
 	private static final Logger log = Logger.getLogger(HibernatePersistenceManager.class);
-	
+
 	private SessionFactory sessionFactory;
-	
-	
+
 	public GrailsHibernatePersistenceManager(TideTransactionManager tm) {
 		super(tm);
 	}
 
 	public GrailsHibernatePersistenceManager(SessionFactory sf, TideTransactionManager tm) {
-		super(tm);
-        this.sessionFactory = sf;
+		this(tm);
+		sessionFactory = sf;
 	}
-	
+
 	/**
-	 * attaches the entity to the JPA context.
+	 * Attaches the entity to the JPA context.
 	 * @return the attached entity
 	 */
 	@Override
@@ -67,27 +65,33 @@ public class GrailsHibernatePersistenceManager extends AbstractTidePersistenceMa
 		try {
 			id = (Serializable)Reflections.invoke(idGetter, entity);
 		}
-		catch (Exception e) {
+		catch (Exception ignored) {
 		}
-		
-        if (id == null)
-            return null;
 
-        if (fetch == null)
-        	return sessionFactory.getCurrentSession().load(entity.getClass(), id);
-        
-        for (String f : fetch) {
-	        Query q = sessionFactory.getCurrentSession().createQuery("select e from " + entity.getClass().getName() + " e left join fetch e." + f + " where e = :entity");
-	        q.setParameter("entity", entity);
-	        List<?> results = q.list();
-	        if (!results.isEmpty())
-	        	entity = results.get(0);
-	        else
-	        	log.warn("Could not find entity %s to initialize, id: %s", entity.getClass().getName(), id);  
-        }
-        return entity;
+		if (id == null) {
+			return null;
+		}
+
+		if (fetch == null) {
+			return sessionFactory.getCurrentSession().load(entity.getClass(), id);
+		}
+
+		for (String f : fetch) {
+			Query q = sessionFactory.getCurrentSession().createQuery(
+					"select e from " + entity.getClass().getName() + " e " +
+					"left join fetch e." + f + " where e = :entity");
+			q.setParameter("entity", entity);
+			List<?> results = q.list();
+			if (!results.isEmpty()) {
+				entity = results.get(0);
+			}
+			else {
+				log.warn("Could not find entity %s to initialize, id: %s", entity.getClass().getName(), id);
+			}
+		}
+		return entity;
 	}
-	
+
 	@Override
 	protected void close() {
 		// TODO: Should probably try to close the delegate ???

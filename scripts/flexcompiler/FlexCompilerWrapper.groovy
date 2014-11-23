@@ -18,39 +18,34 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-import java.io.File
+class FlexCompilerWrapper {
 
+	private static flexCompiler
 
-public class FlexCompilerWrapper {
+	static void init(flexSDK, basedir, pluginDir, sourceDir, modules, appName, loader = Thread.currentThread().contextClassLoader) {
+		if (flexCompiler) {
+			return
+		}
 
-    private static Object flexCompiler
-       
-       
-    static def init(flexSDK, basedir, pluginDir, sourceDir, modules, appName, loader = Thread.currentThread().getContextClassLoader()) {
-    	if (flexCompiler == null) {
-	 		Class compilerClass = loader.loadClass("FlexCompiler")
-	 		java.lang.reflect.Constructor compilerCons = compilerClass.getConstructor(Object.class, Object.class, Object.class, Object.class, Object.class, Object.class)
-	 		flexCompiler = compilerCons.newInstance(flexSDK, basedir, pluginDir, sourceDir, modules, appName)
-	 	}
-    }
-    
-    
-    static def compile(configFile) {
-    	if (!flexCompiler) {
-    		println "ERROR: Flex project not initialized"
-    		return
-    	}
-	    	
-    	flexCompiler.compile(configFile)
-    }
-    
-    static def incrementalCompile(file) {
-    	if (!flexCompiler) {
-    		println "ERROR: Flex project not initialized"
-    		return
-    	}
-	    	
-    	flexCompiler.incrementalCompile(file)
-    }
-        
+		def FlexCompiler = loader.loadClass("FlexCompiler")
+		flexCompiler = FlexCompiler.newInstance(flexSDK, basedir, pluginDir, sourceDir, modules, appName)
+	}
+
+	static compile(configFile) {
+		if (!flexCompiler) {
+			println "ERROR: Flex project not initialized"
+			return
+		}
+
+		flexCompiler.compile(configFile)
+	}
+
+	static incrementalCompile(file) {
+		if (!flexCompiler) {
+			println "ERROR: Flex project not initialized"
+			return
+		}
+
+		flexCompiler.incrementalCompile(file)
+	}
 }

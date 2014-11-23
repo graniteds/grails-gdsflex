@@ -20,15 +20,16 @@
 
 package org.granite.grails.integration;
 
+import groovy.lang.GString;
+
 import java.lang.reflect.Type;
 
 import org.granite.messaging.amf.io.convert.Converter;
 import org.granite.messaging.amf.io.convert.Converters;
 import org.granite.messaging.amf.io.convert.Reverter;
 
-
 public class GrailsGStringConverter extends Converter implements Reverter {
-	
+
 	public GrailsGStringConverter(Converters converters) {
 		super(converters);
 	}
@@ -44,13 +45,10 @@ public class GrailsGStringConverter extends Converter implements Reverter {
 	}
 
 	//@Override
-	public boolean canRevert(Object value) {
-		return value != null && value instanceof groovy.lang.GString;
-	}
+	public boolean canRevert(Object value) { return value instanceof GString; }
 
 	//@Override
 	public Object revert(Object value) {
 		return value != null ? value.toString() : null;
 	}
-
 }

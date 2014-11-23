@@ -18,11 +18,10 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-Ant.property(environment:"env")
-grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
+includeTargets << new File(gdsflexPluginDir, "scripts/_GrailsFlexCompiler.groovy")
 
-includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
+target (mxmlc: "compile the mxml files") {
+	depends(flexCompile)
+}
 
-target ('default': "compile the mxml files") {
-	 depends(flexCompile)
- }
+setDefaultTarget mxmlc

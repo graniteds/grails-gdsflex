@@ -19,34 +19,34 @@
 */
 
 package org.granite.tide.uibuilder {
-	
+
 	/**
-	 * 	Implementations build a metadata array for an entity class
+	 * Implementations build a metadata array for an entity class
 	 */
-    public interface IEntityMetadataBuilder {
-    	
-    	/**
-    	 * 	Build metadata array for the specified entity
-    	 *  The result is a array of objects sorted in display order
-    	 *  Each element contains at least :
-    	 * 		name		: property name
-    	 * 		type		: property class
-    	 * 		kind		: property kind (String)
-    	 *      association : association type (oneToOne, oneToMany, manyToMany)
-    	 * 
-    	 * 	Implementations can add other properties to be used by the UI builder
-    	 * 
-    	 * 	@param entity
-    	 *  @return metadata array
-    	 */ 
-    	function buildMetadata(entity:Object):Array;
-    	
-    	/**
-    	 * 	Returns the property used as a label for the entity class
-    	 * 
-    	 * 	@param entityClass
-    	 *  @return label property
-    	 */ 
-    	function getDisplayLabel(entityClass:Class):String;
-    }
+	public interface IEntityMetadataBuilder {
+
+		/**
+		 * Build metadata array for the specified entity
+		 * The result is a array of objects sorted in display order
+		 * Each element contains at least :
+		 *    name        : property name
+		 *    type        : property class
+		 *    kind        : property kind (String)
+		 *    association : association type (oneToOne, oneToMany, manyToMany)
+		 *
+		 * Implementations can add other properties to be used by the UI builder
+		 *
+		 * @param entity
+		 * @return metadata array
+		 */
+		function buildMetadata(entity:Object):Array;
+
+		/**
+		 * Returns the property used as a label for the entity class
+		 *
+		 * @param entityClass
+		 * @return label property
+		 */
+		function getDisplayLabel(entityClass:Class):String;
+	}
 }

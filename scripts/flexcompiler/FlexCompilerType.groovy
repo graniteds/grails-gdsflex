@@ -18,7 +18,7 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-public enum FlexCompilerType {
+enum FlexCompilerType {
 	application,
 	library
 }
