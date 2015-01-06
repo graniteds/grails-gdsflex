@@ -21,37 +21,35 @@
 package org.granite.tide.uibuilder.util
 {
 	import flash.utils.getQualifiedClassName;
-	
-    
-    public class ReflectionUtil {
-        
-        public static function getUpperCaseEntityName(entity:Object):String {
-	        var entityName:String = getEntityName(entity);
-        	return entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
-        }
-        
-        public static function getEntityName(entity:Object):String {
-        	var className:String = entity is String ? entity as String : getQualifiedClassName(entity);
-        	var entityName:String;
-        	if (className.indexOf("::") > 0) {
-        		entityName = className.substring(className.lastIndexOf("::")+2);
-        		entityName = entityName.substring(0, 1).toLowerCase() + entityName.substring(1);
-        	}
-        	else
-        		entityName = className.substring(0, 1).toLowerCase() + className.substring(1);
-        	return entityName;
-        }
-        
-        public static function getQualifiedEntityName(entity:Object):String {
-        	var className:String = entity is String ? entity as String : getQualifiedClassName(entity);
-        	var entityName:String = getEntityName(className);
-        	var qualifiedEntityName:String;
-        	if (className.indexOf("::") > 0)
-        		qualifiedEntityName = className.substring(0, className.lastIndexOf("::")) + "." + entityName;
-        	else
-        		qualifiedEntityName = entityName;
-        	return qualifiedEntityName;
-        }
-        
-    }
+
+	public class ReflectionUtil {
+
+		public static function getUpperCaseEntityName(entity:Object):String {
+			var entityName:String = getEntityName(entity);
+			return entityName.substring(0, 1).toUpperCase() + entityName.substring(1);
+		}
+
+		public static function getEntityName(entity:Object):String {
+			var className:String = entity is String ? entity as String : getQualifiedClassName(entity);
+			var entityName:String;
+			if (className.indexOf("::") > 0) {
+				entityName = className.substring(className.lastIndexOf("::")+2);
+				entityName = entityName.substring(0, 1).toLowerCase() + entityName.substring(1);
+			}
+			else
+				entityName = className.substring(0, 1).toLowerCase() + className.substring(1);
+			return entityName;
+		}
+
+		public static function getQualifiedEntityName(entity:Object):String {
+			var className:String = entity is String ? entity as String : getQualifiedClassName(entity);
+			var entityName:String = getEntityName(className);
+			var qualifiedEntityName:String;
+			if (className.indexOf("::") > 0)
+				qualifiedEntityName = className.substring(0, className.lastIndexOf("::")) + "." + entityName;
+			else
+				qualifiedEntityName = entityName;
+			return qualifiedEntityName;
+		}
+	}
 }

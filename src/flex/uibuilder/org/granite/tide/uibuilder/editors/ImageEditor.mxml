@@ -21,96 +21,93 @@
 -->
 
 <mx:HBox
-    xmlns:mx="http://www.adobe.com/2006/mxml"
-    xmlns="*">
-	
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns="*">
+
 	<mx:Script>
-        <![CDATA[
-        	import flash.events.Event;
-        	import flash.utils.getQualifiedClassName;
-        	import flash.net.FileReference;
-        	import mx.utils.Base64Decoder;
-        	import mx.controls.Alert;
-        	import mx.controls.Image;
-        	import org.granite.tide.events.TideResultEvent;
-        	import org.granite.tide.Component;
-        	import org.granite.tide.BaseContext;
-        	import org.granite.tide.uibuilder.util.ReflectionUtil;
-        	
-        	
+		<![CDATA[
+			import flash.events.Event;
+			import flash.utils.getQualifiedClassName;
+			import flash.net.FileReference;
+			import mx.utils.Base64Decoder;
+			import mx.controls.Alert;
+			import mx.controls.Image;
+			import org.granite.tide.events.TideResultEvent;
+			import org.granite.tide.Component;
+			import org.granite.tide.BaseContext;
+			import org.granite.tide.uibuilder.util.ReflectionUtil;
+
 			[Bindable]
 			private var _entity:Object;
-			
+
 			public function set entity(entity:Object):void {
 				_entity = entity;
 				dispatchEvent(new Event("imageChange"));
 			}
-			
+
 			[Bindable]
 			public var propertyName:String;
-			
+
 			[Bindable]
 			public var fileRef:FileReference;
-			
+
 			[Bindable]
 			public var byteArray:ByteArray;
-			
-            
-            private function uploadImage():void {
-            	fileRef = new FileReference();
-            	fileRef.addEventListener(Event.SELECT, selectImage, false, 0, true);
-            	fileRef.browse();
-            }
-            
-            private function selectImage(event:Event):void {
-            	fileRef.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, uploadCompleteHandler);
-            	fileRef.addEventListener(ProgressEvent.PROGRESS, uploadProgressHandler);
-            	fileRef.upload(new URLRequest("./" + ReflectionUtil.getEntityName(_entity) + "/upload?id=" + _entity.id + "&property=" + propertyName), propertyName);
-            }          
-            
-            private function uploadProgressHandler(event:ProgressEvent):void {
-            	upload.label = "Upload image (" + (event.bytesLoaded*100.0/event.bytesTotal) + "%)";
-            }
-            
-            private function uploadCompleteHandler(event:DataEvent):void {
-            	completeHandler(event.data);
-            	upload.label = "Upload image";
-            }
-                        
-            private function deleteImage():void {
-            	var req:URLRequest = new URLRequest("./" + ReflectionUtil.getEntityName(_entity) + "/upload?id=" + _entity.id + "&property=" + propertyName);
-            	var loader:URLLoader = new URLLoader(req);
-            	loader.addEventListener(Event.COMPLETE, deleteCompleteHandler);
-            }
-            
-            private function deleteCompleteHandler(event:Event):void {
-            	completeHandler(event.target.data);
-            }
-            
-            private function completeHandler(data:String):void {
-            	var buf:Base64Decoder = new Base64Decoder();
-            	buf.decode(data);
-            	var obj:Object = buf.toByteArray().readObject();
-            	_entity.meta_getEntityManager().meta_mergeExternal(obj, _entity);
-            	_entity.meta_getEntityManager().meta_mergeInGlobalContext();
-            	if (_entity[propertyName] is ByteArray)
-            		byteArray = _entity[propertyName] as ByteArray;
-            	image.source = null;
-            	dispatchEvent(new Event("imageChange"));        	
-            }
-            
-            
-            [Bindable(event="imageChange")]
-            private function getImageSource(entity:Object, propertyName:String):Object {
-            	if (entity == null || entity[propertyName] == null)
-            		return null;
-            	return "./" + ReflectionUtil.getEntityName(entity) + "/download?id=" + entity.id + "&property=" + propertyName;
-            }
-      	]]>
+
+			private function uploadImage():void {
+				fileRef = new FileReference();
+				fileRef.addEventListener(Event.SELECT, selectImage, false, 0, true);
+				fileRef.browse();
+			}
+
+			private function selectImage(event:Event):void {
+				fileRef.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, uploadCompleteHandler);
+				fileRef.addEventListener(ProgressEvent.PROGRESS, uploadProgressHandler);
+				fileRef.upload(new URLRequest("./" + ReflectionUtil.getEntityName(_entity) + "/upload?id=" + _entity.id + "&property=" + propertyName), propertyName);
+			}
+
+			private function uploadProgressHandler(event:ProgressEvent):void {
+				upload.label = "Upload image (" + (event.bytesLoaded*100.0/event.bytesTotal) + "%)";
+			}
+
+			private function uploadCompleteHandler(event:DataEvent):void {
+				completeHandler(event.data);
+				upload.label = "Upload image";
+			}
+
+			private function deleteImage():void {
+				var req:URLRequest = new URLRequest("./" + ReflectionUtil.getEntityName(_entity) + "/upload?id=" + _entity.id + "&property=" + propertyName);
+				var loader:URLLoader = new URLLoader(req);
+				loader.addEventListener(Event.COMPLETE, deleteCompleteHandler);
+			}
+
+			private function deleteCompleteHandler(event:Event):void {
+				completeHandler(event.target.data);
+			}
+
+			private function completeHandler(data:String):void {
+				var buf:Base64Decoder = new Base64Decoder();
+				buf.decode(data);
+				var obj:Object = buf.toByteArray().readObject();
+				_entity.meta_getEntityManager().meta_mergeExternal(obj, _entity);
+				_entity.meta_getEntityManager().meta_mergeInGlobalContext();
+				if (_entity[propertyName] is ByteArray)
+					byteArray = _entity[propertyName] as ByteArray;
+				image.source = null;
+				dispatchEvent(new Event("imageChange"));
+			}
+
+			[Bindable(event="imageChange")]
+			private function getImageSource(entity:Object, propertyName:String):Object {
+				if (entity == null || entity[propertyName] == null)
+					return null;
+				return "./" + ReflectionUtil.getEntityName(entity) + "/download?id=" + entity.id + "&property=" + propertyName;
+			}
+		]]>
 	</mx:Script>
-	
+
 	<mx:Image id="image" source="{getImageSource(_entity, propertyName)}"/>
-	
+
 	<mx:VBox>
 		<mx:Button id="upload" label="Upload image" click="uploadImage()"/>
 		<mx:Button id="remove" label="Delete image" click="deleteImage()"

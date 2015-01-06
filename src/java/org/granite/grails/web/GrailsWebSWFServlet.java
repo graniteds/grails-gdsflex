@@ -20,7 +20,7 @@
 
 package org.granite.grails.web;
 
-import grails.util.GrailsUtil;
+import grails.util.Environment;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,150 +35,146 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.codehaus.groovy.grails.commons.GrailsApplication;
+import org.apache.commons.io.IOUtils;
+import org.codehaus.groovy.grails.io.support.GrailsResourceUtils;
 import org.codehaus.groovy.grails.web.pages.GroovyPageResourceLoader;
 import org.codehaus.groovy.grails.web.servlet.DefaultGrailsApplicationAttributes;
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes;
-import org.codehaus.groovy.grails.io.support.GrailsResourceUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.context.support.ServletContextResourceLoader;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
-
 public class GrailsWebSWFServlet extends HttpServlet {
-    
-    private static final long serialVersionUID = 1L;
 
+	private static final long serialVersionUID = 1;
 
-    protected ResourceLoader resourceLoader = null;
-    protected ResourceLoader servletContextLoader = null;
-    
-    protected GrailsApplicationAttributes grailsAttributes;
-    
-    
-    @Override
-    public void init(ServletConfig servletConfig) throws ServletException {
-        this.servletContextLoader = new ServletContextResourceLoader(servletConfig.getServletContext());
-        ApplicationContext springContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletConfig.getServletContext());
-		if (springContext.containsBean(GroovyPageResourceLoader.BEAN_ID))
-			this.resourceLoader = (ResourceLoader)springContext.getBean(GroovyPageResourceLoader.BEAN_ID);
-		
-        this.grailsAttributes = new DefaultGrailsApplicationAttributes(servletConfig.getServletContext());
-    }
+	protected ResourceLoader resourceLoader;
+	protected ResourceLoader servletContextLoader;
+	protected GrailsApplicationAttributes grailsAttributes;
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        doPost(request, response);
-    }
+	@Override
+	public void init(ServletConfig servletConfig) throws ServletException {
+		servletContextLoader = new ServletContextResourceLoader(servletConfig.getServletContext());
+		ApplicationContext springContext = WebApplicationContextUtils.getRequiredWebApplicationContext(servletConfig.getServletContext());
+		if (springContext.containsBean(GroovyPageResourceLoader.BEAN_ID)) {
+			resourceLoader = (ResourceLoader)springContext.getBean(GroovyPageResourceLoader.BEAN_ID);
+		}
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {        
+		grailsAttributes = new DefaultGrailsApplicationAttributes(servletConfig.getServletContext());
+	}
 
-        request.setAttribute(GrailsApplicationAttributes.REQUEST_SCOPE_ID, grailsAttributes);
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		doPost(request, response);
+	}
 
-        // Get the name of the Groovy script (intern the name so that we can
-        // lock on it)
-        String pageName = "/swf"+request.getServletPath();        
-        Resource requestedFile = getResourceForUri(pageName);
-        File swfFile = requestedFile.getFile();
-        if (requestedFile == null || swfFile==null || !swfFile.exists()) {
-            response.sendError(404, "\"" + pageName + "\" not found.");
-            return;
-        }
-        response.setContentType("application/x-shockwave-flash");
-        response.setContentLength((int)swfFile.length());
-        response.setBufferSize((int)swfFile.length());
-        response.setDateHeader("Expires", 0);
-        
-        FileInputStream is = null;
-        FileChannel inChan = null;
-        try {
-            is = new FileInputStream(swfFile);
-            OutputStream os = response.getOutputStream();
-            inChan = is.getChannel();
-            long fSize =  inChan.size();
-            MappedByteBuffer mBuf = inChan.map(FileChannel.MapMode.READ_ONLY, 0,fSize);
-            byte[] buf = new byte[(int)fSize];
-            mBuf.get(buf);
-            os.write(buf);
-        } finally {
-            if (is != null)  {
-                is.close();
-            } 
-            if (inChan != null) {
-                inChan.close();
-            }
-        }
-    }
+	@Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-    /**
-     * Attempts to retrieve a reference to a GSP as a Spring Resource instance for the given URI.
-     *
-     * @param uri The URI to check
-     * @return A Resource instance
-     */
-    public Resource getResourceForUri(String uri) {
-        Resource r = getResourceWithinContext(uri);
-        if (r != null && r.exists())
-            return r;
-        
-        // try plugin
-        String pluginUri = GrailsResourceUtils.WEB_INF + uri;
-        r = getResourceWithinContext(pluginUri);
-        if (r != null && r.exists())
-            return r;
-        
-        uri = getUriWithinGrailsViews(uri);
-        return getResourceWithinContext(uri);
-    }
+		request.setAttribute(GrailsApplicationAttributes.REQUEST_SCOPE_ID, grailsAttributes);
 
-    private Resource getResourceWithinContext(String uri) {
-        Resource r = servletContextLoader.getResource(uri);
-        if (r.exists()) 
-            return r;
-        return resourceLoader != null ? resourceLoader.getResource(uri) : null;
-    }
-    
-    /**
-     * Returns the path to the view of the relative URI within the Grails views directory
-     *
-     * @param relativeUri The relative URI
-     * @return The path of the URI within the Grails view directory
-     */
-    @SuppressWarnings("deprecation")
+		// Get the name of the Groovy script (intern the name so that we can lock on it)
+		String pageName = "/swf" + request.getServletPath();
+		Resource requestedFile = getResourceForUri(pageName);
+		File swfFile = requestedFile.getFile();
+		if (swfFile == null || !swfFile.exists()) {
+			response.sendError(404, "\"" + pageName + "\" not found.");
+			return;
+		}
+		response.setContentType("application/x-shockwave-flash");
+		response.setContentLength((int)swfFile.length());
+		response.setBufferSize((int)swfFile.length());
+		response.setDateHeader("Expires", 0);
+
+		FileInputStream is = null;
+		FileChannel inChan = null;
+		try {
+			is = new FileInputStream(swfFile);
+			OutputStream os = response.getOutputStream();
+			inChan = is.getChannel();
+			long fSize =  inChan.size();
+			MappedByteBuffer mBuf = inChan.map(FileChannel.MapMode.READ_ONLY, 0, fSize);
+			byte[] buf = new byte[(int)fSize];
+			mBuf.get(buf);
+			os.write(buf);
+		} finally {
+			if (is != null)  {
+				IOUtils.closeQuietly(is);
+			}
+			if (inChan != null) {
+				try { inChan.close(); }
+				catch (IOException ignored) {}
+			}
+		}
+	}
+
+	/**
+	 * Attempts to retrieve a reference to a GSP as a Spring Resource instance for the given URI.
+	 *
+	 * @param uri The URI to check
+	 * @return A Resource instance
+	 */
+	public Resource getResourceForUri(String uri) {
+		Resource r = getResourceWithinContext(uri);
+		if (r != null && r.exists()) {
+			return r;
+		}
+
+		// try plugin
+		String pluginUri = GrailsResourceUtils.WEB_INF + uri;
+		r = getResourceWithinContext(pluginUri);
+		if (r != null && r.exists()) {
+			return r;
+		}
+
+		uri = getUriWithinGrailsViews(uri);
+		return getResourceWithinContext(uri);
+	}
+
+	private Resource getResourceWithinContext(String uri) {
+		Resource r = servletContextLoader.getResource(uri);
+		if (r.exists()) {
+			return r;
+		}
+		return resourceLoader != null ? resourceLoader.getResource(uri) : null;
+	}
+
+	/**
+	 * Returns the path to the view of the relative URI within the Grails views directory
+	 *
+	 * @param relativeUri The relative URI
+	 * @return The path of the URI within the Grails view directory
+	 */
 	protected String getUriWithinGrailsViews(String relativeUri) {
-        StringBuilder buf = new StringBuilder();
-        String[] tokens;
-        if (relativeUri.startsWith("/"))
-            relativeUri = relativeUri.substring(1);
+		StringBuilder buf = new StringBuilder();
+		String[] tokens;
+		if (relativeUri.startsWith("/")) {
+			relativeUri = relativeUri.substring(1);
+		}
 
-        if (relativeUri.indexOf('/') >= 0)
-            tokens = relativeUri.split("/");
-        else
-            tokens = new String[] { relativeUri };
-        
-        String pathToViews = GrailsApplicationAttributes.PATH_TO_VIEWS;
-        
-        int idx = GrailsUtil.getGrailsVersion().indexOf(".");
-        int majorGrailsVersion = Integer.parseInt(GrailsUtil.getGrailsVersion().substring(0, idx));
-        
-        if (GrailsUtil.getEnvironment().equals(GrailsApplication.ENV_DEVELOPMENT) 
-        		&& majorGrailsVersion >= 2 && pathToViews.startsWith("/WEB-INF"))
-        	pathToViews = pathToViews.substring("/WEB-INF".length());
-        
-        buf.append(pathToViews);
-        for (int i = 0; i < tokens.length; i++) {
-            String token = tokens[i];
-            buf.append('/').append(token);
-        }
-        
-        return buf.toString();
-    }
+		if (relativeUri.indexOf('/') >= 0) {
+			tokens = relativeUri.split("/");
+		}
+		else {
+			tokens = new String[] { relativeUri };
+		}
 
+		String pathToViews = GrailsApplicationAttributes.PATH_TO_VIEWS;
+		if (Environment.isDevelopmentMode() && pathToViews.startsWith("/WEB-INF")) {
+			pathToViews = pathToViews.substring("/WEB-INF".length());
+		}
 
-   @Override
-    public void destroy() {
-    }
+		buf.append(pathToViews);
+		for (int i = 0; i < tokens.length; i++) {
+			buf.append('/').append(tokens[i]);
+		}
+
+		return buf.toString();
+	}
+
+	@Override
+	public void destroy() {
+	}
 }

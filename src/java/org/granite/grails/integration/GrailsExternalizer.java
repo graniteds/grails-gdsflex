@@ -27,6 +27,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -45,98 +46,99 @@ import org.springframework.context.ApplicationContextAware;
  * @author William Draï
  */
 public class GrailsExternalizer extends DefaultExternalizer implements ApplicationContextAware {
-	
+
 	private GrailsApplication grailsApplication;
 	private Externalizer delegate;
 	private EnumExternalizer enumExternalizer;
 
 	public static final Set<String> EVENTS = new HashSet<String>();
 	static {
-		EVENTS.add("onLoad");
-		EVENTS.add("onSave"); 
-		EVENTS.add("beforeLoad");
-		EVENTS.add("beforeInsert");
-		EVENTS.add("afterInsert");
-		EVENTS.add("beforeUpdate");
-		EVENTS.add("afterUpdate");
-		EVENTS.add("beforeDelete");
-		EVENTS.add("afterDelete");
-		EVENTS.add("afterLoad");
+		for (String name : Arrays.asList("onLoad", "onSave", "beforeLoad", "beforeInsert", "afterInsert",
+				"beforeUpdate", "afterUpdate", "beforeDelete", "afterDelete", "afterLoad")) {
+			EVENTS.add(name);
+		}
 	};
-	
+
 	public static final String ERRORS = "org.springframework.validation.Errors";
-    
-	
-    public void setApplicationContext(ApplicationContext springContext) {
-    	grailsApplication = (GrailsApplication)springContext.getBean("grailsApplication");
-        GrailsPluginManager manager = (GrailsPluginManager)springContext.getBean("pluginManager");
-        if (manager.hasGrailsPlugin("app-engine"))
-        	delegate = new GrailsDataNucleusExternalizer(grailsApplication);
-        else
-        	delegate = new GrailsHibernateExternalizer(grailsApplication);
-        
-    	enumExternalizer = new EnumExternalizer();
-    }
-    
-    
-    @Override
-    public void configure(XMap properties) {
-    	super.configure(properties);
-    	
-    	enumExternalizer.configure(properties);
-    	if (delegate != null)
-    		delegate.configure(properties);
-    }
-    
+
+	public void setApplicationContext(ApplicationContext springContext) {
+		grailsApplication = (GrailsApplication)springContext.getBean("grailsApplication");
+		GrailsPluginManager manager = (GrailsPluginManager)springContext.getBean("pluginManager");
+		if (manager.hasGrailsPlugin("app-engine")) {
+			delegate = new GrailsDataNucleusExternalizer(grailsApplication);
+		}
+		else {
+			delegate = new GrailsHibernateExternalizer(grailsApplication);
+		}
+
+		enumExternalizer = new EnumExternalizer();
+	}
 
 	@Override
-    public Object newInstance(String type, ObjectInput in)
-        throws IOException, ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException {
+	public void configure(XMap properties) {
+		super.configure(properties);
 
-        Class<?> clazz = TypeUtil.forName(type);
-        if (Enum.class.isAssignableFrom(clazz))
-        	return enumExternalizer.newInstance(type, in);
-        
+		enumExternalizer.configure(properties);
+		if (delegate != null) {
+			delegate.configure(properties);
+		}
+	}
+
+	@Override
+	public Object newInstance(String type, ObjectInput in)
+		throws IOException, ClassNotFoundException, InstantiationException, InvocationTargetException, IllegalAccessException {
+
+		Class<?> clazz = TypeUtil.forName(type);
+		if (Enum.class.isAssignableFrom(clazz)) {
+			return enumExternalizer.newInstance(type, in);
+		}
+
 		return delegate.newInstance(type, in);
-    }
+	}
 
-    @Override
-    public void readExternal(Object o, ObjectInput in) throws IOException, ClassNotFoundException, IllegalAccessException {
-    	if (o instanceof Enum)
-    		enumExternalizer.readExternal(o, in);
-    	else
-    		delegate.readExternal(o, in);
-    }
+	@Override
+	public void readExternal(Object o, ObjectInput in) throws IOException, ClassNotFoundException, IllegalAccessException {
+		if (o instanceof Enum) {
+			enumExternalizer.readExternal(o, in);
+		}
+		else {
+			delegate.readExternal(o, in);
+		}
+	}
 
-    @Override
-    public void writeExternal(Object o, ObjectOutput out) throws IOException, IllegalAccessException {
-    	if (o instanceof Enum)
-    		enumExternalizer.writeExternal(o, out);
-    	else if (!Closure.class.isAssignableFrom(o.getClass()))
-    		delegate.writeExternal(o, out);
-    }
+	@Override
+	public void writeExternal(Object o, ObjectOutput out) throws IOException, IllegalAccessException {
+		if (o instanceof Enum) {
+			enumExternalizer.writeExternal(o, out);
+		}
+		else if (!Closure.class.isAssignableFrom(o.getClass())) {
+			delegate.writeExternal(o, out);
+		}
+	}
 
-    @Override
-    public int accept(Class<?> clazz) {
-    	if (grailsApplication.isArtefactOfType("Domain", clazz) || "org.hibernate.proxy.HibernateProxy".equals(clazz.getName()))
-    		return 100;
-        return -1;
-    }
-    
-    public static boolean isIgnored(Field field) {
-    	if (EVENTS.contains(field.getName()))
-    		return true;
-    	if (field.getName().equals("errors") && field.getType().getName().equals(ERRORS))
-    		return true;
-    	return false;
-    }
-    
-    public static boolean isIgnored(PropertyDescriptor property) {
-    	if (EVENTS.contains(property.getName()))
-    		return true;
-    	if (property.getName().equals("errors") && property.getPropertyType() != null && 
-    			property.getPropertyType().getName().equals(ERRORS))
-    		return true;
-    	return false;
-    }
+	@Override
+	public int accept(Class<?> clazz) {
+		if (grailsApplication.isArtefactOfType("Domain", clazz) || "org.hibernate.proxy.HibernateProxy".equals(clazz.getName())) {
+			return 100;
+		}
+		return -1;
+	}
+
+	public static boolean isIgnored(Field field) {
+		if (EVENTS.contains(field.getName())) {
+			return true;
+		}
+		if (field.getName().equals("errors") && field.getType().getName().equals(ERRORS)) {
+			return true;
+		}
+		return false;
+	}
+
+	public static boolean isIgnored(PropertyDescriptor property) {
+		if (EVENTS.contains(property.getName())) {
+			return true;
+		}
+		return property.getName().equals("errors") && property.getPropertyType() != null &&
+				property.getPropertyType().getName().equals(ERRORS);
+	}
 }

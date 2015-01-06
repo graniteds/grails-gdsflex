@@ -18,23 +18,18 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-Ant.property(environment:"env")
-grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
-
-
-target ('installFlexTemplates': "install Flex templates") {
+target(installFlexTemplates: "install Flex templates") {
 	ant.mkdir(dir:"${basedir}/src/templates/artifacts")
 	ant.copy(todir:"${basedir}/src/templates/artifacts", overwrite:"yes") {
 		fileset(dir:"${gdsflexPluginDir}/src/templates/artifacts")
 	}
-	
+
 	ant.mkdir(dir:"${basedir}/src/templates/scaffolding")
 	ant.copy(todir:"${basedir}/src/templates/scaffolding", overwrite:"yes") {
 		fileset(dir:"${gdsflexPluginDir}/src/templates/scaffolding")
 	}
-	
+
 	ant.copy(todir:"${basedir}/grails-app/views/flex", overwrite: "true") {
 		fileset(dir:"${gdsflexPluginDir}/src/flex/uibuilder")
 	}
-		
 }

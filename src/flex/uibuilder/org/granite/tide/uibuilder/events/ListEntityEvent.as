@@ -20,19 +20,17 @@
 
 package org.granite.tide.uibuilder.events
 {
-    import flash.events.Event;
-    
-    import org.granite.tide.events.AbstractTideEvent;
-    
-    
-    public class ListEntityEvent extends AbstractTideEvent {
-        
-        public function ListEntityEvent():void {
-        	super();
-        }
-        
-        public override function clone():Event {
-        	return new ListEntityEvent();
-        }
-    }
+	import flash.events.Event;
+	import org.granite.tide.events.AbstractTideEvent;
+
+	public class ListEntityEvent extends AbstractTideEvent {
+
+		public function ListEntityEvent():void {
+			super();
+		}
+
+		public override function clone():Event {
+			return new ListEntityEvent();
+		}
+	}
 }

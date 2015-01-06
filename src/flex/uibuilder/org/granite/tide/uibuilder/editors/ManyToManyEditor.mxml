@@ -21,125 +21,125 @@
 -->
 
 <mx:HBox
-    xmlns:mx="http://www.adobe.com/2006/mxml"
-    xmlns="*"
-    width="100%"
-    creationComplete="buildColumns()">
-	
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns="*"
+	width="100%"
+	creationComplete="buildColumns()">
+
 	<mx:Script>
-        <![CDATA[
-        	import flash.utils.getQualifiedClassName;
-        	import mx.collections.ArrayCollection;
-        	import mx.core.IUIComponent;
-        	import mx.managers.DragManager;
-        	import mx.events.DragEvent;
-        	import mx.controls.dataGridClasses.DataGridColumn;
-        	import mx.collections.ListCollectionView;
-        	import org.granite.tide.BaseContext;
-        	import org.granite.tide.Component;
-        	import org.granite.tide.events.TideResultEvent;
-        	import org.granite.tide.uibuilder.IUIBuilder;
-        	import org.granite.tide.uibuilder.IEntityMetadataBuilder;
-        	import org.granite.tide.uibuilder.util.ReflectionUtil;
-        	
-        	
-            private function removeItem():void {
-                collection.removeItemAt(elementGrid.selectedIndex);
-            }
-			
+		<![CDATA[
+			import flash.utils.getQualifiedClassName;
+			import mx.collections.ArrayCollection;
+			import mx.core.IUIComponent;
+			import mx.managers.DragManager;
+			import mx.events.DragEvent;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.collections.ListCollectionView;
+			import org.granite.tide.BaseContext;
+			import org.granite.tide.Component;
+			import org.granite.tide.events.TideResultEvent;
+			import org.granite.tide.uibuilder.IUIBuilder;
+			import org.granite.tide.uibuilder.IEntityMetadataBuilder;
+			import org.granite.tide.uibuilder.util.ReflectionUtil;
+
+			private function removeItem():void {
+				collection.removeItemAt(elementGrid.selectedIndex);
+			}
+
 			private function get context():BaseContext {
 				return entity.meta_getEntityManager() as BaseContext;
 			}
-			
+
 			[Bindable]
 			public var entity:Object;
-			
+
 			[Bindable]
 			public var collection:ListCollectionView;
-			
+
 			public var _elementClass:Class;
 			private var _elementName:String;
 			private var _qualifiedElementName:String;
 			private var _elementLabel:String;
-			
-			
-            public function set elementClass(elementClass:Class):void {
-            	_elementClass = elementClass;
+
+			public function set elementClass(elementClass:Class):void {
+				_elementClass = elementClass;
 				var elementClassName:String = getQualifiedClassName(_elementClass);
-            	_elementName = ReflectionUtil.getEntityName(elementClassName);
-            	_qualifiedElementName = ReflectionUtil.getQualifiedEntityName(elementClassName);
+				_elementName = ReflectionUtil.getEntityName(elementClassName);
+				_qualifiedElementName = ReflectionUtil.getQualifiedEntityName(elementClassName);
 			}
-			
+
 			private function elementLabel(element:Object):String {
 				return element[_elementLabel];
 			}
-			
+
 			[Bindable]
 			public var editable:Boolean = true;
-			
+
 			private function get controller():Component {
 				return context[_qualifiedElementName + 'Controller'];
 			}
-			
-			
+
 			[Bindable]
 			private var _columns:Array = null;
-			
+
 			private function buildColumns():void {
 				var elementClassName:String = getQualifiedClassName(_elementClass);
-				
+
 				var metadata:Array = IEntityMetadataBuilder(context.tideEntityMetadataBuilder).buildMetadata(_elementClass);
 				_columns = IUIBuilder(context.tideUIBuilder).buildListColumns(elementClassName, metadata, true);
-				
+
 				_elementName = ReflectionUtil.getEntityName(elementClassName);
 				_qualifiedElementName = ReflectionUtil.getQualifiedEntityName(elementClassName);
-				if (editable)
+				if (editable) {
 					controller.list(context, {offset: 0, max: 100, order: _elementLabel, desc: false}, listResult);
+				}
 			}
-			
+
 			private function listResult(event:TideResultEvent):void {
-            	existingElements.labelField = context.tideEntityMetadataBuilder.getDisplayLabel(_elementClass);            	
+				existingElements.labelField = context.tideEntityMetadataBuilder.getDisplayLabel(_elementClass);
 				existingElements.dataProvider = context[_elementName + 'InstanceList'];
 			}
-            
-            
-        	private function dragEnterHandler(event:DragEvent):void {
-        		var data:Object = event.dragSource.dataForFormat('items');
-	            if (data[0] && (collection == null || collection.getItemIndex(data[0]) < 0)) {
-	                DragManager.acceptDragDrop(event.currentTarget as IUIComponent);
-	                DragManager.showFeedback(DragManager.COPY);
-	            }
-	        }
-        	
-            private function dragDropHandler(event:DragEvent):void {
-        		var data:Object = event.dragSource.dataForFormat('items');
-        		if (collection == null)
-        			collection = new ArrayCollection();
-            	collection.addItem(data[0]);
-            }
-            
-            private function dragOverHandler(event:DragEvent):void {
-                event.preventDefault();
-                
-                event.currentTarget.showDropFeedback(event);
-            
-                if (event.dragSource.hasFormat("items"))
-                    DragManager.showFeedback(DragManager.COPY);
-				else
-	                DragManager.showFeedback(DragManager.NONE);                
-            }
-      	]]>
+
+			private function dragEnterHandler(event:DragEvent):void {
+				var data:Object = event.dragSource.dataForFormat('items');
+				if (data[0] && (collection == null || collection.getItemIndex(data[0]) < 0)) {
+					DragManager.acceptDragDrop(event.currentTarget as IUIComponent);
+					DragManager.showFeedback(DragManager.COPY);
+				}
+			}
+
+			private function dragDropHandler(event:DragEvent):void {
+				var data:Object = event.dragSource.dataForFormat('items');
+				if (collection == null) {
+					collection = new ArrayCollection();
+				}
+				collection.addItem(data[0]);
+			}
+
+			private function dragOverHandler(event:DragEvent):void {
+				event.preventDefault();
+
+				event.currentTarget.showDropFeedback(event);
+
+				if (event.dragSource.hasFormat("items")) {
+					DragManager.showFeedback(DragManager.COPY);
+				}
+				else {
+					DragManager.showFeedback(DragManager.NONE);
+				}
+			}
+		]]>
 	</mx:Script>
 
-	<mx:DataGrid id="elementGrid" dataProvider="{collection}" columns="{_columns}" width="50%"		
-    	dragOver="dragOverHandler(event)"
-    	dragEnter="dragEnterHandler(event)"
-    	dragDrop="dragDropHandler(event)">
+	<mx:DataGrid id="elementGrid" dataProvider="{collection}" columns="{_columns}" width="50%"
+		dragOver="dragOverHandler(event)"
+		dragEnter="dragEnterHandler(event)"
+		dragDrop="dragDropHandler(event)">
 	</mx:DataGrid>
 
 	<mx:Button label="Remove" visible="{editable}"
 		enabled="{Boolean(elementGrid.selectedItem)}"
 		click="removeItem()"/>
-	
+
 	<mx:List id="existingElements" dragEnabled="true" width="50%" visible="{editable}"/>
 </mx:HBox>

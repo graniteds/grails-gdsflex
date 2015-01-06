@@ -18,10 +18,11 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-Ant.property(environment:"env")
-grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
-
 includeTargets << grailsScript("_GrailsPackage")
-includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
+includeTargets << new File(gdsflexPluginDir, "scripts/_GrailsGas3.groovy")
 
-target ('default': "Gas3") { depends(packageApp) }
+target(gas3: "Gas3") {
+	depends(packageApp)
+}
+
+setDefaultTarget gas3

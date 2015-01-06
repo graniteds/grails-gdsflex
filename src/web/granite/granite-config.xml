@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!DOCTYPE granite-config PUBLIC "-//Granite Data Services//DTD granite-config internal//EN"
-    "http://www.graniteds.org/public/dtd/2.0.0/granite-config.dtd">
+	"http://www.graniteds.org/public/dtd/2.0.0/granite-config.dtd">
 
 <!--
   GRANITE DATA SERVICES
@@ -24,35 +24,33 @@
 -->
 
 <granite-config>
-	
-    <converters>
+
+	<converters>
 		<converter type="org.granite.messaging.amf.io.convert.impl.GAEKeyConverter"/>
 		<converter type="org.granite.grails.integration.GrailsGStringConverter"/>
 		<converter type="org.granite.grails.integration.GrailsBinaryConverter"/>
 	</converters>
 
-    <class-getter type="org.granite.grails.integration.GrailsClassGetter"/>
-    
-    <externalizers>
-    	<configuration>
-    		<dynamic-class>true</dynamic-class>
-    	</configuration>
-    </externalizers>
-    
-    <descriptors>
-    	<descriptor instance-of="groovy.lang.GroovyObject" 
-    		java="org.granite.messaging.amf.io.util.DefaultGroovyClassDescriptor"/>
-    </descriptors>
-	
+	<class-getter type="org.granite.grails.integration.GrailsClassGetter"/>
+
+	<externalizers>
+		<configuration>
+			<dynamic-class>true</dynamic-class>
+		</configuration>
+	</externalizers>
+
+	<descriptors>
+		<descriptor instance-of="groovy.lang.GroovyObject"
+			java="org.granite.messaging.amf.io.util.DefaultGroovyClassDescriptor"/>
+	</descriptors>
+
 	<exception-converters>
 		<exception-converter type="org.granite.tide.spring.SpringValidationExceptionConverter"/>
 	</exception-converters>
-	
-    <!--
-     ! Enable Grails components for Tide by annotation
-     !-->
-    <tide-components>
+
+	<!-- Enable Grails components for Tide by annotation -->
+	<tide-components>
 		<tide-component annotated-with="org.granite.tide.annotations.TideEnabled"/>
-    </tide-components>
+	</tide-components>
 
 </granite-config>

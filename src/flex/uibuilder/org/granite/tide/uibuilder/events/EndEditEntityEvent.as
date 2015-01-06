@@ -20,21 +20,20 @@
 
 package org.granite.tide.uibuilder.events
 {
-    import flash.events.Event;
-    
-    import org.granite.tide.events.AbstractTideEvent;
-    import org.granite.tide.events.IConversationEvent;
-    import org.granite.tide.uibuilder.util.ReflectionUtil;
-    
-    
-    public class EndEditEntityEvent extends AbstractTideEvent {
-        
-        public function EndEditEntityEvent():void {
-        	super();
-        }
-        
-        public override function clone():Event {
-        	return new EndEditEntityEvent();
-        }
-    }
+	import flash.events.Event;
+
+	import org.granite.tide.events.AbstractTideEvent;
+	import org.granite.tide.events.IConversationEvent;
+	import org.granite.tide.uibuilder.util.ReflectionUtil;
+
+	public class EndEditEntityEvent extends AbstractTideEvent {
+
+		public function EndEditEntityEvent():void {
+			super();
+		}
+
+		public override function clone():Event {
+			return new EndEditEntityEvent();
+		}
+	}
 }

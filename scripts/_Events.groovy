@@ -19,35 +19,35 @@
 */
 
 import grails.util.Environment
-import grails.util.BuildSettings
 
+includeTargets << new File(gdsflexPluginDir, "scripts/_FlexCommon.groovy")
+includeTargets << new File(gdsflexPluginDir, "scripts/_GrailsGas3.groovy")
+includeTargets << new File(gdsflexPluginDir, "scripts/_GrailsFlexCompiler.groovy")
 
 packageCompileFlag = false
 
 eventCompileEnd = {
-    if (checkDir() && packageCompileFlag) {
-		includeTargets << new File("${gdsflexPluginDir}/scripts/_FlexCommon.groovy")
-		includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
-        gas3()
-    }
+	if (checkDir() && packageCompileFlag) {
+		gas3()
+	}
 }
 
 eventPackagingEnd = {
-    if (checkDir()) {
-		includeTargets << new File("${gdsflexPluginDir}/scripts/_FlexCommon.groovy")
-        if (!packageCompileFlag) {
-			includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
-            gas3()
-            packageCompileFlag = true
-        }
-		if (Environment.current == Environment.PRODUCTION && config?.as3Config.autoCompileFlex) {
-            includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsFlexCompiler.groovy")
-            println "Starting compile flex files"
-            flexCompile()
-        }
-    }
+	if (!checkDir()) {
+		return
+	}
+
+	if (!packageCompileFlag) {
+		gas3()
+		packageCompileFlag = true
+	}
+
+	if (Environment.current == Environment.PRODUCTION && config?.as3Config.autoCompileFlex) {
+		println "Starting compile flex files"
+		flexCompile()
+	}
 }
 
-def checkDir() {
-    return gdsflexPluginDir.path != basedir
+private boolean checkDir() {
+	gdsflexPluginDir.path != basedir
 }

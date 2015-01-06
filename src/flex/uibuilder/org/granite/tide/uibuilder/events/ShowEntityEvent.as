@@ -20,35 +20,33 @@
 
 package org.granite.tide.uibuilder.events
 {
-    import flash.events.Event;
-    
-    import org.granite.tide.events.AbstractTideEvent;
-    import org.granite.tide.events.IConversationEvent;
-    import org.granite.tide.uibuilder.util.ReflectionUtil;
-    
-    
-    public class ShowEntityEvent extends AbstractTideEvent implements IConversationEvent {
-        
-        private var _conversationId:String;
-        public var entityClass:Class;
-        public var id:Number;
-        
-        
-        public function ShowEntityEvent(entityClass:Class, id:Number):void {
-        	super();
-        	
-        	this.entityClass = entityClass;
-        	this.id = id;
-        	
-    		_conversationId = ReflectionUtil.getUpperCaseEntityName(entityClass) + "#" + id;
-        }
-        
-        public function get conversationId():String {
-        	return _conversationId;
-        }
-        
-        public override function clone():Event {
-        	return new ShowEntityEvent(entityClass, id);
-        }
-    }
+	import flash.events.Event;
+
+	import org.granite.tide.events.AbstractTideEvent;
+	import org.granite.tide.events.IConversationEvent;
+	import org.granite.tide.uibuilder.util.ReflectionUtil;
+
+	public class ShowEntityEvent extends AbstractTideEvent implements IConversationEvent {
+
+		private var _conversationId:String;
+		public var entityClass:Class;
+		public var id:Number;
+
+		public function ShowEntityEvent(entityClass:Class, id:Number):void {
+			super();
+
+			this.entityClass = entityClass;
+			this.id = id;
+
+			_conversationId = ReflectionUtil.getUpperCaseEntityName(entityClass) + "#" + id;
+		}
+
+		public function get conversationId():String {
+			return _conversationId;
+		}
+
+		public override function clone():Event {
+			return new ShowEntityEvent(entityClass, id);
+		}
+	}
 }

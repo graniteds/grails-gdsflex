@@ -32,23 +32,22 @@ import org.springframework.orm.hibernate4.HibernateTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
- * Responsible for attaching a session with the persistence mangager
- * @author cingram
+ * Attaches a session with the persistence mangager.
  *
+ * @author cingram
  */
 public class GrailsPersistenceManager implements TidePersistenceManager {
-    
+
 	private static final Logger log = Logger.getLogger(GrailsPersistenceManager.class);
-	
+
 	private TidePersistenceManager pm;
-	
-	
+
 	public GrailsPersistenceManager(PlatformTransactionManager transactionManager) {
 		TideTransactionManager tm = new SpringTransactionManager(transactionManager);
 		if (transactionManager instanceof HibernateTransactionManager) {
 			try {
 				Object sf = transactionManager.getClass().getMethod("getSessionFactory").invoke(transactionManager);
-				pm = (TidePersistenceManager)TypeUtil.newInstance("org.granite.grails.integration.GrailsHibernatePersistenceManager", 
+				pm = (TidePersistenceManager)TypeUtil.newInstance("org.granite.grails.integration.GrailsHibernatePersistenceManager",
 						new Class<?>[] { SessionFactory.class, TideTransactionManager.class }, new Object[] { sf, tm });
 			}
 			catch (Exception e) {
@@ -62,10 +61,10 @@ public class GrailsPersistenceManager implements TidePersistenceManager {
 		}
 	}
 
-
 	public Object attachEntity(Object entity, String[] propertyNames) {
-		if (pm instanceof AbstractTidePersistenceManager)
-			return ((AbstractTidePersistenceManager)pm).attachEntity(this, entity, propertyNames);
+		if (pm instanceof AbstractTidePersistenceManager) {
+			return ((AbstractTidePersistenceManager) pm).attachEntity(this, entity, propertyNames);
+		}
 		return pm.attachEntity(entity, propertyNames);
 	}
 }

@@ -21,61 +21,59 @@
 -->
 
 <mx:HBox
-    xmlns:mx="http://www.adobe.com/2006/mxml"
-    xmlns="*"
-    creationComplete="init()">
-	
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns="*"
+	creationComplete="init()">
+
 	<mx:Script>
-        <![CDATA[
-        	import flash.utils.getQualifiedClassName;
-        	import mx.events.FlexEvent;
-        	import org.granite.tide.events.TideResultEvent;
-        	import org.granite.tide.Component;
-        	import org.granite.tide.BaseContext;
-        	import org.granite.tide.uibuilder.util.ReflectionUtil;
-        	
-        	
+		<![CDATA[
+			import flash.utils.getQualifiedClassName;
+			import mx.events.FlexEvent;
+			import org.granite.tide.events.TideResultEvent;
+			import org.granite.tide.Component;
+			import org.granite.tide.BaseContext;
+			import org.granite.tide.uibuilder.util.ReflectionUtil;
+
 			[Bindable]
 			public var entity:Object;
-			
+
 			[Bindable]
 			public var property:Object;
-			
+
 			public var _elementClass:Class;
 			private var _elementName:String;
 			private var _qualifiedElementName:String;
 			private var _elementLabel:String;
-			
-			
+
 			private function get context():BaseContext {
 				return entity.meta_getEntityManager() as BaseContext;
 			}
-			
+
 			private function get controller():Component {
 				return context[_qualifiedElementName + 'Controller'];
 			}
-			
-            public function set elementClass(elementClass:Class):void {
-            	_elementClass = elementClass;
-            	var className:String = getQualifiedClassName(elementClass);
-            	_elementName = ReflectionUtil.getEntityName(className);
-            	_qualifiedElementName = ReflectionUtil.getQualifiedEntityName(className);
+
+			public function set elementClass(elementClass:Class):void {
+				_elementClass = elementClass;
+				var className:String = getQualifiedClassName(elementClass);
+				_elementName = ReflectionUtil.getEntityName(className);
+				_qualifiedElementName = ReflectionUtil.getQualifiedEntityName(className);
 			}
-			
+
 			private function init():void {
 				controller.list(context, {offset: 0, max: 100, order: _elementLabel, desc: false}, listResult);
 			}
-			
+
 			private function listResult(event:TideResultEvent):void {
-            	propertyInput.labelField = context.tideEntityMetadataBuilder.getDisplayLabel(_elementClass);            	
+				propertyInput.labelField = context.tideEntityMetadataBuilder.getDisplayLabel(_elementClass);
 				propertyInput.dataProvider = context[_elementName + 'InstanceList'];
-				propertyInput.selectedIndex = propertyInput.dataProvider.getItemIndex(property); 
+				propertyInput.selectedIndex = propertyInput.dataProvider.getItemIndex(property);
 			}
-			
+
 			private function valueChanged():void {
 				property = propertyInput.selectedItem;
 			}
-      	]]>
+		]]>
 	</mx:Script>
 
 	<mx:ComboBox id="propertyInput"

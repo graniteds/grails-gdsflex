@@ -41,8 +41,8 @@ import org.granite.messaging.amf.io.convert.Converters;
 import org.granite.messaging.amf.io.util.FieldProperty;
 import org.granite.messaging.amf.io.util.MethodProperty;
 import org.granite.messaging.amf.io.util.Property;
-import org.granite.messaging.annotations.Include;
 import org.granite.messaging.annotations.Exclude;
+import org.granite.messaging.annotations.Include;
 import org.granite.util.Introspector;
 import org.granite.util.PropertyDescriptor;
 import org.granite.util.TypeUtil;
@@ -51,15 +51,13 @@ import org.granite.util.TypeUtil;
  * @author William Draï
  */
 public class GrailsDataNucleusExternalizer extends DataNucleusExternalizer {
-	
+
 	private GrailsApplication grailsApplication;
-    
 
 	GrailsDataNucleusExternalizer(GrailsApplication grailsApplication) {
 		this.grailsApplication = grailsApplication;
 	}
-    
-    
+
 	@Override
 	protected boolean isRegularEntity(Class<?> clazz) {
 		return grailsApplication.isArtefactOfType("Domain", clazz);
@@ -70,108 +68,114 @@ public class GrailsDataNucleusExternalizer extends DataNucleusExternalizer {
 		return value instanceof Closure;
 	}
 
-    
-    private boolean isRoot(Class<?> clazz) {
-        return clazz.getSuperclass() != null && 
-        	(clazz.getSuperclass().equals(GroovyObject.class) ||
-            clazz.getSuperclass().equals(Object.class) ||
-            Modifier.isAbstract(clazz.getSuperclass().getModifiers()));
-    }
-    
-    @Override
-    public List<Property> findOrderedFields(final Class<?> clazz, boolean returnSettersWhenAvailable) {
-        List<Property> fields = !dynamicClass ? (returnSettersWhenAvailable ? orderedSetterFields.get(clazz) : orderedFields.get(clazz)) : null;
+	private boolean isRoot(Class<?> clazz) {
+		return clazz.getSuperclass() != null &&
+			(clazz.getSuperclass().equals(GroovyObject.class) ||
+			clazz.getSuperclass().equals(Object.class) ||
+			Modifier.isAbstract(clazz.getSuperclass().getModifiers()));
+	}
 
-        if (fields == null) {
-        	if (dynamicClass)
-        		Introspector.flushFromCaches(clazz);
-            PropertyDescriptor[] propertyDescriptors = TypeUtil.getProperties(clazz);
-            Converters converters = ((ConvertersConfig)GraniteContext.getCurrentInstance().getGraniteConfig()).getConverters();
+	@Override
+	public List<Property> findOrderedFields(final Class<?> clazz, boolean returnSettersWhenAvailable) {
+		List<Property> fields = !dynamicClass ? (returnSettersWhenAvailable ? orderedSetterFields.get(clazz) : orderedFields.get(clazz)) : null;
 
-            fields = new ArrayList<Property>();
-            
-            List<Property> idVersionFields = new ArrayList<Property>();
+		if (fields == null) {
+			if (dynamicClass) {
+				Introspector.flushFromCaches(clazz);
+			}
+			PropertyDescriptor[] propertyDescriptors = TypeUtil.getProperties(clazz);
+			Converters converters = ((ConvertersConfig)GraniteContext.getCurrentInstance().getGraniteConfig()).getConverters();
 
-            Set<String> allFieldNames = new HashSet<String>();
-            for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
+			fields = new ArrayList<Property>();
 
-                List<Property> newFields = new ArrayList<Property>();
+			List<Property> idVersionFields = new ArrayList<Property>();
 
-                // Standard declared fields.
-                for (Field field : c.getDeclaredFields()) {
-                    if (!allFieldNames.contains(field.getName()) &&
-                        !Modifier.isTransient(field.getModifiers()) &&
-                        !Modifier.isStatic(field.getModifiers()) &&
-                        !field.isAnnotationPresent(Exclude.class) &&
-                        !GrailsExternalizer.isIgnored(field)) {
+			Set<String> allFieldNames = new HashSet<String>();
+			for (Class<?> c = clazz; c != null; c = c.getSuperclass()) {
 
-                    	boolean found = false;
-                    	if (returnSettersWhenAvailable && propertyDescriptors != null) {
-                    		for (PropertyDescriptor pd : propertyDescriptors) {
-                    			if (pd.getName().equals(field.getName()) && pd.getWriteMethod() != null) {
-                        			if ("id".equals(field.getName()) || "version".equals(field.getName())) { 
-                        				if (c == clazz)
-                            				idVersionFields.add(new MethodProperty(converters, field.getName(), pd.getWriteMethod(), pd.getReadMethod()));
-                        			}
-                        			else
-                        				newFields.add(new MethodProperty(converters, field.getName(), pd.getWriteMethod(), pd.getReadMethod()));
-                    				found = true;
-                    				break;
-                    			}
-                    		}
-                    	}
-                		if (!found) {
-                			if ("id".equals(field.getName()) || "version".equals(field.getName())) { 
-                				if (c == clazz)
-                					idVersionFields.add(new FieldProperty(converters, field));
-                			}
-                			else
-                				newFields.add(new FieldProperty(converters, field));
-                		}
-                    }
-                    allFieldNames.add(field.getName());
-                }
+				List<Property> newFields = new ArrayList<Property>();
 
-                // Getter annotated  by @ExternalizedProperty.
-                if (propertyDescriptors != null) {
-                    for (PropertyDescriptor property : propertyDescriptors) {
-                        Method getter = property.getReadMethod();
-                        if (getter != null &&
-                            getter.isAnnotationPresent(Include.class) &&
-                            getter.getDeclaringClass().equals(c) &&
-                            !allFieldNames.contains(property.getName()) &&
-                            !GrailsExternalizer.isIgnored(property)) {
+				// Standard declared fields.
+				for (Field field : c.getDeclaredFields()) {
+					if (!allFieldNames.contains(field.getName()) &&
+						!Modifier.isTransient(field.getModifiers()) &&
+						!Modifier.isStatic(field.getModifiers()) &&
+						!field.isAnnotationPresent(Exclude.class) &&
+						!GrailsExternalizer.isIgnored(field)) {
 
-                            newFields.add(new MethodProperty(
-                                converters,
-                                property.getName(),
-                                null,
-                                getter
-                            ));
-                            allFieldNames.add(property.getName());
-                        }
-                    }
-                }
+						boolean found = false;
+						if (returnSettersWhenAvailable && propertyDescriptors != null) {
+							for (PropertyDescriptor pd : propertyDescriptors) {
+								if (pd.getName().equals(field.getName()) && pd.getWriteMethod() != null) {
+									if ("id".equals(field.getName()) || "version".equals(field.getName())) {
+										if (c == clazz) {
+											idVersionFields.add(new MethodProperty(converters, field.getName(), pd.getWriteMethod(), pd.getReadMethod()));
+										}
+									}
+									else {
+										newFields.add(new MethodProperty(converters, field.getName(), pd.getWriteMethod(), pd.getReadMethod()));
+									}
+									found = true;
+									break;
+								}
+							}
+						}
+						if (!found) {
+							if ("id".equals(field.getName()) || "version".equals(field.getName())) {
+								if (c == clazz) {
+									idVersionFields.add(new FieldProperty(converters, field));
+								}
+							}
+							else {
+								newFields.add(new FieldProperty(converters, field));
+							}
+						}
+					}
+					allFieldNames.add(field.getName());
+				}
 
-                if (isRoot(c))
-                	newFields.addAll(idVersionFields);
-                
-                Collections.sort(newFields, new Comparator<Property>() {
-                    public int compare(Property o1, Property o2) {
-                        return o1.getName().compareTo(o2.getName());
-                    }
-                });
+				// Getter annotated  by @ExternalizedProperty.
+				if (propertyDescriptors != null) {
+					for (PropertyDescriptor property : propertyDescriptors) {
+						Method getter = property.getReadMethod();
+						if (getter != null &&
+							getter.isAnnotationPresent(Include.class) &&
+							getter.getDeclaringClass().equals(c) &&
+							!allFieldNames.contains(property.getName()) &&
+							!GrailsExternalizer.isIgnored(property)) {
 
-                fields.addAll(0, newFields);
-            }
+							newFields.add(new MethodProperty(
+								converters,
+								property.getName(),
+								null,
+								getter
+							));
+							allFieldNames.add(property.getName());
+						}
+					}
+				}
 
-            if (!dynamicClass) {
-	            List<Property> previousFields = (returnSettersWhenAvailable ? orderedSetterFields : orderedFields).putIfAbsent(clazz, fields);
-	            if (previousFields != null)
-	                fields = previousFields;
-            }
-        }
+				if (isRoot(c)) {
+					newFields.addAll(idVersionFields);
+				}
 
-        return fields;
-    }
+				Collections.sort(newFields, new Comparator<Property>() {
+					public int compare(Property o1, Property o2) {
+						return o1.getName().compareTo(o2.getName());
+					}
+				});
+
+				fields.addAll(0, newFields);
+			}
+
+			if (!dynamicClass) {
+				List<Property> previousFields = (returnSettersWhenAvailable ? orderedSetterFields : orderedFields).putIfAbsent(clazz, fields);
+				if (previousFields != null) {
+					fields = previousFields;
+				}
+			}
+		}
+
+		return fields;
+	}
 }

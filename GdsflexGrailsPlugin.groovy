@@ -18,88 +18,96 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-import org.codehaus.groovy.grails.web.context.ServletContextHolder;
-
-import java.util.concurrent.*
-
-import org.springframework.orm.hibernate3.AbstractSessionFactoryBean
-import org.springframework.transaction.interceptor.TransactionInterceptor;
-import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
-import org.granite.tide.data.JDOPersistenceManager
-import org.granite.grails.integration.GrailsExternalizer;
-import org.granite.grails.integration.GrailsPersistenceManager
-import org.granite.messaging.amf.io.util.externalizer.EnumExternalizer;
-import org.granite.tide.spring.TideDataPublishingAdvisor;
-import org.granite.tide.spring.security.Identity
-import org.granite.tide.spring.security.AclIdentity
-import org.granite.config.ServletGraniteConfig
-import org.granite.config.GraniteConfig
-import org.granite.config.GraniteConfigUtil
-
-import grails.util.Environment
 import grails.util.BuildSettings
+import grails.util.Environment
+import grails.util.Metadata
 
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
+
+import org.codehaus.groovy.grails.web.servlet.GrailsDispatcherServlet
+import org.granite.config.GraniteConfig
+import org.granite.config.GraniteConfigListener
+import org.granite.config.GraniteConfigUtil
+import org.granite.config.ServletGraniteConfig
+import org.granite.grails.integration.GrailsExternalizer
+import org.granite.grails.integration.GrailsPersistenceManager
+import org.granite.messaging.amf.io.util.externalizer.EnumExternalizer
+import org.granite.spring.ServerFilter
+import org.granite.tide.data.JDOPersistenceManager
+import org.granite.tide.spring.TideDataPublishingAdvisor
+import org.granite.tide.spring.security.AclIdentity
+import org.granite.tide.spring.security.Identity
+import org.springframework.aop.Advisor
+import org.springframework.transaction.interceptor.TransactionInterceptor
+import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping
 
 class GdsflexGrailsPlugin {
 	def groupId = 'org.graniteds.grails'
-    def version = "2.0.0.GA"
-    def author = "William Drai, Ford Guo"
-    def authorEmail = "william.drai@graniteds.org"
-    def title = "Integration between Grails and GraniteDS/Flex"
-    def description = ""
-    def documentation = "http://www.graniteds.org/"
-	
-    private static final def config = GraniteConfigUtil.getUserConfig()
-	private static def sourceDir = config?.as3Config.srcDir ?: "./grails-app/views/flex"
-	private static def modules = config?.modules ?: []
+	def version = "2.0.0.GA"
+	def grailsVersion = '2.0 > *'
+	def title = "GraniteDS Plugin"
+	def description = "Integration between Grails and GraniteDS/Flex"
+	def documentation = "http://www.granitedataservices.com/"
+	def license = 'LGPL2.1'
+	def organization = [name: 'GraniteDS', url: 'http://www.granitedataservices.com/']
+	def developers = [
+		[name: 'William Drai', email: 'william.drai@graniteds.org']
+		[name: 'Ford Guo']
+	]
+	def issueManagement = [system: 'GITHUB', url: 'https://github.com/graniteds/grails-gdsflex/issues']
+	def scm = [url: 'https://github.com/graniteds/grails-gdsflex']
+
+	private static final config = GraniteConfigUtil.userConfig
+	private static String sourceDir = config.as3Config.srcDir ?: "./grails-app/views/flex"
+	private static modules = config.modules ?: []
 	private static final String GRAVITY_ASYNC_SERVLET_NAME = "org.granite.gravity.servlet3.GravityAsyncServlet"
-	
-	private static GroovyClassLoader compilerLoader = null
-    private static LinkedBlockingQueue lastModifiedQueue = new LinkedBlockingQueue()
-    private static ExecutorService executor = Executors.newFixedThreadPool(1)
-    
-	def watchedResources = ["file:${sourceDir}/**/*.mxml",
-	                        "file:${sourceDir}/**/*.css",
-	                        "file:${sourceDir}/**/*.as"]
-	                        
-    
+
+	private static GroovyClassLoader compilerLoader
+	private static LinkedBlockingQueue lastModifiedQueue = new LinkedBlockingQueue()
+	private static ExecutorService executor = Executors.newFixedThreadPool(1)
+
+	def watchedResources = [
+		"file:${sourceDir}/**/*.mxml",
+		"file:${sourceDir}/**/*.css",
+		"file:${sourceDir}/**/*.as"]
+
 	def doWithSpring = {
-		
+
 		xmlns graniteds:"http://www.graniteds.org/config"
 		graniteds."server-filter"("tide": "true")
-		
+
 		graniteUrlMapping(SimpleUrlHandlerMapping) {
 			alwaysUseFullPath = true
-			urlMap = [ '/graniteamf/*': 'org.granite.spring.ServerFilter' ]
+			urlMap = [ '/graniteamf/*': ServerFilter.name ]
 		}
-		
-		graniteds.'tide-data-publishing-advice'('mode': 'proxy', order: Integer.MAX_VALUE)
-		
+
+		graniteds.'tide-data-publishing-advice'(mode: 'proxy', order: Integer.MAX_VALUE)
+
 		grailsExternalizer(GrailsExternalizer)
-		
+
 		enumExternalizer(EnumExternalizer)
-		
-        if (manager?.hasGrailsPlugin("app-engine")) {
-			tidePersistenceManager(JDOPersistenceManager, ref("persistenceManagerFactory")) {
-			}
-        }
-        
-        if (manager?.hasGrailsPlugin("hibernate")) {
-			tidePersistenceManager(GrailsPersistenceManager, ref("transactionManager")) {
-			}
+
+		if (manager?.hasGrailsPlugin("app-engine")) {
+			tidePersistenceManager(JDOPersistenceManager, ref("persistenceManagerFactory"))
 		}
-		
-		def identityClass = null
-		
+
+		if (manager?.hasGrailsPlugin("hibernate")) {
+			tidePersistenceManager(GrailsPersistenceManager, ref("transactionManager"))
+		}
+
+		def identityClass
+
 		if (manager?.hasGrailsPlugin("spring-security-core")) {
 			// Load classes dynamically in case plugin not present
-			Class gssmswClass = Thread.currentThread().getContextClassLoader().loadClass("org.granite.grails.security.GrailsSpringSecurity3MetadataSourceWrapper")
-			Class gssiClass = Thread.currentThread().getContextClassLoader().loadClass("org.granite.grails.security.GrailsSpringSecurity3Interceptor")
-			
+			Class gssmswClass = Thread.currentThread().contextClassLoader.loadClass("org.granite.grails.security.GrailsSpringSecurity3MetadataSourceWrapper")
+			Class gssiClass = Thread.currentThread().contextClassLoader.loadClass("org.granite.grails.security.GrailsSpringSecurity3Interceptor")
+
 			graniteObjectDefinitionSource(gssmswClass) {
 				wrappedMetadataSource = ref('objectDefinitionSource')
 			}
-			
+
 			graniteSecurityInterceptor(gssiClass) {
 				authenticationManager = ref('authenticationManager')
 				accessDecisionManager = ref('accessDecisionManager')
@@ -111,282 +119,246 @@ class GdsflexGrailsPlugin {
 				authenticationManager = ref('authenticationManager')
 				authenticationTrustResolver = ref('authenticationTrustResolver')
 				securityInterceptor = ref('graniteSecurityInterceptor')
-				// passwordEncoder = ref('passwordEncoder') // Don't use passwordEncoder any more, Grails plugin encodes the incoming password itself
+				// passwordEncoder = ref('passwordEncoder') // Don't use passwordEncoder any more, the User class encodes the incoming password itself
 				sessionAuthenticationStrategy = ref('sessionAuthenticationStrategy')
 			}
-			
+
 			identityClass = Identity
 		}
-		
+
 		if (manager?.hasGrailsPlugin("spring-security-acl")) {
-			identityClass = AclIdentity;
-		}
-		
-		if (config) {
-			def conf = config.graniteConfig
-			
-			if (conf.springSecurityIdentityClass)
-				identityClass = conf.springSecurityIdentityClass
+			identityClass = AclIdentity
 		}
 
-		if (identityClass != null)
-			identity(identityClass)
-	}
-	
-	
-	def doWithApplicationContext = { applicationContext ->
-		
-		GraniteConfig graniteConfig = ServletGraniteConfig.loadConfig(applicationContext.servletContext)
-		
-		if (manager?.hasGrailsPlugin("spring-security-core")) {
-			graniteConfig.securityService = applicationContext.getBean("graniteSecurityService")
+		if (config) {
+			def conf = config.graniteConfig
+			if (conf.springSecurityIdentityClass) {
+				identityClass = conf.springSecurityIdentityClass
+			}
 		}
-		
+
+		if (identityClass) {
+			identity(identityClass)
+		}
+	}
+
+	def doWithApplicationContext = { applicationContext ->
+
+		GraniteConfig graniteConfig = ServletGraniteConfig.loadConfig(applicationContext.servletContext)
+
+		if (manager?.hasGrailsPlugin("spring-security-core")) {
+			graniteConfig.securityService = applicationContext.graniteSecurityService
+		}
+
 		// Ensure order of transaction and data publish interceptors
 		// Data publish interceptor must be called inside transaction interceptor
-		def advisors = applicationContext.getBeansOfType(org.springframework.aop.Advisor.class).values()
-		
-		def txAdvisor = null
-		def tideDataAdvisor = null
-		for (Object advisor in advisors) {
-			if (advisor instanceof TideDataPublishingAdvisor)
+		def advisors = applicationContext.getBeansOfType(Advisor).values()
+
+		def txAdvisor
+		def tideDataAdvisor
+		for (advisor in advisors) {
+			if (advisor instanceof TideDataPublishingAdvisor) {
 				tideDataAdvisor = advisor
-			else if (advisor.advice instanceof TransactionInterceptor)
+			}
+			else if (advisor.advice instanceof TransactionInterceptor) {
 				txAdvisor = advisor
+			}
 		}
-		
+
 		if (txAdvisor.order >= tideDataAdvisor.order) {
-			if (txAdvisor.order == Integer.MAX_VALUE)
-				txAdvisor.order = Integer.MAX_VALUE-1
-			tideDataAdvisor.order = txAdvisor.order+1
+			if (txAdvisor.order == Integer.MAX_VALUE) {
+				txAdvisor.order = Integer.MAX_VALUE - 1
+			}
+			tideDataAdvisor.order = txAdvisor.order + 1
 		}
 	}
-    
-    def doWithWebDescriptor = { xml ->
-        // servlets
-        def servlets = xml.servlet
-        servlets[servlets.size() - 1] + {
-            servlet {
-                'servlet-name'("GraniteServlet")
-                'display-name'("GraniteServlet")
-                'servlet-class'("org.codehaus.groovy.grails.web.servlet.GrailsDispatcherServlet")
-                'load-on-startup'("1")
-            }
-			
-	        if (manager?.hasGrailsPlugin("app-engine")) {
-				servlet {
-					'servlet-name'("WebSWFServlet")
-					'display-name'("Web SWF")
-					'description'("GraniteDS Web SWF")
-					'servlet-class'("org.granite.grails.web.GrailsGAEWebSWFServlet")
-					'load-on-startup'("1")
-				}
-	        }
-	        else {
-				servlet {
-					'servlet-name'("WebSWFServlet")
-					'display-name'("Web SWF")
-					'description'("GraniteDS Web SWF")
-					'servlet-class'("org.granite.grails.web.GrailsWebSWFServlet")
-					'load-on-startup'("1")
-				}
+
+	def doWithWebDescriptor = { xml ->
+		// servlets
+		def servlets = xml.servlet
+		servlets[servlets.size() - 1] + {
+			servlet {
+				'servlet-name'("GraniteServlet")
+				'display-name'("GraniteServlet")
+				'servlet-class'(GrailsDispatcherServlet.name)
+				'load-on-startup'("1")
 			}
-        }
-    	
-        // servlet mappings
-        def servletMappings = xml.'servlet-mapping'
-        servletMappings[servletMappings.size() - 1] + {
-            'servlet-mapping' {
-                'servlet-name'("GraniteServlet")
-                'url-pattern'("/graniteamf/*")
-            }
-			
+
+			String className = manager?.hasGrailsPlugin("app-engine") ? 'GrailsGAEWebSWFServlet' : 'GrailsWebSWFServlet'
+
+			servlet {
+				'servlet-name'("WebSWFServlet")
+				'display-name'("Web SWF")
+				description("GraniteDS Web SWF")
+				'servlet-class'("org.granite.grails.web." + className)
+				'load-on-startup'("1")
+			}
+		}
+
+		// servlet mappings
+		def servletMappings = xml.'servlet-mapping'
+		servletMappings[servletMappings.size() - 1] + {
+			'servlet-mapping' {
+				'servlet-name'("GraniteServlet")
+				'url-pattern'("/graniteamf/*")
+			}
+
 			'servlet-mapping' {
 				'servlet-name'("WebSWFServlet")
 				'url-pattern'("*.swf")
 			}
-        }
-		
+		}
+
 		def listeners = xml.'listener'
 		listeners[listeners.size() - 1] + {
 			listener {
-				'listener-class'("org.granite.config.GraniteConfigListener")
+				'listener-class'(GraniteConfigListener.name)
 			}
-		}		
+		}
 
-        if (config) {
-        	def conf = config.graniteConfig
-			
+		if (config) {
+			def conf = config.graniteConfig
+
 			String gravityServletClassName = conf.gravityServletClassName ?: null
-			
+
 			// Defaults to servlet 3.0 when available
-			ConfigObject buildConfig = GraniteConfigUtil.getBuildConfig()
-			
+			ConfigObject buildConfig = GraniteConfigUtil.buildConfig
+
 			// Support for Tomcat 7 (Grails 2.x)
-			if (!gravityServletClassName && buildConfig?.grails?.servlet?.version == "3.0")
+			if (!gravityServletClassName && buildConfig?.grails?.servlet?.version == "3.0") {
 				gravityServletClassName = GRAVITY_ASYNC_SERVLET_NAME
-			
-			if (!gravityServletClassName && Environment.current == Environment.DEVELOPMENT) {
+			}
+
+			if (!gravityServletClassName && Environment.isDevelopmentMode()) {
 				try {
 					getClass().loadClass(GRAVITY_TOMCAT_SERVLET_NAME)
 					gravityServletClassName = GRAVITY_TOMCAT_SERVLET_NAME
 				}
-				catch (Exception e) {
+				catch (ignored) {}
+			}
+
+			if (!gravityServletClassName) {
+				throw new RuntimeException("Gravity enabled but no suitable servlet class defined in GraniteDSConfig.groovy")
+			}
+
+			servlets = xml.servlet
+			servlets[servlets.size() - 1] + {
+				servlet {
+					'servlet-name'("GravityServlet")
+					'display-name'("GravityServlet")
+					'servlet-class'(gravityServletClassName)
+					'load-on-startup'("1")
+					if (GRAVITY_ASYNC_SERVLET_NAME.equals(gravityServletClassName)) {
+						'async-supported'("true")
+					}
 				}
 			}
-		
-			if (!gravityServletClassName)
-				throw new RuntimeException("Gravity enabled but no suitable servlet class defined in GraniteDSConfig.groovy")
-			
-			servlets = xml.servlet
-	        servlets[servlets.size() - 1] + {
-	            servlet {
-	                'servlet-name'("GravityServlet")
-	                'display-name'("GravityServlet")
-	                'servlet-class'(gravityServletClassName)
-	                'load-on-startup'("1")
-					if (GRAVITY_ASYNC_SERVLET_NAME.equals(gravityServletClassName))
-						'async-supported'("true")
-	            }
-	        }
-	    
-	        // servlet mappings
-	        servletMappings = xml.'servlet-mapping'
-	        servletMappings[servletMappings.size() - 1] + {
-	            'servlet-mapping' {
-	                'servlet-name'("GravityServlet")
-	                'url-pattern'("/gravityamf/*")
-	            }
-	        }
-        }
-    }
-    
-    
-    def onChange = { event ->
-		if (Environment.current == Environment.DEVELOPMENT) {
-	        if (event.source && config?.as3Config.autoCompileFlex) {
-	        	flexCompile(event)
-	        }
+
+			// servlet mappings
+			servletMappings = xml.'servlet-mapping'
+			servletMappings[servletMappings.size() - 1] + {
+				'servlet-mapping' {
+					'servlet-name'("GravityServlet")
+					'url-pattern'("/gravityamf/*")
+				}
+			}
 		}
-    }
-    
-    def flexCompile(event) {
-		def buildConfig = GraniteConfigUtil.getBuildConfig()
-		
+	}
+
+	def onChange = { event ->
+		if (Environment.isDevelopmentMode() && event.source && config?.as3Config.autoCompileFlex) {
+			flexCompile(event)
+		}
+	}
+
+	private flexCompile(event) {
+		def buildConfig = GraniteConfigUtil.buildConfig
+
 		def flexSDK = System.getenv("FLEX_HOME")
-		if (buildConfig.flex.sdk)
+		if (buildConfig.flex.sdk) {
 			flexSDK = buildConfig.flex.sdk
-		
+		}
+
 		if (!flexSDK) {
 			println "No Flex SDK specified. Either set FLEX_HOME in your environment or specify flex.sdk in your grails-app/conf/BuildConfig.groovy file"
 			System.exit(1)
 		}
-		
+
 		println "Using Flex SDK: ${flexSDK}"
-		
+
 		String grailsHome = System.getProperty("grails.home")
 		BuildSettings settings = new BuildSettings(new File(grailsHome))
-    	
-    	File pluginDir = lookupPluginDir(buildConfig, settings)
-    	
- 		if (compilerLoader == null) {
- 			ClassLoader loader = configureFlexCompilerClassPath(flexSDK, pluginDir)
- 			
+
+		File pluginDir = lookupPluginDir(buildConfig, settings)
+
+		if (!compilerLoader) {
+			ClassLoader loader = configureFlexCompilerClassPath(flexSDK, pluginDir)
+
 			File source = new File(sourceDir)
-			if (!source.exists())
+			if (!source.exists()) {
 				source.mkdirs()
-			
-			Class wrapperClass = loader.loadClass("FlexCompilerWrapper")
-			java.lang.reflect.Method wrapperInit = wrapperClass.getMethod("init", Object.class, Object.class, Object.class, Object.class, Object.class, Object.class, Object.class)
-			wrapperInit.invoke(null, flexSDK, settings.baseDir, pluginDir, source.canonicalPath, modules, event.application.metadata['app.name'], loader)
-			
+			}
+
+			def FlexCompilerWrapper = loader.loadClass("FlexCompilerWrapper")
+			FlexCompilerWrapper.init(flexSDK, settings.baseDir, pluginDir, source.canonicalPath, modules, Metadata.current.getApplicationName(), loader)
+
 			compilerLoader = loader
 		}
-    	
-    	long lastModified = event.source.lastModified() / 500L 
-    	if (!lastModifiedQueue.contains(lastModified)) {
-    		lastModifiedQueue.offer(lastModified)
-    		executor.execute({
-    			println "Flex incremental compilation for ${event.source.filename}"
-    			
-    			Thread.currentThread().setContextClassLoader(compilerLoader)
-    			if (!lastModifiedQueue.isEmpty()) {
-        			lastModifiedQueue.clear()
-    				Class wrapperClass = Thread.currentThread().getContextClassLoader().loadClass("FlexCompilerWrapper")
-					java.lang.reflect.Method wrapperCompile = wrapperClass.getMethod("incrementalCompile", Object.class)
-					wrapperCompile.invoke(null, event.source.file)
-    			}
-    		} as Runnable)
-    	}
-    }
-    
-    
-    static def configureFlexCompilerClassPath(flexSDK, pluginDir) {
-		GroovyClassLoader loader = new GroovyClassLoader()
-		
-		loader.addURL(new File("${flexSDK}/lib/adt.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/afe.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/aglj32.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/asc.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/asdoc.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/batik_ja.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/batik-awt-util.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/batik-bridge.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/batik-css.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/batik-dom.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/batik-ext.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/batik-gvt.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/batik-parser.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/batik-script.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/batik-svg-dom.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/batik-svggen.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/batik-transcoder.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/batik-util.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/batik-xml.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/commons-discovery.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/compc.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/mxmlc.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/mxmlc_ja.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/copylocale.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/digest.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/flex-compiler-oem.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/flex-fontkit.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/flex-messaging-common.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/mm-velocity-1.4.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/optimizer.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/rideau.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/swfutils.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/xmlParserAPIs.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/xercesImpl.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/xercesPatch.jar").toURI().toURL())
-		loader.addURL(new File("${flexSDK}/lib/xalan.jar").toURI().toURL())
-	
-		loader.parseClass(new File("${pluginDir}/scripts/flexcompiler/FlexCompilerException.groovy"))
-		loader.parseClass(new File("${pluginDir}/scripts/flexcompiler/FlexCompilerType.groovy"))
-		loader.parseClass(new File("${pluginDir}/scripts/flexcompiler/FlexCompiler.groovy"))
-		loader.parseClass(new File("${pluginDir}/scripts/flexcompiler/FlexCompilerWrapper.groovy"))
 
-		return loader
+		long lastModified = event.source.lastModified() / 500L
+		if (!lastModifiedQueue.contains(lastModified)) {
+			lastModifiedQueue.offer(lastModified)
+			executor.execute({
+				println "Flex incremental compilation for ${event.source.filename}"
+
+				Thread.currentThread().contextClassLoader = compilerLoader
+				if (lastModifiedQueue) {
+					lastModifiedQueue.clear()
+					def FlexCompilerWrapper = compilerLoader.loadClass("FlexCompilerWrapper")
+					FlexCompilerWrapper.incrementalCompile(event.source.file)
+				}
+			} as Runnable)
+		}
 	}
-	
-    private static File lookupPluginDir(buildConfig, settings) {
-    	if (buildConfig?.grails?.plugin?.location?.gdsflex)
-    		return new File(buildConfig?.grails?.plugin?.location?.gdsflex.toString());
 
-        File[] dirs = listPluginDirs(settings.getProjectPluginsDir())
-        if (dirs.length > 0)
-        	return dirs[0]
-        
-        dirs = listPluginDirs(settings.getGlobalPluginsDir())
-        return dirs.length > 0 ? dirs[0] : null;
-    }
-    
-    private static File[] listPluginDirs(File dir) {
-        File[] dirs = dir.listFiles({ path -> 
-            return path.isDirectory() &&
-                    (!path.getName().startsWith(".") && path.getName().startsWith('gdsflex-'))
-        } as FileFilter)
-		
-        return dirs == null ? new File[0] : dirs;
-    }
+	static GroovyClassLoader configureFlexCompilerClassPath(flexSDK, pluginDir) {
+		GroovyClassLoader loader = new GroovyClassLoader()
+
+		for (name in ['adt', 'afe', 'aglj32', 'asc', 'asdoc', 'batik_ja', 'batik-awt-util', 'batik-bridge',
+		              'batik-css', 'batik-dom', 'batik-ext', 'batik-gvt', 'batik-parser', 'batik-script',
+		              'batik-svg-dom', 'batik-svggen', 'batik-transcoder', 'batik-util', 'batik-xml',
+		              'commons-discovery', 'compc', 'mxmlc', 'mxmlc_ja', 'copylocale', 'digest',
+		              'flex-compiler-oem', 'flex-fontkit', 'flex-messaging-common', 'mm-velocity-1.4',
+		              'optimizer', 'rideau', 'swfutils', 'xmlParserAPIs', 'xercesImpl', 'xercesPatch', 'xalan']) {
+			loader.addURL(new File(flexSDK, "lib/${name}.jar").toURI().toURL())
+		}
+
+		for (name in ['Exception', 'Type', '', 'Wrapper']) {
+			loader.parseClass(new File(pluginDir, "scripts/flexcompiler/FlexCompiler${name}.groovy"))
+		}
+
+		loader
+	}
+
+	private static File lookupPluginDir(buildConfig, settings) {
+		if (buildConfig?.grails?.plugin?.location?.gdsflex) {
+			return new File(buildConfig.grails.plugin.location.gdsflex.toString())
+		}
+
+		File[] dirs = listPluginDirs(settings.projectPluginsDir)
+		if (dirs) {
+			return dirs[0]
+		}
+
+		dirs = listPluginDirs(settings.globalPluginsDir)
+		dirs ? dirs[0] : null
+	}
+
+	private static File[] listPluginDirs(File dir) {
+		File[] dirs = dir.listFiles({ path ->
+			path.directory && (!path.name.startsWith(".") && path.name.startsWith('gdsflex-'))
+		} as FileFilter)
+
+		dirs ?: [] as File[]
+	}
 }

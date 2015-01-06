@@ -19,20 +19,19 @@
 */
 
 package org.granite.tide.uibuilder {
-	
+
 	import mx.core.IUIComponent;
 	import mx.validators.Validator;
-	
-	
-    public class EntityProperty {
-    	
-    	public var property:String;
-    	public var component:IUIComponent;
-    	public var editorDataField:String;
-    	public var percentWidth:int = -1;
-    	public var validator:Validator;
-    	public var parser:Function;
-    	public var entityField:String;
-    	public var bound:Boolean = true;
-    }
+
+	public class EntityProperty {
+
+		public var property:String;
+		public var component:IUIComponent;
+		public var editorDataField:String;
+		public var percentWidth:int = -1;
+		public var validator:Validator;
+		public var parser:Function;
+		public var entityField:String;
+		public var bound:Boolean = true;
+	}
 }

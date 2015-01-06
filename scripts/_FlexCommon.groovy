@@ -17,14 +17,14 @@
   You should have received a copy of the GNU Library General Public License
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
+import grails.util.Metadata
 
-flexSDK = System.getenv("FLEX_HOME")
-if (buildConfig.flex.sdk) {
-	flexSDK = buildConfig.flex.sdk
+flexSDK = buildConfig.flex.sdk ?: System.getenv("FLEX_HOME")
+if (Metadata.current.getApplicationName() != 'gdsflex') {
+	if (!flexSDK) {
+		println "No Flex SDK specified. Either set FLEX_HOME in your environment or specify flex.sdk in your grails-app/conf/BuildConfig.groovy file"
+		System.exit(1)
+	}
+
+	println "Using Flex SDK: $flexSDK    ${Metadata.current.getApplicationName()}"
 }
-if (!flexSDK) {
-	println "No Flex SDK specified. Either set FLEX_HOME in your environment or specify flex.sdk in your grails-app/conf/BuildConfig.groovy file"
-	System.exit(1)
-}
-		
-println "Using Flex SDK: ${flexSDK}"

@@ -18,9 +18,6 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-Ant.property(environment:"env")
-grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
-
-Ant.copy(todir: "${basedir}/web-app/WEB-INF/granite", overwrite: false) {
-    fileset(dir: "${gdsflexPluginDir}/src/web/granite")
+ant.copy(todir: "${basedir}/web-app/WEB-INF/granite", overwrite: false) {
+	fileset(dir: "${gdsflexPluginDir}/src/web/granite")
 }

@@ -19,21 +19,20 @@
 */
 
 package org.granite.tide.uibuilder {
-	
+
 	import flash.display.DisplayObjectContainer;
-	
 
 	/**
-	 * 	Implementations do the layout of UI elements
+	 * Implementations do the layout of UI elements
 	 */
-    public interface IUIFormLayout {
-    	
-    	/**
-    	 * 	Layout an edit form for an entity
-    	 * 
-    	 * 	@param container	Flex form/container
-    	 *  @param properties	array of item descriptors (from IUIBuilder)
-    	 */
-    	function layoutEditForm(container:DisplayObjectContainer, properties:Array):void;
-    }
+	public interface IUIFormLayout {
+
+		/**
+		 * Layout an edit form for an entity
+		 *
+		 * @param container   Flex form/container
+		 * @param properties  array of item descriptors (from IUIBuilder)
+		 */
+		function layoutEditForm(container:DisplayObjectContainer, properties:Array):void;
+	}
 }

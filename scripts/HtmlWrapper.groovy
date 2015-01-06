@@ -18,11 +18,10 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-Ant.property(environment:"env")
-grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
+includeTargets << new File(gdsflexPluginDir, "scripts/_GrailsHtmlWrapper.groovy")
 
-includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsHtmlWrapper.groovy")
+target(htmlWrapper: "generate the HTML wrapper for the SWF") {
+	depends(flexHtmlWrapper)
+}
 
-target ('default': "generate the html wrapper for the swf") {
-	 depends(flexHtmlWrapper)
- }
+setDefaultTarget htmlWrapper

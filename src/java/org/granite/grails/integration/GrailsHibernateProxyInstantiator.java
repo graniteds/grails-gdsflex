@@ -17,7 +17,6 @@
   You should have received a copy of the GNU Library General Public License
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
-
 package org.granite.grails.integration;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,21 +24,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.granite.hibernate4.HibernateProxyInstantiator;
 import org.granite.hibernate4.ProxyFactory;
 
-
 /**
  * @author Franck WOLFF
  */
 public class GrailsHibernateProxyInstantiator extends HibernateProxyInstantiator {
 
-	private static final long serialVersionUID = 1L;
-	
+	private static final long serialVersionUID = 1;
 
 	public GrailsHibernateProxyInstantiator(ConcurrentHashMap<String, ProxyFactory> proxyFactories, String detachedState) {
-    	super(proxyFactories, detachedState);
-    }
-    
+		super(proxyFactories, detachedState);
+	}
+
 	@Override
-    protected ProxyFactory newProxyFactory(String initializerClassName) {
-    	return new GrailsProxyFactory(initializerClassName);
-    }
+	protected ProxyFactory newProxyFactory(String initializerClassName) {
+		return new GrailsProxyFactory(initializerClassName);
+	}
 }

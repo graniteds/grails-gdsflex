@@ -18,69 +18,57 @@
   along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
-Ant.property(environment:"env")
-grailsHome = Ant.antProject.properties."env.GRAILS_HOME"
-
-includeTargets << grailsScript("_GrailsPackage")
-includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsGas3.groovy")
-includeTargets << new File("${gdsflexPluginDir}/scripts/_GrailsInstallFlexTemplates.groovy")
-includeTargets << grailsScript("_GrailsCompile")
-
-
-import groovy.text.Template
 import groovy.text.SimpleTemplateEngine
 
+includeTargets << grailsScript("_GrailsPackage")
+includeTargets << grailsScript("_GrailsCompile")
+includeTargets << new File(gdsflexPluginDir, "scripts/_GrailsGas3.groovy")
+includeTargets << new File(gdsflexPluginDir, "scripts/_GrailsInstallFlexTemplates.groovy")
 
-target ('default': "generate Flex app") {
-	depends(packageApp)
-	depends(installFlexTemplates)
-	depends(gas3)
-	
-	def domainDir = new File("${basedir}/grails-app/domain")
+target (generateFlexApp: "generate Flex app") {
+	depends(packageApp, installFlexTemplates, gas3)
 
-	domainClassList = []
-	list(domainDir, domainClassList)
-	
-	def engine = new SimpleTemplateEngine()
-	def template = engine.createTemplate(new File("${gdsflexPluginDir}/src/templates/mainflexapp.gsp"))
-	def binding = [ domainClassList: domainClassList ]
-	Writable writable = template.make(binding)
-	
-    GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
-    loader.addURL(new File(classesDirPath).toURI().toURL())
-    Class groovyClass = loader.parseClass(new File("${gdsflexPluginDir}/src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
-    GroovyObject groovyObject = (GroovyObject)groovyClass.newInstance()
-    
-    def as3Config = groovyObject.getUserConfig()?.as3Config
-    
-	def targetDir = as3Config.srcDir ?: "${basedir}/grails-app/views/flex/"
-	if (targetDir.endsWith("/"))
-		targetDir = targetDir.substring(0, targetDir.length()-1)
-    
-	File outFile = new File(targetDir + "/${grailsAppName}.mxml")
-	int i = 0;
-	File bakFile = outFile;
-	while (bakFile.exists()) {
-		i++;
-		bakFile = new File(targetDir + "/${grailsAppName}.mxml.bak.${i}")
+	def domainDir = new File(basedir, "grails-app/domain")
+
+	def domainClassList = list(domainDir)
+
+	GroovyClassLoader loader = new GroovyClassLoader(rootLoader)
+	loader.addURL(new File(classesDirPath).toURI().toURL())
+	def GraniteConfigUtil = loader.parseClass(new File(gdsflexPluginDir, "src/groovy/org/granite/config/GraniteConfigUtil.groovy"))
+	def as3Config = GraniteConfigUtil.getUserConfig()?.as3Config
+
+	String targetDir = as3Config.srcDir ?: "${basedir}/grails-app/views/flex/"
+	if (targetDir.endsWith("/")) {
+		targetDir = targetDir[0..-2]
 	}
-	if (i > 0) {
+
+	File outFile = new File(targetDir, "${grailsAppName}.mxml")
+	int i = 0
+	File bakFile = outFile
+	while (bakFile.exists()) {
+		bakFile = new File(targetDir, "${grailsAppName}.mxml.bak.${++i}")
+	}
+	if (i) {
 		println "Backup existing Flex app to ${bakFile}"
 		outFile.renameTo(bakFile)
 	}
-	
-	outFile = new File(targetDir + "/${grailsAppName}.mxml")
-	writable.writeTo(new FileWriter(outFile))
-	
+
+	outFile = new File(targetDir, "${grailsAppName}.mxml")
+
+	def template = new SimpleTemplateEngine().createTemplate(new File(gdsflexPluginDir, "src/templates/mainflexapp.gsp"))
+	template.make(domainClassList: domainClassList).writeTo(new FileWriter(outFile))
+
 	println "Generated Flex app in ${targetDir}/${grailsAppName}.mxml"
 }
 
-
-def list(File dir, List domainClassList) {
-	dir.eachFileRecurse {
-		if (it.getPath().endsWith(".groovy")) {
-			domainClassList << it.getPath().substring(dir.getPath().length()+1, it.getPath().length()-7).replace(File.separator, ".")
+private List list(File dir) {
+	List names = []
+	dir.eachFileRecurse { File f ->
+		if (f.name.endsWith(".groovy")) {
+			names << f.path.substring(dir.path.length() + 1, f.path.length() - 7).replace(File.separator, ".")
 		}
 	}
-	
+	names
 }
+
+setDefaultTarget generateFlexApp

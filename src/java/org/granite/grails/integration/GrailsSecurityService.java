@@ -20,7 +20,6 @@
 
 package org.granite.grails.integration;
 
-
 import java.security.Principal;
 import java.util.Map;
 
@@ -29,9 +28,7 @@ import org.granite.messaging.service.security.AbstractSecurityService;
 import org.granite.messaging.service.security.SecurityServiceException;
 
 /**
- * 
  * @author william
- *
  */
 public class GrailsSecurityService extends AbstractSecurityService {
 
