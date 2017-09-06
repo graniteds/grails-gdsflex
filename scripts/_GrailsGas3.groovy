@@ -47,7 +47,7 @@ target(gas3: "Gas3") {
 	def excludeClasses = as3Config.excludeClasses
 	def entityBaseTemplate = as3Config.entityBaseTemplate
 	if (!entityBaseTemplate) {
-		entityBaseTemplate = StandardTemplateUris.TIDE_ENTITY_BASE
+		entityBaseTemplate = "class:org.granite.generator.template.tideEntityBase.gsp"
 	}
 
 	ant.path(id: "gas3.generate.classpath") {
